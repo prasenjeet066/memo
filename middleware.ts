@@ -1,4 +1,4 @@
-/**
+
 import { NextResponse, NextRequest } from 'next/server';
 
 // Import your modular middleware functions
@@ -63,4 +63,3 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|api|images|sitemap.xml).*)',
   ],
 };
-**/
