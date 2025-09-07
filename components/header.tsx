@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from 'react'
 import { Menu, Search } from 'lucide-react'
 export default function Header({ context, user }) {
