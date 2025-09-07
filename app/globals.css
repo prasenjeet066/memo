@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+body {
+  font-family: "" !important;
+}
+
+.logo-style-font {
+  font-family: "Aminute" !important;
+}
