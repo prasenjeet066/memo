@@ -1,82 +1,65 @@
-import { getToken } from 'next-auth/jwt'
-import { NextResponse } from 'next/server'
+// /middleware.ts
+import { NextResponse, NextRequest } from 'next/server';
 
-import type { NextRequest } from 'next/server'
-import { NEXTAUTH_SECRET } from '@/lib/auth/secret'
+// Import your modular middleware functions
+import { withAuth } from './middleware/withAuth';
+import { withI18n } from './middleware/withI18n';
+import { withLogging } from './middleware/withLogging';
+import { withSecurityHeaders } from './middleware/withSecurityHeaders';
+import { withGeoRedirection } from './middleware/withGeoRedirection';
 
-export async function middleware(request: NextRequest) {
-  const token = await getToken({ req: request as any, secret: NEXTAUTH_SECRET })
-  
-  const isAuthPage = request.nextUrl.pathname.startsWith('/auth/')
-  
-  // Clone the request headers
-  const requestHeaders = new Headers(request.headers)
-  requestHeaders.set('x-auth-status', token ? 'authenticated' : 'unauthenticated')
-  
-  // Handle auth pages (prevent authenticated users from accessing login/register)
-  if (isAuthPage && token) {
-    return NextResponse.redirect(new URL('/', request.url))
+// Create a middleware stack or chain
+// This allows you to apply multiple middleware functions sequentially
+type Middleware = (req: NextRequest) => NextResponse | Promise<NextResponse>;
+
+const stackMiddlewares = (
+  middlewares: Middleware[],
+  index = 0
+): Middleware => {
+  const current = middlewares[index];
+  if (current) {
+    const next = stackMiddlewares(middlewares, index + 1);
+    return async (req) => {
+      const response = await current(req);
+      if (response instanceof NextResponse) {
+        return next(req); // Pass to the next middleware
+      }
+      return response; // If a middleware returns a response, stop the chain
+    };
   }
-  
-  // Super access route protection
-  const isSuperAccessRoute = request.nextUrl.pathname.startsWith('/super-access')
-  
-  if (isSuperAccessRoute) {
-    // Check if user is not logged in
-    if (!token) {
-      const signInUrl = new URL('/auth/sign-in', request.url)
-      signInUrl.searchParams.set('callbackUrl', request.nextUrl.pathname)
-      return NextResponse.redirect(signInUrl)
-    }
-    
-    // Check if user doesn't have superAccess role
-    if (!token.superAccess || !token.superAccess.role) {
-      // Redirect to unauthorized page or home page
-      return NextResponse.redirect(new URL('/', request.url))
-      // Or redirect to home: return NextResponse.redirect(new URL('/', request.url))
-    }
+  return () => NextResponse.next(); // End of the chain
+};
+
+// Define the order of your middleware
+// Order matters! Authentication should generally come before other logic.
+const middlewares: Middleware[] = [
+  withLogging,
+  withAuth,
+  withI18n,
+  withGeoRedirection,
+  withSecurityHeaders,
+];
+
+// The main middleware function
+export async function middleware(req: NextRequest): Promise<NextResponse> {
+  // Pass the request through the middleware stack
+  const chainedMiddleware = stackMiddlewares(middlewares);
+  const response = await chainedMiddleware(req);
+
+  // If a middleware returned a response (e.g., a redirect), return it
+  if (response instanceof NextResponse) {
+    return response;
   }
-  
-  // Protected routes logic
-  const isProtectedRoute = [
-    '/dashboard',
-    '/profile',
-    '/settings',
-    // Add more protected routes here
-  ].some(path => request.nextUrl.pathname.startsWith(path))
-  
-  if (isProtectedRoute && !token) {
-    const signInUrl = new URL('/auth/sign-in', request.url)
-    signInUrl.searchParams.set('callbackUrl', request.nextUrl.pathname)
-    return NextResponse.redirect(signInUrl)
-  }
-  
-  // Set CORS headers
-  const response = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  })
-  
-  response.headers.set('Access-Control-Allow-Origin', '*') // Change '*' to specific domains if needed
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-  
-  // Handle OPTIONS requests for preflight checks
-  if (request.method === 'OPTIONS') {
-    return response // Return early for preflight requests
-  }
-  
-  return response
+
+  // Otherwise, continue to the next handler
+  return NextResponse.next();
 }
 
+// Configuration for Next.js middleware matcher
+// This tells Next.js which paths should be processed by this middleware.
 export const config = {
   matcher: [
-    '/dashboard/:path*',
-    '/profile/:path*',
-    '/settings/:path*',
-    '/auth/:path*',
-    '/super-access/:path*', // Added super-access to matcher
-    // Add more paths that need middleware protection
-  ]
-}
+    // Apply middleware to all pages and API routes except static files, Next.js internal files, etc.
+    '/((?!_next/static|_next/image|favicon.ico|api|images|sitemap.xml).*)',
+  ],
+};
