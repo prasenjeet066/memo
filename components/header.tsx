@@ -35,7 +35,7 @@ export default function Header({ context, user }) {
         }
       </div>
       {
-        sideBarLogic && NavList.length (
+        sideBarLogic && NavList.length && (
           <div className = ''>
             {
               NavList.map((item)=>(
