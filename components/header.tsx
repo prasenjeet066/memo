@@ -17,7 +17,7 @@ export default function Header() {
     name: 'Contribution'
   }]
   useEffect(()=>{
-    await getServerAuthContext((isAuth,data)=>{
+    getServerAuthContext((isAuth,data)=>{
       setAuthData({
         isAuth,
         data
