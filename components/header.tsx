@@ -5,10 +5,6 @@ import { Menu, Search } from 'lucide-react'
 export default function Header({ context, user }) {
   
   const [ sideBarLogic , setSideBarOpenLogic] = useState();
-  
-  interface NavList {
-    
-  }
   const [_val, _eff] = context
   const NavList = [
     {
@@ -21,9 +17,6 @@ export default function Header({ context, user }) {
       name : 'Contribution'
     }
   ]
-  useEffect(() => {
-    
-  }, [_val])
   
   return (
     <div className = 'w-full p-2 flex flex-row items-center justify-between gap-4 sticky top-0 bg-white'>
