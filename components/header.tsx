@@ -1,5 +1,5 @@
 "use client"
-import { getAuthContext } from '@/lib/units/auth-context'
+import { getServerAuthContext } from '@/lib/units/auth-context'
 import { useState, useEffect } from 'react'
 import { Menu, Search } from 'lucide-react'
 export default function Header() {
@@ -26,7 +26,7 @@ export default function Header() {
       <div className = 'flex-1 flex flex-row items-center justify-end gap-2'>
         <Search className='h-5 w-5'/>
         {
-        await getAuthContext((isAuth,data)=>(
+       await getServerAuthContext((isAuth,data)=>(
           <>
             {
               isAuth &&  data!==null ? (
