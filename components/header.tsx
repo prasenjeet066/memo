@@ -21,7 +21,7 @@ export default function Header() {
   return (
     <div className = 'w-full p-2 flex flex-row items-center justify-between gap-4 sticky top-0 bg-white'>
       <div className = 'flex items-center gap-2'>
-        <Menu className='w-5 h-5' onClick = {setSideBarOpenLogic(!sideBarLogic)}/>
+        <Menu className='w-5 h-5' onClick = {()=>{setSideBarOpenLogic(!sideBarLogic)}}/>
         <h1 className = 'logo-style-font text-gray-800'>{"recordCN"}</h1>
       </div>
       <div className = 'flex-1 flex items-center gap-2'>
