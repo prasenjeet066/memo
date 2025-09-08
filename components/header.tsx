@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { Menu, Search } from 'lucide-react'
-export default function Header({ context, user }) {
+export default function Header() {
   
   const [ sideBarLogic , setSideBarOpenLogic] = useState();
-  const [_val, _eff] = context
+  
   const NavList = [
     {
       name : 'Home',
