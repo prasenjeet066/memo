@@ -26,13 +26,7 @@ export default function Header() {
       </div>
       <div className = 'flex-1 flex items-center gap-2'>
         <Search className='h-5 w-5'/>
-        {
-          user &&  (
-            <>
-              authed
-            </>
-          )
-        }
+        
       </div>
       {
         sideBarLogic && NavList.length && (
