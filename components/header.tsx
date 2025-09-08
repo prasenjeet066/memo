@@ -36,7 +36,7 @@ export default function Header({ context, user }) {
       </div>
       {
         sideBarLogic && NavList.length && (
-          <div className = ''>
+          <div className = 'fixed top-0 left-0 min-w-1/2 min-h-screen bg-white/50 backdrop:blur-xl'>
             {
               NavList.map((item)=>(
               <a href={`${item.name}`}>
