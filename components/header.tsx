@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Menu, Search } from 'lucide-react'
 export default function Header() {
   
-  const [ sideBarLogic , setSideBarOpenLogic] = useState();
+  const [ sideBarLogic , setSideBarOpenLogic] = useState<boolean>(false);
   
   const NavList = [
     {
