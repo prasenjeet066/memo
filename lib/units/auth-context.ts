@@ -1,6 +1,6 @@
 // utils/getServerAuthContext.ts
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth'; // Update this path as needed
+import { authOptions } from '@/lib/auth/auth'; // Update this path as needed
 import { ReactNode } from 'react';
 
 type AuthCallback = (isAuth: boolean, data: any) => ReactNode;
