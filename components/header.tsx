@@ -5,7 +5,7 @@ import { Menu, Search } from 'lucide-react'
 export default function Header() {
   
   const [sideBarLogic, setSideBarOpenLogic] = useState < boolean > (false);
-  
+  const [AuthData, setAuthData] = useState()
   const NavList = [
   {
     name: 'Home',
@@ -16,7 +16,14 @@ export default function Header() {
   {
     name: 'Contribution'
   }]
-  
+  useEffect(()=>{
+    await getServerAuthContext((isAuth,data)=>{
+      setAuthData({
+        isAuth,
+        data
+      })
+    })
+  },[])
   return (
     <div className = 'w-full p-2 flex flex-row items-center justify-between gap-4 sticky top-0 bg-white'>
       <div className = 'flex items-center gap-2'>
@@ -25,23 +32,7 @@ export default function Header() {
       </div>
       <div className = 'flex-1 flex flex-row items-center justify-end gap-2'>
         <Search className='h-5 w-5'/>
-        {
-       await getServerAuthContext((isAuth,data)=>(
-          <>
-            {
-              isAuth &&  data!==null ? (
-                <>
-                  
-                </>
-              ):(<>
-                <button className='outline-none border-none bg-gray-800 rounded-xl text-white p-2 px-4'>
-                  {"Login"}
-                </button>
-              </>)
-            }
-          </>
-          ))
-        }
+        
       </div>
       {
         sideBarLogic && NavList.length && (
