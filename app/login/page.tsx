@@ -33,7 +33,7 @@ export default function LoginPage() {
   }
   
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen">
       {/* Header */}
       <div className="sticky top-0 bg-white p-4 flex items-center justify-between border-b">
         <div className="flex items-center gap-2">
@@ -47,7 +47,7 @@ export default function LoginPage() {
       <div className="flex flex-col items-center justify-center px-4 py-12">
         <form
           onSubmit={handleSubmit}
-          className="w-full max-w-md bg-white p-6 rounded-lg shadow-md space-y-6"
+          className="w-full bg-white p-6  "
         >
           {/* Username or Email */}
           <div className="flex flex-col space-y-2">
