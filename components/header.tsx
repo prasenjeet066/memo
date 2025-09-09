@@ -25,7 +25,7 @@ export default function Header() {
     })
   },[])
   return (
-    <div className = 'w-full p-2 flex flex-row items-center justify-between gap-4 sticky top-0 bg-white'>
+    <div className = 'w-full p-4 flex flex-row items-center justify-between gap-4 sticky top-0 bg-white'>
       <div className = 'flex items-center gap-2'>
         <Menu className='w-5 h-5' onClick = {()=>{setSideBarOpenLogic(!sideBarLogic)}}/>
         <h1 className = 'logo-style-font text-gray-800'>{"recordCN"}</h1>
@@ -36,7 +36,7 @@ export default function Header() {
       </div>
       {
         sideBarLogic && NavList.length && (
-          <div className = 'fixed top-0 left-0 w-1/2 min-h-screen bg-white flex flex-col items-center justify-center gap-4'>
+          <div className = 'fixed top-0 left-0 w-1/2 min-h-screen bg-white flex flex-col items-start justify-start gap-4'>
             {
               NavList.map((item)=>(
               <a href={`${item.name}`}>
