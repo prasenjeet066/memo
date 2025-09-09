@@ -1,4 +1,4 @@
-import { Menu, Search, ArrowLeft} from 'lucide-react
+import { Menu, Search, ArrowLeft} from 'lucide-react'
 
 export default function LoginPage(){
   
