@@ -44,7 +44,7 @@ export default function Header() {
       {
         sideBarLogic && NavList.length && (
           <div className = 'fixed top-0 left-0 w-1/2 p-6 min-h-screen bg-white flex flex-col items-start justify-start gap-4'>
-            <div className = 'flex flex-row items-center gap-2 justify-start'>
+            <div className = 'flex flex-row items-center gap-2 justify-start font-semibold border-b '>
               <h1>{"Navigation"}</h1>
             </div>
             {
