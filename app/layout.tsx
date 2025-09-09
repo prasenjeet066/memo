@@ -1,7 +1,7 @@
 // app/[locale]/layout.tsx
 import React from 'react'
 import './globals.css'
-import { AuthProvider } from '@/components/utils/provider/auth'
+import { Providers } from '@/components/utils/provider/auth'
 import { Metadata } from 'next'
 
 
@@ -23,9 +23,9 @@ export default function LocaleLayout({ children }: Props) {
         <link rel='stylesheet' href='/font/Aminute/Web-TT/Aminute.css'/>
       </head>
       <body>
-        <AuthProvider>
+        <Providers>
           {children}
-        </AuthProvider>
+        </Providers>
       </body>
     </html>
   )
