@@ -2,7 +2,8 @@
 import { getServerAuthContext } from '@/lib/units/auth-context'
 
 import { useState, useEffect } from 'react'
-import { Menu, Search } from 'lucide-react'
+
+import { Menu, Search, ArrowLeft} from 'lucide-react'
 export default function Header() {
   
   const [sideBarLogic, setSideBarOpenLogic] = useState < boolean > (false);
@@ -43,7 +44,8 @@ export default function Header() {
       </div>
       {
         sideBarLogic && NavList.length && (
-          <div className = 'fixed top-0 left-0 w-1/2 p-6 min-h-screen bg-white flex flex-col items-start justify-start gap-4'>
+          <div className = 'fixed top-0 left-0 w-full flex flex-row items-center justify-between'>
+            <div className='flex-1 p-6 min-h-screen bg-white flex flex-col items-start justify-start gap-4'>
             <div className = 'flex flex-row items-center gap-2 justify-start font-semibold border-b '>
               <h1>{"Navigation"}</h1>
             </div>
@@ -55,6 +57,11 @@ export default function Header() {
                 )
               )
             }
+          </div>
+          <div className='flex flex-col items-center justify-start'>
+            <ArrowLeft className='flex flex-row items-center justify-center p-2 bg-gray-700 text-white' onClick={()=>{setSideBarOpenLogic(!sideBarLogic)}}/>
+            
+          </div>
           </div>
         )
       }
