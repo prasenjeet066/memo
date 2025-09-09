@@ -10,3 +10,7 @@
     text-rendering: optimizeLegibility;
 }
 
+@font-face {
+    font-family:"Harper";
+    src: url("Harper-Bold Personal Use.otf");
+}
