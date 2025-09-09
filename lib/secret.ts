@@ -1,0 +1,1 @@
+export const NEXTAUTH_SECRET = 'SCNxqygOV1kqYOrSNfbaL8tUF+qfYGVb/hdF/yeQco4OrvZ90baYDwUpoqo=';
