@@ -1,6 +1,8 @@
 import { React } from 'react'
 import './globals.css'
+import '../i18n';
 import { AuthProvider } from '@/components/utils/provider/auth'
+
 const RootLayout = ({ children }: { children: React.Node }) => {
   return (
     <html>

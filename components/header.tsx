@@ -1,29 +1,37 @@
 "use client"
 import { getServerAuthContext } from '@/lib/units/auth-context'
+import { useTranslation } from 'react-i18next';
+
 import { useState, useEffect } from 'react'
 import { Menu, Search } from 'lucide-react'
 export default function Header() {
   
   const [sideBarLogic, setSideBarOpenLogic] = useState < boolean > (false);
   const [AuthData, setAuthData] = useState()
+  const { t } = useTranslation('common')
   const NavList = [
   {
-    name: 'Home',
+    name: t('home'),
   },
   {
-    name: 'Explore'
+    name: t('explore')
   },
   {
-    name: 'Contribution'
-  }]
-  useEffect(()=>{
-    getServerAuthContext((isAuth,data)=>{
+    name: t('contribution')
+  },
+  {
+    name: t('setting'),
+    
+  },
+  ]
+  useEffect(() => {
+    getServerAuthContext((isAuth, data) => {
       setAuthData({
         isAuth,
         data
       })
     })
-  },[])
+  }, [])
   return (
     <div className = 'w-full p-4 flex flex-row items-center justify-between gap-4 sticky top-0 bg-white'>
       <div className = 'flex items-center gap-2'>
