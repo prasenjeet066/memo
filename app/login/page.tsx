@@ -47,7 +47,7 @@ export default function LoginPage() {
       <div className="flex flex-col items-center justify-center px-4 py-12">
         <form
           onSubmit={handleSubmit}
-          className="w-full bg-white p-6  "
+          className="w-full space-y-6 bg-white p-6  "
         >
           {/* Username or Email */}
           <div className="flex flex-col space-y-2">
