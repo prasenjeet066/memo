@@ -1,6 +1,5 @@
 "use client"
 import { getServerAuthContext } from '@/lib/units/auth-context'
-import { useTranslation } from 'react-i18next';
 
 import { useState, useEffect } from 'react'
 import { Menu, Search } from 'lucide-react'
@@ -8,19 +7,19 @@ export default function Header() {
   
   const [sideBarLogic, setSideBarOpenLogic] = useState < boolean > (false);
   const [AuthData, setAuthData] = useState()
-  const { t } = useTranslation('common')
+  
   const NavList = [
   {
-    name: t('home'),
+    name: 'home',
   },
   {
-    name: t('explore')
+    name: 'explore'
   },
   {
-    name: t('contribution')
+    name: 'contribution'
   },
   {
-    name: t('setting'),
+    name: 'setting',
     
   },
   ]
