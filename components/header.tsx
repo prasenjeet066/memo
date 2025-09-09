@@ -58,8 +58,8 @@ export default function Header() {
               )
             }
           </div>
-          <div className='min-w-1/2 flex flex-col items-center justify-start'>
-            <ArrowLeft className='flex flex-row items-center justify-center p-2 bg-gray-700 rounded-full text-white' onClick={()=>{setSideBarOpenLogic(!sideBarLogic)}}/>
+          <div className='min-w-[50%] flex flex-col items-center justify-start'>
+            <ArrowLeft className='flex h-5 w-5 backdrop:blur-md flex-row items-center justify-center p-2 bg-gray-700 rounded-full text-white' onClick={()=>{setSideBarOpenLogic(!sideBarLogic)}}/>
             
           </div>
           </div>
