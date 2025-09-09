@@ -1,3 +1,4 @@
+"use client"
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'
 
