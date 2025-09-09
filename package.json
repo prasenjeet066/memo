@@ -39,8 +39,6 @@
     "@radix-ui/react-toggle-group": "latest",
     "@radix-ui/react-tooltip": "latest",
     "@reduxjs/toolkit": "latest",
-    "@supabase/auth-helpers-nextjs": "latest",
-    "@supabase/supabase-js": "latest",
     "@vercel/blob": "latest",
     "autoprefixer": "^10.4.20",
     "bcryptjs": "latest",
