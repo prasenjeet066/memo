@@ -1,12 +1,15 @@
 "use client"
 
 import { useState,useEffect } from 'react'
+import { useSession } from "next-auth/react"
+
 import { SearchInHeader } from '@/components/utils/search'
 import { useMobile } from "@/lib/units/use-mobile"
 import { Menu, Search, ArrowLeft, Home, Compass, HandHeart, Settings } from 'lucide-react'
 
 export default function Header({ navlist }) {
   const [sideBarLogic, setSideBarOpenLogic] = useState<boolean>(false)
+  const { data: session, status } = useSession()
   const [AuthData, setAuthData] = useState()
   const [isExpand, setIsExpand] = useState(true)
   const isMobile = useMobile()
@@ -34,6 +37,23 @@ export default function Header({ navlist }) {
           </div>
           <div className='flex flex-row items-center gap-4'>
             <SearchInHeader />
+            <div className = 'flex gap-2 flex-row items-center justify-end'>
+              {
+              status === 'unauthorized' ? (
+                <>
+                  <button className='bg-none border-none outline-none hover:underline text-semibold'>
+                    {"প্রবেশ করুন"}
+                  </button>
+                  <button className='bg-gray-800 text-white rounded-full p-2 outline-none'>
+                    {"নিবন্ধন করুন"}
+                  </button>
+                </>
+                
+              ):(
+                <></>
+              )
+              }
+            </div>
           </div>
         </>
       )}
@@ -44,7 +64,7 @@ export default function Header({ navlist }) {
           {/* Sidebar */}
           <div className='flex-1 p-6 min-h-screen bg-white flex flex-col items-start justify-start gap-4 shadow-lg'>
             <div className='flex flex-row items-center gap-2 justify-start font-semibold border-b pb-2 w-full'>
-              <h1>{"Navigation"}</h1>
+              <h1>{"মেনু সমূহ"}</h1>
             </div>
             {
               NavList.map((item) => (
