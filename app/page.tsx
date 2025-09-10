@@ -32,7 +32,7 @@ export default function MainPage() {
   useEffect(() => {
     if (!isMobile) {
       setSideBar(
-        <div className='p-2 flex flex-col items-start justify-start gap-2'>
+        <div className='p-2 flex flex-col items-start justify-start border-r gap-2 bg-white'>
           {NavList.map((nav) => (
             <div
               key={nav.name}
@@ -50,7 +50,7 @@ export default function MainPage() {
   }, [isMobile, isExpand]) // ✅ only depend on these
 
   return (
-    <main className="min-h-screen w-full bg-gray-50">
+    <main className="min-h-screen w-full bg-white">
       <Header navlist={NavList} />
       <div className="flex flex-row items-start justify-between">
         {sideBar}
