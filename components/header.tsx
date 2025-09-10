@@ -5,7 +5,7 @@ import { SearchInHeader } from '@/components/utils/search'
 import { useMobile } from "@/lib/units/use-mobile"
 import { Menu, Search, ArrowLeft, Home, Compass, HandHeart, Settings } from 'lucide-react'
 
-export default function Header({ sideBar, setSideBar }) {
+export default function Header({ navlist }) {
   const [sideBarLogic, setSideBarOpenLogic] = useState<boolean>(false)
   const [AuthData, setAuthData] = useState()
   const [isExpand, setIsExpand] = useState(true)
@@ -13,7 +13,7 @@ export default function Header({ sideBar, setSideBar }) {
   
   
   // Render sidebar for non-mobile screens
-  
+  const NavList = navlist;
 
   return (
     <div className='w-full p-4 flex flex-row items-center justify-between gap-4 sticky top-0 bg-white z-50 shadow-sm'>
