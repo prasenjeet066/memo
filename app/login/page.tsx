@@ -75,9 +75,9 @@ export default function LoginPage() {
   }
   
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen">
       {/* Header */}
-      <div className="sticky top-0 bg-white p-4 flex items-center justify-between border-b shadow-sm">
+      <div className="sticky top-0 bg-white p-4 flex items-center justify-between border-b">
         <div className="flex items-center gap-2">
           <ArrowLeft className="w-4 h-4 cursor-pointer" onClick={() => router.back()} />
           <h1 className="font-semibold text-gray-900">Sign In</h1>
@@ -85,9 +85,9 @@ export default function LoginPage() {
       </div>
 
       {/* Form Container */}
-      <div className="flex flex-col items-center justify-center px-4 py-12">
+      <div className="flex flex-col items-center justify-center px-4">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-lg  p-6">
             <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
               Welcome Back
             </h2>
