@@ -1,5 +1,6 @@
 // lib/auth/auth.ts
 import { AuthOptions } from 'next-auth';
+import { NEXTAUTH_SECRET } from '@/lib/secret'
 import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { connectDB } from '@/lib/security/auth/db/provider';
@@ -21,7 +22,7 @@ export const authOptions: AuthOptions = {
         if (!credentials?.usernameOrEmail || !credentials?.password) {
           throw new Error('Please provide both username/email and password');
         }
-
+        
         try {
           await connectDB();
           
@@ -32,20 +33,20 @@ export const authOptions: AuthOptions = {
               { user_handler: credentials.usernameOrEmail.toLowerCase() }
             ]
           });
-
+          
           if (!user) {
             throw new Error('Invalid credentials');
           }
-
+          
           const isPasswordValid = await user.comparePassword(credentials.password);
           if (!isPasswordValid) {
             throw new Error('Invalid credentials');
           }
-
+          
           // Update last login
           user.last_login = new Date();
           await user.save();
-
+          
           return {
             id: user._id.toString(),
             email: user.email,
@@ -122,6 +123,5 @@ export const authOptions: AuthOptions = {
     signIn: '/login',
     error: '/login',
   },
-  secret: process.env.NEXTAUTH_SECRET,
-};
-
+  secret: NEXTAUTH_SECRET
+}
