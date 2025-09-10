@@ -1,3 +1,4 @@
+'use client'
 import Header from '@/components/header'
 import { useState } from 'react'
 export default async function MainPage() {
