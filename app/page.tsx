@@ -1,12 +1,17 @@
 import Header from '@/components/header'
-
+import { useState } from 'react'
 export default async function MainPage() {
-  
+  const [sideBar,setSideBar] = useState(null)
   return (
     <main className="min-h-screen w-full bg-gray-50">
-      <Header />
-      <div className="p-4">
-        <h1>{"Home"}</h1>
+      <Header sideBar setSideBar/>
+      <div className="flex flex-row items-center justify-between">
+        {
+          sideBar!==null &&  sideBar 
+        }
+        <div className='flex-1'>
+          
+        </div>
       </div>
     </main>
   )

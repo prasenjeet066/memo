@@ -4,11 +4,12 @@
 import { useState, useEffect } from 'react'
 import { SearchInHeader } from '@/components/utils/search'
 import { useMobile } from "@/lib/units/use-mobile"
-import { Menu, Search, ArrowLeft} from 'lucide-react'
-export default function Header() {
+import { Menu, Search, ArrowLeft } from 'lucide-react'
+export default function Header({ sideBar, setSideBar }) {
   
   const [sideBarLogic, setSideBarOpenLogic] = useState < boolean > (false);
   const [AuthData, setAuthData] = useState()
+  const [isExpand, setIsExpand] = useState(true)
   const isMobile = useMobile()
   const NavList = [
   {
@@ -23,9 +24,33 @@ export default function Header() {
   {
     name: 'setting',
     
-  },
-  ]
-  
+  }, ]
+  if (!isMobile && sideBar && setSideBar) {
+    setSideBar(
+      <>
+      <div className='p-2 flex flex-col items-start justify-start gap-2'>
+        {
+          NavList.map((nav)=>(
+            <div className='flex flex-row items-center justify-start'>
+              {
+                isExpand ? (
+                  <>
+                    <nav.icon className='w-5 h-5'/>
+                    <span>{nav.name}</span>
+                  </>
+                ):(<>
+                  {
+                    <nav.icon className='w-5 h-5'/>
+                  }
+                </>)
+              }
+            </div>
+          ))
+        }
+      </div>
+      </>
+    )
+  }
   return (
     <div className = 'w-full p-4 flex flex-row items-center justify-between gap-4 sticky top-0 bg-white'>
       {isMobile ? (<><div className = 'flex items-center gap-2'>
