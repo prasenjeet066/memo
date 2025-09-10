@@ -1,5 +1,5 @@
 "use client"
-import { getServerAuthContext } from '@/lib/units/auth-context'
+
 
 import { useState, useEffect } from 'react'
 
@@ -24,14 +24,7 @@ export default function Header() {
     
   },
   ]
-  useEffect(() => {
-    getServerAuthContext((isAuth, data) => {
-      setAuthData({
-        isAuth,
-        data
-      })
-    })
-  }, [])
+  
   return (
     <div className = 'w-full p-4 flex flex-row items-center justify-between gap-4 sticky top-0 bg-white'>
       <div className = 'flex items-center gap-2'>
