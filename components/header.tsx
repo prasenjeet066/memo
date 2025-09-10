@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState,useEffect } from 'react'
 import { SearchInHeader } from '@/components/utils/search'
 import { useMobile } from "@/lib/units/use-mobile"
 import { Menu, Search, ArrowLeft, Home, Compass, HandHeart, Settings } from 'lucide-react'
@@ -10,7 +10,6 @@ export default function Header({ sideBar, setSideBar }) {
   const [AuthData, setAuthData] = useState()
   const [isExpand, setIsExpand] = useState(true)
   const isMobile = useMobile()
-
   const NavList = [
     {
       name: 'home',
@@ -29,9 +28,8 @@ export default function Header({ sideBar, setSideBar }) {
       icon: Settings,
     },
   ]
-
-  // Render sidebar for non-mobile screens
-  if (!isMobile && sideBar && setSideBar) {
+  useEffect(()=>{
+    if (!isMobile && sideBar && setSideBar) {
     setSideBar(
       <>
         <div className='p-2 flex flex-col items-start justify-start gap-2'>
@@ -47,6 +45,9 @@ export default function Header({ sideBar, setSideBar }) {
       </>
     )
   }
+  },[sideBar,isExpand])
+  // Render sidebar for non-mobile screens
+  
 
   return (
     <div className='w-full p-4 flex flex-row items-center justify-between gap-4 sticky top-0 bg-white z-50 shadow-sm'>
