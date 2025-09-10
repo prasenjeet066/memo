@@ -2,13 +2,14 @@
 
 
 import { useState, useEffect } from 'react'
-
+import { SearchInHeader } from '@/components/utils/search'
+import { useMobile } from "@/lib/units/use-mobile"
 import { Menu, Search, ArrowLeft} from 'lucide-react'
 export default function Header() {
   
   const [sideBarLogic, setSideBarOpenLogic] = useState < boolean > (false);
   const [AuthData, setAuthData] = useState()
-  
+  const isMobile = useMobile()
   const NavList = [
   {
     name: 'home',
@@ -27,14 +28,26 @@ export default function Header() {
   
   return (
     <div className = 'w-full p-4 flex flex-row items-center justify-between gap-4 sticky top-0 bg-white'>
-      <div className = 'flex items-center gap-2'>
+      {isMobile ? (<><div className = 'flex items-center gap-2'>
         <Menu className='w-5 h-5' onClick = {()=>{setSideBarOpenLogic(!sideBarLogic)}}/>
         <h1 className = 'logo-style-font text-gray-800'>{"RecordCN"}</h1>
       </div>
       <div className = 'flex-1 flex flex-row items-center justify-end gap-2'>
         <Search className='h-5 w-5'/>
         
-      </div>
+      </div></>):(<>
+        <div className='flex flex-row items-center gap-4'>
+             <h1 className = 'logo-style-font text-gray-800'>{"RecordCN"}</h1>
+        </div>
+        <div className='flex flex-row items-center gap-4'>
+          <SearchInHeader/>
+          
+        </div>
+        
+        </>
+        
+      )}
+      
       {
         sideBarLogic && NavList.length && (
           <div className = 'fixed top-0 left-0 w-full flex flex-row items-center justify-between'>
