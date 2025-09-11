@@ -1,12 +1,14 @@
 "use client"
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'
+import {getDictionary} from '@/lib/auth/i18n/language'
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export default function LoginPage() {
   const [passwordType, setPasswordType] = useState(true)
+  const lang = getDictionary('bn')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -80,7 +82,7 @@ export default function LoginPage() {
       <div className="sticky top-0 bg-white p-4 flex items-center justify-between border-b">
         <div className="flex items-center gap-2">
           <ArrowLeft className="w-4 h-4 cursor-pointer" onClick={() => router.back()} />
-          <h1 className="font-semibold text-gray-900">প্রবেশ করুন</h1>
+          <h1 className="font-semibold text-gray-900">{lang.home}</h1>
         </div>
       </div>
 
