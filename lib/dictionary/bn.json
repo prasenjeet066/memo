@@ -69,5 +69,18 @@
   "delete_error": "মুছে ফেলা যায়নি",
   "upload_success": "সফলভাবে আপলোড হয়েছে",
   "upload_error": "আপলোড ব্যর্থ হয়েছে",
-  "permission_denied": "আপনার অনুমতি নেই"
+  "permission_denied": "আপনার অনুমতি নেই",
+  
+  "welcome_message": "শুভেচ্ছা আপনাকে!",
+  "email_or_username": "ইমেইল অথবা ইউজারনেম",
+  "password": "পাসওয়ার্ড",
+  "please_wait": "অপেক্ষা করুন...",
+  "enter": "প্রবেশ করুন",
+  "continue_with_google": "Google দিয়ে চালিয়ে যান",
+  "no_account": "কোনো অ্যাকাউন্ট নেই?",
+  "sign_up": "নিবন্ধন করুন",
+  "fill_all_fields": "সকল ক্ষেত্র পূরণ করুন।",
+  "invalid_credentials_error": "ভুল ব্যবহারকারী নাম বা পাসওয়ার্ড। আবার চেষ্টা করুন।",
+  "login_failed": "লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।",
+  "google_signin_failed": "Google দিয়ে সাইন ইন ব্যর্থ হয়েছে"
 }

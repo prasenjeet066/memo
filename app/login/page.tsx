@@ -1,14 +1,17 @@
 "use client"
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
-import { useState } from 'react'
-import {getDictionary} from '@/lib/auth/i18n/language'
+import { useState, useEffect } from 'react'
+import { getDictionary } from '@/lib/auth/i18n/language'
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
+// Define the Locale type
+type Locale = 'en' | 'bn';
+
 export default function LoginPage() {
   const [passwordType, setPasswordType] = useState(true)
-  const lang = getDictionary('bn')
+  const [lang, setLang] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -17,6 +20,15 @@ export default function LoginPage() {
     usernameOrEmail: '',
     password: ''
   })
+
+  // Load dictionary on component mount
+  useEffect(() => {
+    const loadDictionary = async () => {
+      const dictionary = await getDictionary('bn' as Locale)
+      setLang(dictionary)
+    }
+    loadDictionary()
+  }, [])
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -53,7 +65,7 @@ export default function LoginPage() {
         // Successful login - redirect to dashboard or home
         const session = await getSession()
         if (session) {
-          router.push('/dashboard') // or wherever you want to redirect
+          router.push('/dashboard')
           router.refresh()
         }
       }
@@ -72,14 +84,24 @@ export default function LoginPage() {
     } catch (error) {
       console.error('Google sign in error:', error)
       setError('Failed to sign in with Google')
+    } finally {
       setIsLoading(false)
     }
   }
+
+  // Show loading state while dictionary is loading
+  if (!lang) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-500">{lang.loading}</div>
+      </div>
+    )
+  }
   
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="sticky top-0 bg-white p-4 flex items-center justify-between border-b">
+      <div className="sticky top-0 bg-white p-4 flex items-center justify-between border-b shadow-sm">
         <div className="flex items-center gap-2">
           <ArrowLeft className="w-4 h-4 cursor-pointer" onClick={() => router.back()} />
           <h1 className="font-semibold text-gray-900">{lang.home}</h1>
@@ -87,9 +109,9 @@ export default function LoginPage() {
       </div>
 
       {/* Form Container */}
-      <div className="flex flex-col items-center justify-center px-4">
+      <div className="flex flex-col items-center justify-center px-4 py-8">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-lg  p-6">
+          <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
               শুভেচ্ছা আপনাকে!
             </h2>
@@ -112,7 +134,7 @@ export default function LoginPage() {
                   type="text"
                   value={formData.usernameOrEmail}
                   onChange={handleChange}
-                  className="border border-gray-100 px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="border border-gray-300 px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                   disabled={isLoading}
                 />
@@ -123,28 +145,28 @@ export default function LoginPage() {
                 <label htmlFor="password" className="text-sm font-medium text-gray-700">
                   পাসওয়ার্ড
                 </label>
-                <div className="flex items-center border border-gray-100 rounded-xl px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
+                <div className="relative">
                   <input
                     id="password"
                     name="password"
                     type={passwordType ? 'password' : 'text'}
                     value={formData.password}
                     onChange={handleChange}
-                    className="flex-1 focus:outline-none"
+                    className="w-full border border-gray-300 px-3 py-2 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                     disabled={isLoading}
                   />
-                  {passwordType ? (
-                    <Eye
-                      className="w-4 h-4 text-gray-500 cursor-pointer"
-                      onClick={() => setPasswordType(false)}
-                    />
-                  ) : (
-                    <EyeOff
-                      className="w-4 h-4 text-gray-500 cursor-pointer"
-                      onClick={() => setPasswordType(true)}
-                    />
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => setPasswordType(!passwordType)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                  >
+                    {passwordType ? (
+                      <Eye className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <EyeOff className="w-4 h-4 text-gray-500" />
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -154,7 +176,7 @@ export default function LoginPage() {
                 disabled={isLoading}
                 className="w-full bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? ' অপেক্ষা করুন...' : 'প্রবেশ করুন'}
+                {isLoading ? 'অপেক্ষা করুন...' : 'প্রবেশ করুন'}
               </button>
             </form>
 
