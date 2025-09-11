@@ -80,7 +80,7 @@ export default function LoginPage() {
       <div className="sticky top-0 bg-white p-4 flex items-center justify-between border-b">
         <div className="flex items-center gap-2">
           <ArrowLeft className="w-4 h-4 cursor-pointer" onClick={() => router.back()} />
-          <h1 className="font-semibold text-gray-900">Sign In</h1>
+          <h1 className="font-semibold text-gray-900">প্রবেশ করুন</h1>
         </div>
       </div>
 
@@ -89,7 +89,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="bg-white rounded-lg  p-6">
             <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
-              Welcome Back
+              শুভেচ্ছা আপনাকে!
             </h2>
             
             {error && (
@@ -102,7 +102,7 @@ export default function LoginPage() {
               {/* Username or Email */}
               <div className="flex flex-col space-y-2">
                 <label htmlFor="usernameOrEmail" className="text-sm font-medium text-gray-700">
-                  Email or Username
+                  ইমেইল অথবা ইউজারনেম
                 </label>
                 <input
                   id="usernameOrEmail"
@@ -119,7 +119,7 @@ export default function LoginPage() {
               {/* Password */}
               <div className="flex flex-col space-y-2">
                 <label htmlFor="password" className="text-sm font-medium text-gray-700">
-                  Password
+                  পাসওয়ার্ড
                 </label>
                 <div className="flex items-center border border-gray-100 rounded-xl px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
                   <input
@@ -152,7 +152,7 @@ export default function LoginPage() {
                 disabled={isLoading}
                 className="w-full bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? 'Signing In...' : 'Sign In'}
+                {isLoading ? ' অপেক্ষা করুন...' : 'প্রবেশ করুন'}
               </button>
             </form>
 

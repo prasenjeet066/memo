@@ -151,4 +151,4 @@ UserSchema.index({ emailVerificationExpires: 1 }, { expireAfterSeconds: 0 });
  * Export Mongoose Model
  */
 export const User: Model<IUser> =
-  mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+  mongoose.models.User || mongoose.model<IUser>('users', UserSchema);
