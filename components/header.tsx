@@ -24,7 +24,7 @@ export default function Header({ navlist }) {
         <>
           <div className='flex items-center gap-2'>
             <Menu className='w-5 h-5 cursor-pointer' onClick={() => { setSideBarOpenLogic(!sideBarLogic) }} />
-            <h1 className='logo-style-font text-gray-800'>{"RecordCN"}</h1>
+            <h1 className='logo-style-font text-gray-800'>{"record"}</h1>
           </div>
           <div className='flex-1 flex flex-row items-center justify-end gap-2'>
             <Search className='h-5 w-5 cursor-pointer' />
@@ -33,7 +33,7 @@ export default function Header({ navlist }) {
       ) : (
         <>
           <div className='flex flex-row items-center gap-4'>
-            <h1 className='logo-style-font text-gray-800'>{"RecordCN"}</h1>
+            <h1 className='logo-style-font text-gray-800'>{"record"}</h1>
           </div>
           <div className='flex flex-row items-center gap-4'>
             <SearchInHeader />

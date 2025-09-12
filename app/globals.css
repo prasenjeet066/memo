@@ -5,9 +5,12 @@
 
 
 body {
-  font-family: 'Kalpurush' !important;
+  font-family: 'Poppins' !important;
 }
 
 .logo-style-font {
   font-family: "Harper" !important;
+}
+.logo-style-font:before{
+  content: "CN";
 }

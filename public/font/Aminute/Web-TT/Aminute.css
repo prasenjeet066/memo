@@ -13,4 +13,6 @@
 @font-face {
     font-family:"Harper";
     src: url("Harper-Bold Personal Use.otf");
+    font-weight: normal;
+    text-rendering: optimizeLegibility;
 }
