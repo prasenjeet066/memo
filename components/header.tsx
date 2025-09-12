@@ -39,7 +39,7 @@ export default function Header({ navlist }) {
             <SearchInHeader />
             <div className = 'flex gap-2 flex-row items-center justify-end'>
               {
-              status === 'unauthorized' ? (
+              status ? (
                 <>
                   <button className='bg-none border-none outline-none hover:underline text-semibold'>
                     {"প্রবেশ করুন"}
@@ -71,7 +71,7 @@ export default function Header({ navlist }) {
             {
               NavList.map((item) => (
                 <a key={item.name} href={`/${item.name}`} className='flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 w-full text-sm'>
-                  <item.icon className='w-5 h-5' />
+                  <item.icon className='w-4 h-4' />
                   <span className='capitalize'>{item.name}</span>
                 </a>
               ))
