@@ -66,7 +66,7 @@ export default function Header({ navlist }) {
             <div className='flex flex-col items-start gap-2 justify-start font-semibold pb-2 w-full'>
               
               <h1 className='logo-style-font border-b'>{"record"}</h1>
-              <small>{"Navigation"}</small>
+        
             </div>
             {
               NavList.map((item) => (
