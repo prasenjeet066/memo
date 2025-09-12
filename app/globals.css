@@ -11,6 +11,7 @@ body {
 .logo-style-font {
   font-family: "Harper" !important;
 }
-.logo-style-font:before{
+.logo-style-font:after{
   content: "CN";
+  color:#FF0000;
 }
