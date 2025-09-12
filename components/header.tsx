@@ -33,6 +33,7 @@ export default function Header({ navlist }) {
       ) : (
         <>
           <div className='flex flex-row items-center gap-4'>
+            <Menu className='h-5 w-5'/>
             <h1 className='logo-style-font text-gray-800'>{"record"}</h1>
           </div>
           <div className='flex flex-row items-center gap-4'>
