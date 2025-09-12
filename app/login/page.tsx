@@ -89,7 +89,7 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="sticky top-0 bg-white p-4 flex items-center justify-between border-b shadow-sm">
+      <div className="sticky top-0 bg-white p-4 flex items-center justify-between border-b">
         <div className="flex items-center gap-2">
           <ArrowLeft className="w-4 h-4 cursor-pointer" onClick={() => router.back()} />
           <h1 className="font-semibold text-gray-900">Login</h1>
@@ -114,7 +114,7 @@ export default function LoginPage() {
               {/* Username or Email */}
               <div className="flex flex-col space-y-2">
                 <label htmlFor="usernameOrEmail" className="text-sm font-medium text-gray-700">
-                  ইমেইল অথবা ইউজারনেম
+                  Username or Email address 
                 </label>
                 <input
                   id="usernameOrEmail"
