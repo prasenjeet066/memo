@@ -19,7 +19,7 @@ export default function Header({ navlist }) {
   const NavList = navlist;
 
   return (
-    <div className='w-full p-4 flex flex-row items-center justify-between gap-4 sticky top-0 bg-white z-50 shadow-sm'>
+    <div className='w-full p-4 flex flex-row items-center justify-between gap-4 sticky top-0 bg-white z-50 border-b'>
       {isMobile ? (
         <>
           <div className='flex items-center gap-2'>
@@ -64,7 +64,8 @@ export default function Header({ navlist }) {
           {/* Sidebar */}
           <div className='flex-1 p-6 min-h-screen bg-white flex flex-col items-start justify-start gap-4 shadow-lg'>
             <div className='flex flex-row items-center gap-2 justify-start font-semibold border-b pb-2 w-full'>
-              <h1>{"মেনু সমূহ"}</h1>
+              <h1 className='logo-font border-b'>{"record"}</h1>
+              <small>{"Navigation"}</small>
             </div>
             {
               NavList.map((item) => (
