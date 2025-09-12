@@ -1,7 +1,7 @@
 "use client"
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { getDictionary } from '@/lib/auth/i18n/language'
+
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -22,13 +22,7 @@ export default function LoginPage() {
   })
 
   // Load dictionary on component mount
-  useEffect(() => {
-    const loadDictionary = async () => {
-      const dictionary = await getDictionary('bn' as Locale)
-      setLang(dictionary)
-    }
-    loadDictionary()
-  }, [])
+  
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -90,13 +84,7 @@ export default function LoginPage() {
   }
 
   // Show loading state while dictionary is loading
-  if (!lang) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-500">{lang.loading}</div>
-      </div>
-    )
-  }
+  
   
   return (
     <main className="min-h-screen bg-gray-50">
@@ -104,7 +92,7 @@ export default function LoginPage() {
       <div className="sticky top-0 bg-white p-4 flex items-center justify-between border-b shadow-sm">
         <div className="flex items-center gap-2">
           <ArrowLeft className="w-4 h-4 cursor-pointer" onClick={() => router.back()} />
-          <h1 className="font-semibold text-gray-900">{lang.home}</h1>
+          <h1 className="font-semibold text-gray-900">Login</h1>
         </div>
       </div>
 
@@ -143,7 +131,7 @@ export default function LoginPage() {
               {/* Password */}
               <div className="flex flex-col space-y-2">
                 <label htmlFor="password" className="text-sm font-medium text-gray-700">
-                  পাসওয়ার্ড
+                  Password
                 </label>
                 <div className="relative">
                   <input
@@ -176,7 +164,7 @@ export default function LoginPage() {
                 disabled={isLoading}
                 className="w-full bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? 'অপেক্ষা করুন...' : 'প্রবেশ করুন'}
+                {isLoading ? ' Please Wait': 'Login'}
               </button>
             </form>
 
