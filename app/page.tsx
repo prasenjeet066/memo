@@ -12,19 +12,19 @@ export default function MainPage() {
 
   const NavList = [
     {
-      name: 'হোম',
+      name: 'Home',
       icon: Home,
     },
     {
-      name: 'এক্সপ্লোর',
+      name: 'Explore',
       icon: Compass,
     },
     {
-      name: 'অবদান রাখুন',
+      name: 'Contribute',
       icon: HandHeart,
     },
     {
-      name: 'সেটিংস',
+      name: 'Settings',
       icon: Settings,
     },
   ]
