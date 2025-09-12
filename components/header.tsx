@@ -63,8 +63,9 @@ export default function Header({ navlist }) {
         <div className='fixed top-0 left-0 w-full h-full flex flex-row z-50'>
           {/* Sidebar */}
           <div className='flex-1 p-6 min-h-screen bg-white flex flex-col items-start justify-start gap-4 shadow-lg'>
-            <div className='flex flex-row items-center gap-2 justify-start font-semibold border-b pb-2 w-full'>
-              <h1 className='logo-font border-b'>{"record"}</h1>
+            <div className='flex flex-col items-start gap-2 justify-start font-semibold border-b pb-2 w-full'>
+              
+              <h1 className='logo-style-font border-b'>{"record"}</h1>
               <small>{"Navigation"}</small>
             </div>
             {
