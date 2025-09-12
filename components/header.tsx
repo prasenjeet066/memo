@@ -41,10 +41,10 @@ export default function Header({ navlist }) {
               {
               status ? (
                 <>
-                  <button className='bg-none border-none outline-none hover:underline text-semibold'>
+                  <button className='bg-none border-none outline-none px-4 hover:underline text-semibold'>
                     {"প্রবেশ করুন"}
                   </button>
-                  <button className='bg-gray-800 text-white rounded-full p-2 outline-none'>
+                  <button className='bg-gray-800 text-white px-4 rounded-full p-2 outline-none'>
                     {"নিবন্ধন করুন"}
                   </button>
                 </>
