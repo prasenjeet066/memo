@@ -66,9 +66,13 @@ export default function Header({ navlist }: HeaderProps) {
                 {status === "loading" ? (
                   <div className='w-20 h-8 bg-gray-200 animate-pulse rounded-full'></div>
                 ) : session ? (
-                  <div className='flex items-center gap-3'>
-                  <Bell className='h-5 w-5'/>
-                  <Mail className = 'h-5 w-5'/>
+                  <div className='flex items-center gap-4'>
+                  <button className='flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors'>
+                    <Mail className='w-4 h-4'/>
+                  </button>
+                  <button className='flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors'>
+                    <Bell className='w-4 h-4'/>
+                  </button>
                     <button 
                       onClick={() => signOut()}
                       className='flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors'
