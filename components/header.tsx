@@ -8,7 +8,7 @@ import Link from 'next/link'
 
 import { SearchInHeader } from '@/components/utils/search'
 import { useMobile } from "@/lib/units/use-mobile"
-import { Menu, Search, ArrowLeft, LogOut, User } from 'lucide-react'
+import { Menu, Search, ArrowLeft, LogOut, User,Bell,Mail } from 'lucide-react'
 
 interface NavItem {
   name: string;
@@ -54,7 +54,7 @@ export default function Header({ navlist }: HeaderProps) {
         ) : (
           <>
             <div className='flex items-center gap-4'>
-              <Menu className='w-6 h-6 text-gray-700'/>
+              <Menu className='w-6 h-6 text-gray-700' onClick= {()=>setSideBarOpenLogic(!sideBarLogic)}/>
               <Link href="/">
                 <h1 className='logo-style-font text-xl font-semibold text-gray-800 cursor-pointer'>record</h1>
               </Link>
@@ -113,12 +113,8 @@ export default function Header({ navlist }: HeaderProps) {
               </div>
               {session && (
                 <div className='mt-3 flex items-center gap-3'>
-                  <div className='w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center'>
-                    <User className='w-4 h-4 text-gray-600' />
-                  </div>
-                  <span className='text-sm font-medium text-gray-700'>
-                    {session.user?.name || session.user?.email}
-                  </span>
+                  <Bell className='h-5 w-5'/>
+                  <Mail className='h-5 w-5'/>
                 </div>
               )}
             </div>
@@ -153,7 +149,6 @@ export default function Header({ navlist }: HeaderProps) {
                   className='flex items-center gap-3 p-3 w-full rounded-lg hover:bg-gray-100 transition-colors text-red-600 hover:text-red-700'
                 >
                   <LogOut className='w-5 h-5' />
-                  <span className='text-sm font-medium'>Sign Out</span>
                 </button>
               </div>
             )}
