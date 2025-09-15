@@ -11,16 +11,9 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        
-        racing: ['"Racing Sans One"'],
-        raleway: ["var(--font-raleway)"], // Use CSS variable for Raleway
-        inconsolata: ["var(--font-inconsolata)"], // Add Inconsolata
-        bytesized: ["var(--font-bytesized)"], // Add Bytesized
-        ubuntu: ['"Ubuntu"', "sans-serif"], // Add Ubuntu font
-        "space-grotesk": ['"Space Grotesk"', "sans-serif"],
-        "noto-sans-devanagari": ['"Noto Sans Devanagari"', "sans-serif"],
-        "noto-sans-arabic": ['"Noto Sans Arabic"', "sans-serif"],
-        sans: ['"Ubuntu"', "var(--font-raleway)", "sans-serif"], // Set Ubuntu as default sans-serif for English
+        inter: ["var(--font-inter)", "sans-serif"],
+        poppins: ["Poppins", "sans-serif"],
+        aminute: ["Aminute", "sans-serif"], // your custom font
       },
       colors: {
         background: "hsl(var(--background))",

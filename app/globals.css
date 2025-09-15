@@ -3,15 +3,10 @@
 @tailwind utilities;
 
 
-
-body {
-  font-family: 'Poppins' !important;
-}
-
 .logo-style-font {
   font-family: "Harper" !important;
 }
 .logo-style-font:after{
   content: "CN";
-  color:#FF0000;
+  color:#210BFF;
 }
