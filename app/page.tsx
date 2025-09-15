@@ -37,7 +37,7 @@ export default function MainPage() {
   useEffect(() => {
     if (!isMobile) {
       setSideBar(
-        <div className='w-64 min-h-screen bg-white border-r border-gray-200 flex flex-col'>
+        <div className='w-auto max-w-64 min-h-screen bg-white border-r border-gray-200 flex flex-col'>
           {/* Sidebar Header */}
           <div className='p-4 border-b border-gray-200'>
             <button 
