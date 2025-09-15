@@ -67,15 +67,14 @@ export default function Header({ navlist }: HeaderProps) {
                   <div className='w-20 h-8 bg-gray-200 animate-pulse rounded-full'></div>
                 ) : session ? (
                   <div className='flex items-center gap-3'>
-                    <span className='text-sm font-medium text-gray-700'>
-                      {session.user?.name || session.user?.email}
-                    </span>
+                  <Bell className='h-5 w-5'/>
+                  <Mail className = 'h-5 w-5'/>
                     <button 
                       onClick={() => signOut()}
                       className='flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors'
                     >
                       <LogOut className='w-4 h-4' />
-                      <span>Sign Out</span>
+                      
                     </button>
                   </div>
                 ) : (
