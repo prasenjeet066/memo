@@ -1,17 +1,13 @@
+// ===== FIXED: app/login/page.tsx =====
 "use client"
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
-import { useState, useEffect } from 'react'
-
+import { useState } from 'react'
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-// Define the Locale type
-type Locale = 'en' | 'bn';
-
 export default function LoginPage() {
   const [passwordType, setPasswordType] = useState(true)
-  const [lang, setLang] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -20,17 +16,14 @@ export default function LoginPage() {
     usernameOrEmail: '',
     password: ''
   })
-
-  // Load dictionary on component mount
   
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent < HTMLInputElement > ) => {
     const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
       [name]: value
     }))
-    setError('') // Clear error when user starts typing
+    setError('')
   }
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,11 +45,10 @@ export default function LoginPage() {
         password,
         redirect: false,
       })
-
+      
       if (result?.error) {
         setError('Invalid credentials. Please try again.')
       } else {
-        // Successful login - redirect to dashboard or home
         const session = await getSession()
         if (session) {
           router.push('/dashboard')
@@ -70,7 +62,7 @@ export default function LoginPage() {
       setIsLoading(false)
     }
   }
-
+  
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
     try {
@@ -82,39 +74,41 @@ export default function LoginPage() {
       setIsLoading(false)
     }
   }
-
-  // Show loading state while dictionary is loading
-  
   
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="sticky top-0 bg-white p-4 flex items-center justify-between border-b">
-        <div className="flex items-center gap-2">
-          <ArrowLeft className="w-4 h-4 cursor-pointer" onClick={() => router.back()} />
-          <h1 className="font-semibold text-gray-900">Login</h1>
+      <header className="sticky top-0 bg-white border-b border-gray-200 shadow-sm">
+        <div className="px-4 py-3 flex items-center gap-3">
+          <button onClick={() => router.back()} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </button>
+          <h1 className="text-lg font-semibold text-gray-900">Login</h1>
         </div>
-      </div>
+      </header>
 
       {/* Form Container */}
-      <div className="flex flex-col items-center justify-center px-4 py-8">
+      <div className="flex items-center justify-center px-4 py-8 min-h-[calc(100vh-70px)]">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
-              শুভেচ্ছা আপনাকে!
-            </h2>
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                শুভেচ্ছা আপনাকে!
+              </h2>
+              <p className="text-sm text-gray-600">Sign in to your account</p>
+            </div>
             
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
               {/* Username or Email */}
-              <div className="flex flex-col space-y-2">
-                <label htmlFor="usernameOrEmail" className="text-sm font-medium text-gray-700">
-                  Username or Email address 
+              <div>
+                <label htmlFor="usernameOrEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                  Username or Email address
                 </label>
                 <input
                   id="usernameOrEmail"
@@ -122,15 +116,16 @@ export default function LoginPage() {
                   type="text"
                   value={formData.usernameOrEmail}
                   onChange={handleChange}
-                  className="border border-gray-300 px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                   required
                   disabled={isLoading}
+                  placeholder="Enter your username or email"
                 />
               </div>
 
               {/* Password */}
-              <div className="flex flex-col space-y-2">
-                <label htmlFor="password" className="text-sm font-medium text-gray-700">
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                   Password
                 </label>
                 <div className="relative">
@@ -140,14 +135,15 @@ export default function LoginPage() {
                     type={passwordType ? 'password' : 'text'}
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full border border-gray-300 px-3 py-2 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                     required
                     disabled={isLoading}
+                    placeholder="Enter your password"
                   />
                   <button
                     type="button"
                     onClick={() => setPasswordType(!passwordType)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
                   >
                     {passwordType ? (
                       <Eye className="w-4 h-4 text-gray-500" />
@@ -162,16 +158,16 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               >
-                {isLoading ? ' Please Wait': 'Login'}
+                {isLoading ? 'Please Wait...' : 'Login'}
               </button>
             </form>
 
             {/* Divider */}
-            <div className="my-6 flex items-center">
+            <div className="my-8 flex items-center">
               <div className="flex-1 border-t border-gray-300"></div>
-              <div className="mx-4 text-gray-500 text-sm">OR</div>
+              <div className="mx-4 text-gray-500 text-sm font-medium">OR</div>
               <div className="flex-1 border-t border-gray-300"></div>
             </div>
 
@@ -179,7 +175,7 @@ export default function LoginPage() {
             <button
               onClick={handleGoogleSignIn}
               disabled={isLoading}
-              className="w-full border border-gray-300 bg-white text-gray-700 py-2 rounded-xl hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full border border-gray-300 bg-white text-gray-700 py-3 px-4 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 font-medium"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -193,7 +189,7 @@ export default function LoginPage() {
             {/* Sign Up Link */}
             <div className="mt-6 text-center text-sm text-gray-600">
               Don't have an account?{' '}
-              <Link href="/register" className="text-blue-600 hover:text-blue-500 font-medium">
+              <Link href="/register" className="text-blue-600 hover:text-blue-500 font-medium transition-colors">
                 Sign up
               </Link>
             </div>

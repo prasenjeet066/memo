@@ -1,93 +1,171 @@
+// ===== FIXED: components/header.tsx =====
 "use client"
 
-import { useState,useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession } from "next-auth/react"
+import { signOut } from "next-auth/react"
+import Link from 'next/link'
 
 import { SearchInHeader } from '@/components/utils/search'
 import { useMobile } from "@/lib/units/use-mobile"
-import { Menu, Search, ArrowLeft, Home, Compass, HandHeart, Settings } from 'lucide-react'
+import { Menu, Search, ArrowLeft, LogOut, User } from 'lucide-react'
 
-export default function Header({ navlist }) {
+interface NavItem {
+  name: string;
+  icon: React.ComponentType<{ className?: string }>;
+  href?: string;
+}
+
+interface HeaderProps {
+  navlist: NavItem[];
+}
+
+export default function Header({ navlist }: HeaderProps) {
   const [sideBarLogic, setSideBarOpenLogic] = useState<boolean>(false)
   const { data: session, status } = useSession()
-  const [AuthData, setAuthData] = useState()
-  const [isExpand, setIsExpand] = useState(true)
   const isMobile = useMobile()
   
+  // Close sidebar when clicking outside or on navigation
+  const closeSidebar = () => setSideBarOpenLogic(false)
   
-  // Render sidebar for non-mobile screens
-  const NavList = navlist;
-
   return (
-    <div className='w-full p-4 flex flex-row items-center justify-between gap-4 sticky top-0 bg-white z-50 border-b'>
-      {isMobile ? (
-        <>
-          <div className='flex items-center gap-2'>
-            <Menu className='w-5 h-5 cursor-pointer' onClick={() => { setSideBarOpenLogic(!sideBarLogic) }} />
-            <h1 className='logo-style-font text-gray-800'>{"record"}</h1>
-          </div>
-          <div className='flex-1 flex flex-row items-center justify-end gap-2'>
-            <Search className='h-5 w-5 cursor-pointer' />
-          </div>
-        </>
-      ) : (
-        <>
-          <div className='flex flex-row items-center gap-4'>
-            <Menu className='h-5 w-5'/>
-            <h1 className='logo-style-font text-gray-800'>{"record"}</h1>
-          </div>
-          <div className='flex flex-row items-center gap-4'>
-            <SearchInHeader />
-            <div className = 'flex gap-2 flex-row items-center justify-end'>
-              {
-              status ? (
-                <>
-                  <button className='bg-none border-none outline-none px-4 hover:underline text-semibold'>
-                    {"প্রবেশ করুন"}
-                  </button>
-                  <button className='bg-gray-800 text-white px-4 rounded-full p-2 outline-none'>
-                    {"নিবন্ধন করুন"}
-                  </button>
-                </>
-                
-              ):(
-                <></>
-              )
-              }
+    <>
+      <div className='w-full px-4 py-3 flex flex-row items-center justify-between gap-4 sticky top-0 bg-white z-40 border-b border-gray-200 shadow-sm'>
+        {isMobile ? (
+          <>
+            <div className='flex items-center gap-3'>
+              <Menu 
+                className='w-6 h-6 cursor-pointer text-gray-700 hover:text-gray-900 transition-colors' 
+                onClick={() => setSideBarOpenLogic(!sideBarLogic)} 
+              />
+              <Link href="/">
+                <h1 className='logo-style-font text-xl font-semibold text-gray-800 cursor-pointer'>record</h1>
+              </Link>
             </div>
-          </div>
-        </>
-      )}
+            <div className='flex items-center gap-3'>
+              <Search className='w-6 h-6 cursor-pointer text-gray-700 hover:text-gray-900 transition-colors' />
+              {session && (
+                <div className='w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center'>
+                  <User className='w-4 h-4 text-gray-600' />
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className='flex items-center gap-4'>
+              <Menu className='w-6 h-6 text-gray-700'/>
+              <Link href="/">
+                <h1 className='logo-style-font text-xl font-semibold text-gray-800 cursor-pointer'>record</h1>
+              </Link>
+            </div>
+            
+            <div className='flex items-center gap-4'>
+              <SearchInHeader />
+              <div className='flex items-center gap-3'>
+                {status === "loading" ? (
+                  <div className='w-20 h-8 bg-gray-200 animate-pulse rounded-full'></div>
+                ) : session ? (
+                  <div className='flex items-center gap-3'>
+                    <span className='text-sm font-medium text-gray-700'>
+                      {session.user?.name || session.user?.email}
+                    </span>
+                    <button 
+                      onClick={() => signOut()}
+                      className='flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors'
+                    >
+                      <LogOut className='w-4 h-4' />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Link href="/login">
+                      <button className='px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:underline transition-colors'>
+                        প্রবেশ করুন
+                      </button>
+                    </Link>
+                    <Link href="/register">
+                      <button className='px-4 py-2 text-sm font-medium bg-gray-800 text-white rounded-full hover:bg-gray-900 transition-colors'>
+                        নিবন্ধন করুন
+                      </button>
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
 
-      {/* Mobile Sidebar */}
-      {sideBarLogic && NavList.length > 0 && (
-        <div className='fixed top-0 left-0 w-full h-full flex flex-row z-50'>
+      {/* Mobile Sidebar Overlay */}
+      {sideBarLogic && isMobile && (
+        <div className='fixed inset-0 z-50 flex'>
           {/* Sidebar */}
-          <div className='flex-1 p-4 min-h-screen bg-white flex flex-col items-start justify-start gap-4 shadow-lg'>
-            <div className='flex flex-col items-start gap-2 justify-start font-semibold pb-2 w-full'>
-              
-              <h1 className='logo-style-font border-b'>{"record"}</h1>
-        
+          <div className='w-80 max-w-[85vw] bg-white shadow-xl flex flex-col'>
+            {/* Sidebar Header */}
+            <div className='p-4 border-b border-gray-200'>
+              <div className='flex items-center justify-between'>
+                <h1 className='logo-style-font text-xl font-semibold text-gray-800'>record</h1>
+                <button onClick={closeSidebar}>
+                  <ArrowLeft className='w-6 h-6 text-gray-600 hover:text-gray-800 transition-colors' />
+                </button>
+              </div>
+              {session && (
+                <div className='mt-3 flex items-center gap-3'>
+                  <div className='w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center'>
+                    <User className='w-4 h-4 text-gray-600' />
+                  </div>
+                  <span className='text-sm font-medium text-gray-700'>
+                    {session.user?.name || session.user?.email}
+                  </span>
+                </div>
+              )}
             </div>
-            {
-              NavList.map((item) => (
-                <a key={item.name} href={`/${item.name}`} className='flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 w-full text-sm'>
-                  <item.icon className='w-4 h-4' />
-                  <span className='capitalize'>{item.name}</span>
-                </a>
-              ))
-            }
+
+            {/* Navigation Items */}
+            <div className='flex-1 p-4'>
+              <nav className='space-y-2'>
+                {navlist.map((item) => (
+                  <Link 
+                    key={item.name} 
+                    href={item.href || `/${item.name.toLowerCase()}`}
+                    onClick={closeSidebar}
+                    className='flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-colors group'
+                  >
+                    <item.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-800' />
+                    <span className='text-sm font-medium text-gray-700 group-hover:text-gray-900 capitalize'>
+                      {item.name}
+                    </span>
+                  </Link>
+                ))}
+              </nav>
+            </div>
+
+            {/* Sidebar Footer */}
+            {session && (
+              <div className='p-4 border-t border-gray-200'>
+                <button 
+                  onClick={() => {
+                    signOut()
+                    closeSidebar()
+                  }}
+                  className='flex items-center gap-3 p-3 w-full rounded-lg hover:bg-gray-100 transition-colors text-red-600 hover:text-red-700'
+                >
+                  <LogOut className='w-5 h-5' />
+                  <span className='text-sm font-medium'>Sign Out</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Backdrop */}
-          <div className='min-w-[50%] bg-black/10 backdrop-blur-sm flex flex-col items-center justify-start'>
-            <ArrowLeft
-              className='m-4 h-8 w-8 p-2 bg-gray-700 rounded-full text-white cursor-pointer'
-              onClick={() => { setSideBarOpenLogic(!sideBarLogic) }}
-            />
-          </div>
+          <div 
+            className='flex-1 bg-black/20 backdrop-blur-sm'
+            onClick={closeSidebar}
+          />
         </div>
       )}
-    </div>
+    </>
   )
 }
