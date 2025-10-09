@@ -72,7 +72,7 @@ export default function Account() {
   }
   
   const Sidebar = !isMobile && (
-    <div className='w-auto max-w-64 min-h-screen bg-white mr-2 flex flex-col justify-between'>
+  <div className='w-auto max-w-64 min-h-screen bg-white mr-2 flex flex-col justify-between'>
       <div className='p-4 border-b border-gray-200'>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
@@ -85,54 +85,44 @@ export default function Account() {
       <nav className='flex-1 p-4 flex flex-col justify-between'>
         <div className='space-y-2 flex-1'>
           {NavList.slice(0, -1).map((nav) => (
-            <button
-              key={nav.id}
-              onClick={() => setActiveTab(nav.id)}
-              className={`w-full flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors group ${
-                activeTab === nav.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-100'
-              }`}
+            <a
+              key={nav.name}
+              href={nav.href}
+              className='flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors group'
             >
-              <nav.icon className={`w-5 h-5 flex-shrink-0 ${
-                activeTab === nav.id ? 'text-blue-700' : 'text-gray-600 group-hover:text-gray-800'
-              }`} />
+              <nav.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-800 flex-shrink-0' />
               {isExpanded && (
-                <span className={`text-sm font-medium capitalize ${
-                  activeTab === nav.id ? 'text-blue-700' : 'text-gray-700 group-hover:text-gray-900'
-                }`}>
+                <span className='text-sm font-medium text-gray-700 group-hover:text-gray-900 capitalize'>
                   {nav.name}
                 </span>
               )}
-            </button>
+            </a>
           ))}
         </div>
 
+        {/* Bottom nav item (Settings) */}
         <div>
           {(() => {
             const settings = NavList[NavList.length - 1]
             return (
-              <button
-                onClick={() => setActiveTab(settings.id)}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors group ${
-                  activeTab === settings.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-100'
-                }`}
+              <a
+                key={settings.name}
+                href={settings.href}
+                className='flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors group'
               >
-                <settings.icon className={`w-5 h-5 flex-shrink-0 ${
-                  activeTab === settings.id ? 'text-blue-700' : 'text-gray-600 group-hover:text-gray-800'
-                }`} />
+                <settings.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-800 flex-shrink-0' />
                 {isExpanded && (
-                  <span className={`text-sm font-medium capitalize ${
-                    activeTab === settings.id ? 'text-blue-700' : 'text-gray-700 group-hover:text-gray-900'
-                  }`}>
+                  <span className='text-sm font-medium text-gray-700 group-hover:text-gray-900 capitalize'>
                     {settings.name}
                   </span>
                 )}
-              </button>
+              </a>
             )
           })()}
         </div>
       </nav>
     </div>
-  )
+)
 
   // Profile Tab Content
   const ProfileTab = (
