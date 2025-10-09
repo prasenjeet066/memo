@@ -30,7 +30,7 @@ export default function Header({ navlist }: HeaderProps) {
   
   return (
     <>
-      <div className='w-full px-4 py-3 flex flex-row items-center justify-between gap-4 sticky top-0 bg-white z-40 border-b border-gray-200 shadow-sm'>
+      <div className='w-full px-4 py-3 flex flex-row items-center justify-between gap-4 sticky top-0 bg-gray-50 z-40'>
         {isMobile ? (
           <>
             <div className='flex items-center gap-3'>

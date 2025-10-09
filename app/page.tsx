@@ -77,7 +77,7 @@ export default function MainPage() {
   return (
     <main className="min-h-screen w-full bg-gray-50">
       <Header navlist={NavList} />
-      <div className="flex">
+      <div className="flex bg-white">
         {sideBar}
         <div className='flex-1 p-6'>
           <div className='max-w-4xl mx-auto'>
