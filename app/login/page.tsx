@@ -120,7 +120,7 @@ export default function LoginPage() {
         )}
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 px-2">
           {/* Username or Email */}
           <div>
             <label 
@@ -189,7 +189,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 text-white py-3 px-4 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="w-full bg-red-600 text-white py-3 px-4 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
           >
             {isLoading ? 'Signing in...' : 'Sign in'}
           </button>
@@ -218,17 +218,7 @@ export default function LoginPage() {
         </button>
 
         {/* Sign Up Link */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-600">
-            Don't have an account?{' '}
-            <Link 
-              href="/register" 
-              className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
-            >
-              Create account
-            </Link>
-          </p>
-        </div>
+      
 
         {/* Footer Links */}
         <div className="mt-12 pt-8 border-t border-gray-200">
