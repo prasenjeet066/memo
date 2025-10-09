@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
       }
       if (error.name === 'MongoServerError' && (error as any).code === 11000) {
         return NextResponse.json(
-          { error: 'User with this email or username already exists' },
+          { error: 'User with this email or username already exists' + error.message},
           { status: 409 }
         );
       }
