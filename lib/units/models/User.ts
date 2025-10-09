@@ -1,28 +1,27 @@
 import mongoose, { Document, Schema, Model } from 'mongoose';
 import bcrypt from 'bcryptjs';
+
 export const wikipediaUserRolesDB = [
-  "IP",        // Unregistered Users
-  "REG",       // Registered Users
-  "AC",        // Autoconfirmed Users
-  "EC",        // Extended Confirmed Users
-  "ADMIN",     // Administrators
-  "BUC",       // Bureaucrats
-  "CU",        // Checkusers
-  "OS",        // Oversighters
-  "TE",        // Template Editors
-  "STEW",      // Stewards
-  "ARBC",      // Arbitration Committee Members
-  "BOT"        // Bot Operators
-];
-/**
- * TypeScript Interface for User Document
- */
+  'IP',        // Unregistered Users
+  'REG',       // Registered Users
+  'AC',        // Autoconfirmed Users
+  'EC',        // Extended Confirmed Users
+  'ADMIN',     // Administrators
+  'BUC',       // Bureaucrats
+  'CU',        // Checkusers
+  'OS',        // Oversighters
+  'TE',        // Template Editors
+  'STEW',      // Stewards
+  'ARBC',      // Arbitration Committee Members
+  'BOT',       // Bot Operators
+] as const;
+
 export interface IUser extends Document {
   user_handler: string;
   user_full_name: string;
   user_names_format: string[];
-  user_dob: string;
-  user_role: any;
+  user_dob?: string;
+  user_role: string[];
   email: string;
   password: string;
   bio?: string;
@@ -37,8 +36,14 @@ export interface IUser extends Document {
   last_login?: Date;
   created_at: Date;
   updated_at: Date;
+  failed_login_attempts: number;
+  account_locked_until?: Date;
+  oauth_provider?: string;
 
   comparePassword(candidatePassword: string): Promise<boolean>;
+  incrementFailedLogins(): Promise<void>;
+  resetFailedLogins(): Promise<void>;
+  isAccountLocked(): boolean;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -64,7 +69,7 @@ const UserSchema = new Schema<IUser>(
     },
     user_dob: {
       type: String,
-      required: true,
+      required: false,
     },
     user_role: {
       type: [String],
@@ -123,19 +128,28 @@ const UserSchema = new Schema<IUser>(
     last_login: {
       type: Date,
     },
+    failed_login_attempts: {
+      type: Number,
+      default: 0,
+    },
+    account_locked_until: {
+      type: Date,
+    },
+    oauth_provider: {
+      type: String,
+      enum: ['google', 'github', null],
+    },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
   }
 );
 
-/**
- * Pre-save Middleware to Hash Password
- */
+// Pre-save Middleware to Hash Password
 UserSchema.pre<IUser>('save', async function (next) {
   if (!this.isModified('password')) return next();
   try {
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
     next();
   } catch (err) {
@@ -143,25 +157,44 @@ UserSchema.pre<IUser>('save', async function (next) {
   }
 });
 
-/**
- * Compare Password Method
- */
+// Compare Password Method
 UserSchema.methods.comparePassword = async function (
   candidatePassword: string
 ): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-/**
- * Indexes for Performance and TTL
- */
+// Increment failed login attempts
+UserSchema.methods.incrementFailedLogins = async function (): Promise<void> {
+  this.failed_login_attempts += 1;
+
+  // Lock account for 1 hour after 5 failed attempts
+  if (this.failed_login_attempts >= 5) {
+    this.account_locked_until = new Date(Date.now() + 60 * 60 * 1000);
+  }
+
+  await this.save();
+};
+
+// Reset failed login attempts
+UserSchema.methods.resetFailedLogins = async function (): Promise<void> {
+  if (this.failed_login_attempts !== 0 || this.account_locked_until) {
+    this.failed_login_attempts = 0;
+    this.account_locked_until = undefined;
+    await this.save();
+  }
+};
+
+// Check if account is locked
+UserSchema.methods.isAccountLocked = function (): boolean {
+  return !!(this.account_locked_until && this.account_locked_until > new Date());
+};
+
+// Indexes for Performance
 UserSchema.index({ user_handler: 1 });
 UserSchema.index({ email: 1 });
 UserSchema.index({ resetPasswordExpires: 1 }, { expireAfterSeconds: 0 });
 UserSchema.index({ emailVerificationExpires: 1 }, { expireAfterSeconds: 0 });
 
-/**
- * Export Mongoose Model
- */
 export const User: Model<IUser> =
   mongoose.models.User || mongoose.model<IUser>('users', UserSchema);
