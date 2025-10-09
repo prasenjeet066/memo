@@ -6,7 +6,7 @@ import { useMobile } from "@/lib/units/use-mobile"
 import { Home, Compass, HandHeart, Settings } from 'lucide-react'
 import { useState } from 'react'
 
-export default function RecordPage({params}) {
+export default function RecordIdPage({params}) {
   const record_slug = params.id;
   if (record_slug || record_slug.trim()!=='') {
     // back to /record page
