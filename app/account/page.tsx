@@ -441,8 +441,8 @@ export default function Account() {
   }
   
   return (
-    <main className="min-h-screen w-full bg-gray-50">
-      <Header navlist={NavList} />
+    <main className="min-h-screen bg-white">
+     <Header navlist={NavList} />
       <div className="flex">
         {Sidebar}
         <div className='flex-1 p-6'>
