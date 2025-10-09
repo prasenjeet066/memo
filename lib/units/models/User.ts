@@ -1,6 +1,19 @@
 import mongoose, { Document, Schema, Model } from 'mongoose';
 import bcrypt from 'bcryptjs';
-
+export const wikipediaUserRolesDB = [
+  "IP",        // Unregistered Users
+  "REG",       // Registered Users
+  "AC",        // Autoconfirmed Users
+  "EC",        // Extended Confirmed Users
+  "ADMIN",     // Administrators
+  "BUC",       // Bureaucrats
+  "CU",        // Checkusers
+  "OS",        // Oversighters
+  "TE",        // Template Editors
+  "STEW",      // Stewards
+  "ARBC",      // Arbitration Committee Members
+  "BOT"        // Bot Operators
+];
 /**
  * TypeScript Interface for User Document
  */
@@ -9,7 +22,7 @@ export interface IUser extends Document {
   user_full_name: string;
   user_names_format: string[];
   user_dob: string;
-  user_role: ('user' | 'bot' | 'admin')[];
+  user_role: any;
   email: string;
   password: string;
   bio?: string;
@@ -55,9 +68,9 @@ const UserSchema = new Schema<IUser>(
     },
     user_role: {
       type: [String],
-      enum: ['user', 'bot', 'admin'],
+      enum: wikipediaUserRolesDB,
       required: true,
-      default: ['user'],
+      default: ['REG'],
     },
     email: {
       type: String,

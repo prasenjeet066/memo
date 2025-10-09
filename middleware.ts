@@ -10,9 +10,12 @@ export default withAuth(
       authorized: ({ token, req }) => {
         // Protect admin routes
         if (req.nextUrl.pathname.startsWith('/admin')) {
-          return token?.role?.includes('admin') ?? false
+          return token?.role?.includes('ADMIN') ?? false
         }
         
+        if (req.nextUrl.pathname.startsWith('/create')){
+          return token?.role?.includes('IP') ?? true
+        }
         // Protect user dashboard
         if (req.nextUrl.pathname.startsWith('/dashboard')) {
           return !!token

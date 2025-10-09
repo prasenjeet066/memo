@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
       user_handler: username.toLowerCase(),
       user_full_name: fullName,
       user_dob: dob,
-      user_role: ['user']
+      user_role: ['REG']
     });
 
     await user.save();
