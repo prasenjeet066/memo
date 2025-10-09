@@ -11,10 +11,10 @@ export default function Account() {
   const [isExpanded, setIsExpanded] = useState(true)
   
   const NavList = [
-    { name: 'Account', icon: Home, href: '/' },
-    { name: 'Gg', icon: Compass, href: '/explore' },
-    { name: 'Contribute', icon: HandHeart, href: '/contribute' },
-    { name: 'Settings', icon: Settings, href: '/settings' },
+    { name: 'Profile', icon: Home, href: '/' },
+    { name: 'Preference', icon: Compass, href: '/explore' },
+    { name: 'Contributions', icon: HandHeart, href: '/contribute' },
+    { name: 'Account Settings', icon: Settings, href: '/settings' },
   ]
   
   const Sidebar = !isMobile && (

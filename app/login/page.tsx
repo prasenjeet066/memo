@@ -1,6 +1,7 @@
 // ===== FIXED: app/login/page.tsx =====
 "use client"
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import { useMobile } from "@/lib/units/use-mobile"
 import { useState } from 'react'
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -16,7 +17,7 @@ export default function LoginPage() {
     usernameOrEmail: '',
     password: ''
   })
-  
+  const isMobile = useMobile()
   const handleChange = (e: React.ChangeEvent < HTMLInputElement > ) => {
     const { name, value } = e.target
     setFormData((prev) => ({
@@ -78,19 +79,25 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="sticky top-0 bg-white border-b border-gray-200 shadow-sm">
+      <header className="bg-white border-b border-gray-200 flex items-center justify-between ">
         <div className="px-4 py-3 flex items-center gap-3">
           <button onClick={() => router.back()} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900">Login</h1>
+          <h1 className="text-lg font-semibold text-gray-900">Login in Account</h1>
+        </div>
+        <div className='px-2'>
+          <Link href='/register'>
+            {'Registration'}
+          </Link>
+          
         </div>
       </header>
 
       {/* Form Container */}
       <div className="flex items-center justify-center px-4 py-8 min-h-[calc(100vh-70px)]">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+          <div className="bg-white rounded-xl  border border-gray-200 p-8">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
                 শুভেচ্ছা আপনাকে!
