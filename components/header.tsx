@@ -116,16 +116,17 @@ export default function Header({ navlist }: HeaderProps) {
                   <ArrowLeft className='w-6 h-6 text-gray-600 hover:text-gray-800 transition-colors' />
                 </button>
               </div>
+              
+            </div>
+
+            {/* Navigation Items */}
+            <div className='flex-1 p-4'>
               {session && (
                 <div className='mt-3 flex items-center gap-3'>
                   <Bell className='h-5 w-5'/>
                   <Mail className='h-5 w-5'/>
                 </div>
               )}
-            </div>
-
-            {/* Navigation Items */}
-            <div className='flex-1 p-4'>
               <nav className='space-y-2'>
                 {navlist.map((item) => (
                   <Link 
