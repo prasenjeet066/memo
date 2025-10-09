@@ -37,8 +37,9 @@ export default function MainPage() {
   useEffect(() => {
     if (!isMobile) {
       setSideBar(
-        <div className='w-auto max-w-64 min-h-screen bg-white border-r border-gray-200 flex flex-col'>
-          {/* Sidebar Header */}
+        <div className='w-auto max-w-64 min-h-screen bg-white mr-2 flex flex-col justify-between'>
+        
+          
           <div className='p-4 border-b border-gray-200'>
             <button 
               onClick={() => setIsExpanded(!isExpanded)}
@@ -48,10 +49,10 @@ export default function MainPage() {
             </button>
           </div>
           
-          {/* Navigation */}
-          <nav className='flex-1 p-4'>
-            <div className='space-y-2'>
-              {NavList.map((nav) => (
+        
+          <nav className='flex-1 p-4 flex-col justify-between'>
+            <div className='space-y-2 flex-1'>
+              {NavList.pop().map((nav) => (
                 <a
                   key={nav.name}
                   href={nav.href}
@@ -65,6 +66,21 @@ export default function MainPage() {
                   )}
                 </a>
               ))}
+            </div>
+            
+            <div className=''>
+                              <a
+                  key={NavList[NavList.length].name}
+                  href={NavList[NavList.length].href}
+                  className='flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors group'
+                >
+                  <nav.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-800 flex-shrink-0' />
+                  {isExpanded && (
+                    <span className='text-sm font-medium text-gray-700 group-hover:text-gray-900 capitalize'>
+                      {NavList[NavList.length].name}
+                    </span>
+                  )}
+                </a>
             </div>
           </nav>
         </div>
