@@ -1,6 +1,6 @@
 import mongoose from "mongoose"
 
-const MONGODB_URI = 'mongodb+srv://howladerprasenjeet440:6ehMc6iIeh2SDCvJ@cluster0.joo9psn.mongodb.net/codes_beta'
+const MONGODB_URI = 'mongodb+srv://howladerprasenjeet440:6ehMc6iIeh2SDCvJ@cluster0.joo9psn.mongodb.net/admin'
 
 interface MongooseCache {
   conn: typeof mongoose | null
