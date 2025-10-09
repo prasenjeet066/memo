@@ -72,7 +72,7 @@ export default function Account() {
   }
   
   const Sidebar = !isMobile && (
-    <div className='w-64 min-h-screen bg-white border-r border-gray-200 flex flex-col'>
+    <div className='w-auto max-w-64 min-h-screen bg-white mr-2 flex flex-col justify-between'>
       <div className='p-4 border-b border-gray-200'>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
