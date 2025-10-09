@@ -175,7 +175,7 @@ export default function RegisterPage() {
                   className={`w-full px-4 py-3 border ${errors.fullName ? "border-red-400" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
                   disabled={isLoading}
                   autoComplete="name"
-                  required
+                  
                   placeholder="Enter your full name"
                 />
                 {errors.fullName && (
@@ -194,7 +194,7 @@ export default function RegisterPage() {
                   onChange={handleChange}
                   className={`w-full px-4 py-3 border ${errors.dob ? "border-red-400" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
                   disabled={isLoading}
-                  required
+                  
                 />
                 {errors.dob && (
                   <p className="text-red-600 text-xs mt-1">{errors.dob}</p>
@@ -218,7 +218,7 @@ export default function RegisterPage() {
                   className={`w-full px-4 py-3 border ${errors.email ? "border-red-400" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
                   disabled={isLoading}
                   autoComplete="email"
-                  required
+                  
                   placeholder="Enter your email"
                 />
                 {errors.email && (
@@ -238,7 +238,7 @@ export default function RegisterPage() {
                   className={`w-full px-4 py-3 border ${errors.username ? "border-red-400" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
                   disabled={isLoading}
                   autoComplete="username"
-                  required
+                  
                   placeholder="Choose a username"
                 />
                 {errors.username && (
