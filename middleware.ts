@@ -16,6 +16,9 @@ export default withAuth(
         if (req.nextUrl.pathname.startsWith('/create')){
           return token?.role?.includes('IP') ?? true
         }
+        if (req.nextUrl.pathname.startsWith('/account')) {
+          return !!token
+        }
         // Protect user dashboard
         if (req.nextUrl.pathname.startsWith('/dashboard')) {
           return !!token
