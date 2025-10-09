@@ -1,271 +1,369 @@
 "use client"
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { ArrowLeft, Eye, EyeOff } from "lucide-react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { z } from "zod"
+
+const stepSchemas = [
+  // Step 0: Personal Info
+  z.object({
+    fullName: z.string().min(2, "Full name is required"),
+    dob: z.string().min(1, "Date of birth is required"),
+  }),
+  // Step 1: Account Info
+  z.object({
+    email: z.string().email("Enter a valid email"),
+    username: z.string().min(3, "Username must be at least 3 characters"),
+  }),
+  // Step 2: Passwords
+  z.object({
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string().min(6, "Confirm your password"),
+  }).refine(({ password, confirmPassword }) => password === confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  }),
+]
+
+const initialForm = {
+  fullName: "",
+  dob: "",
+  email: "",
+  username: "",
+  password: "",
+  confirmPassword: "",
+}
 
 export default function RegisterPage() {
-  const [passwordType, setPasswordType] = useState(true)
-  const [confirmPasswordType, setConfirmPasswordType] = useState(true)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
   const router = useRouter()
-  
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    username: '',
-    fullName: '',
-    dob: ''
-  })
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }))
-    setError('')
-  }
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError('')
-    setSuccess('')
-    
-    const { email, password, confirmPassword, username, fullName, dob } = formData
-    
-    // Validation
-    if (!email || !password || !confirmPassword || !username || !fullName || !dob) {
-      setError('Please fill in all fields.')
-      setIsLoading(false)
-      return
-    }
+  const [step, setStep] = useState(0)
+  const [form, setForm] = useState(initialForm)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [serverError, setServerError] = useState("")
+  const [success, setSuccess] = useState("")
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.')
-      setIsLoading(false)
-      return
-    }
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long.')
-      setIsLoading(false)
-      return
-    }
-    
-    try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          username,
-          fullName,
-          dob
-        }),
+  function validateCurrentStep() {
+    const schema = stepSchemas[step]
+    const result = schema.safeParse(form)
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {}
+      result.error.errors.forEach(e => {
+        if (e.path[0]) fieldErrors[String(e.path[0])] = e.message
       })
+      setErrors(fieldErrors)
+      return false
+    }
+    setErrors({})
+    return true
+  }
 
-      const data = await response.json()
+  function handleNext(e: React.FormEvent) {
+    e.preventDefault()
+    if (!validateCurrentStep()) return
+    setStep(s => s + 1)
+  }
 
-      if (response.ok) {
-        setSuccess('Registration successful! Redirecting to login...')
-        setTimeout(() => {
-          router.push('/login')
-        }, 2000)
+  function handleBack() {
+    setErrors({})
+    setStep(s => s - 1)
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const { name, value } = e.target
+    setForm(f => ({ ...f, [name]: value }))
+    setErrors({})
+    setServerError("")
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!validateCurrentStep()) return
+
+    setIsLoading(true)
+    setServerError("")
+    setSuccess("")
+
+    const { email, password, username, fullName, dob } = form
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, username, fullName, dob }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setSuccess("Registration successful! Check your email to verify your account.")
+        setTimeout(() => router.push("/login"), 2500)
       } else {
-        setError(data.error || 'Registration failed')
+        setServerError(data.error || "Registration failed")
       }
     } catch (error) {
-      console.error('Registration error:', error)
-      setError('An error occurred. Please try again.')
+      setServerError("An error occurred. Please try again.")
     } finally {
       setIsLoading(false)
     }
   }
-  
+
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-white">
       {/* Header */}
-      <div className="sticky top-0 bg-white p-4 flex items-center justify-between border-b shadow-sm">
-        <div className="flex items-center gap-2">
-          <ArrowLeft className="w-4 h-4 cursor-pointer" onClick={() => router.back()} />
-          <h1 className="font-semibold text-gray-900">Sign Up</h1>
+      <header className="bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.back()}
+              className="p-2 hover:bg-gray-100 transition-colors"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-700" />
+            </button>
+            <h1 className="text-xl font-semibold text-gray-900">Create Account</h1>
+          </div>
+          <Link
+            href="/login"
+            className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors px-4 py-2"
+          >
+            Login
+          </Link>
         </div>
-      </div>
+      </header>
 
-      {/* Form Container */}
-      <div className="flex flex-col items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
-              Create Account
-            </h2>
-            
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
-                {error}
-              </div>
-            )}
+      <div className="max-w-md mx-auto px-4 py-12">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Registration: Step {step + 1} of 3
+          </h2>
+          <p className="text-gray-600">
+            {step === 0 && "Your personal details"}
+            {step === 1 && "Account information"}
+            {step === 2 && "Set your password"}
+          </p>
+        </div>
 
-            {success && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-md text-sm">
-                {success}
-              </div>
-            )}
+        {serverError && (
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm">
+            {serverError}
+          </div>
+        )}
+        {success && (
+          <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 text-sm">
+            {success}
+          </div>
+        )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Full Name */}
-              <div className="flex flex-col space-y-2">
-                <label htmlFor="fullName" className="text-sm font-medium text-gray-700">
+        {/* Multi-step Form */}
+        <form
+          onSubmit={step === 2 ? handleSubmit : handleNext}
+          className="space-y-6 px-2"
+        >
+          {step === 0 && (
+            <>
+              <div>
+                <label htmlFor="fullName" className="block text-sm font-medium text-gray-900 mb-2">
                   Full Name
                 </label>
                 <input
                   id="fullName"
                   name="fullName"
                   type="text"
-                  value={formData.fullName}
+                  value={form.fullName}
                   onChange={handleChange}
-                  className="border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
+                  className={`w-full px-4 py-3 border ${errors.fullName ? "border-red-400" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
                   disabled={isLoading}
-                />
-              </div>
-
-              {/* Username */}
-              <div className="flex flex-col space-y-2">
-                <label htmlFor="username" className="text-sm font-medium text-gray-700">
-                  Username
-                </label>
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  value={formData.username}
-                  onChange={handleChange}
-                  className="border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  autoComplete="name"
                   required
-                  disabled={isLoading}
+                  placeholder="Enter your full name"
                 />
+                {errors.fullName && (
+                  <p className="text-red-600 text-xs mt-1">{errors.fullName}</p>
+                )}
               </div>
-
-              {/* Email */}
-              <div className="flex flex-col space-y-2">
-                <label htmlFor="email" className="text-sm font-medium text-gray-700">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-
-              {/* Date of Birth */}
-              <div className="flex flex-col space-y-2">
-                <label htmlFor="dob" className="text-sm font-medium text-gray-700">
+              <div>
+                <label htmlFor="dob" className="block text-sm font-medium text-gray-900 mb-2">
                   Date of Birth
                 </label>
                 <input
                   id="dob"
                   name="dob"
                   type="date"
-                  value={formData.dob}
+                  value={form.dob}
                   onChange={handleChange}
-                  className="border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
+                  className={`w-full px-4 py-3 border ${errors.dob ? "border-red-400" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
                   disabled={isLoading}
+                  required
                 />
+                {errors.dob && (
+                  <p className="text-red-600 text-xs mt-1">{errors.dob}</p>
+                )}
               </div>
+            </>
+          )}
 
-              {/* Password */}
-              <div className="flex flex-col space-y-2">
-                <label htmlFor="password" className="text-sm font-medium text-gray-700">
+          {step === 1 && (
+            <>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-2">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 border ${errors.email ? "border-red-400" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
+                  disabled={isLoading}
+                  autoComplete="email"
+                  required
+                  placeholder="Enter your email"
+                />
+                {errors.email && (
+                  <p className="text-red-600 text-xs mt-1">{errors.email}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="username" className="block text-sm font-medium text-gray-900 mb-2">
+                  Username
+                </label>
+                <input
+                  id="username"
+                  name="username"
+                  type="text"
+                  value={form.username}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 border ${errors.username ? "border-red-400" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
+                  disabled={isLoading}
+                  autoComplete="username"
+                  required
+                  placeholder="Choose a username"
+                />
+                {errors.username && (
+                  <p className="text-red-600 text-xs mt-1">{errors.username}</p>
+                )}
+              </div>
+            </>
+          )}
+
+          {step === 2 && (
+            <>
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-900 mb-2">
                   Password
                 </label>
-                <div className="flex items-center border border-gray-300 rounded-md px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
+                <div className="relative">
                   <input
                     id="password"
                     name="password"
-                    type={passwordType ? 'password' : 'text'}
-                    value={formData.password}
+                    type={showPassword ? "text" : "password"}
+                    value={form.password}
                     onChange={handleChange}
-                    className="flex-1 focus:outline-none"
-                    required
+                    className={`w-full px-4 py-3 pr-12 border ${errors.password ? "border-red-400" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
                     disabled={isLoading}
+                    required
+                    placeholder="Create a password"
                   />
-                  {passwordType ? (
-                    <Eye
-                      className="w-4 h-4 text-gray-500 cursor-pointer"
-                      onClick={() => setPasswordType(false)}
-                    />
-                  ) : (
-                    <EyeOff
-                      className="w-4 h-4 text-gray-500 cursor-pointer"
-                      onClick={() => setPasswordType(true)}
-                    />
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(s => !s)}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5 text-gray-500" />
+                    ) : (
+                      <Eye className="w-5 h-5 text-gray-500" />
+                    )}
+                  </button>
                 </div>
+                {errors.password && (
+                  <p className="text-red-600 text-xs mt-1">{errors.password}</p>
+                )}
               </div>
-
-              {/* Confirm Password */}
-              <div className="flex flex-col space-y-2">
-                <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-900 mb-2">
                   Confirm Password
                 </label>
-                <div className="flex items-center border border-gray-300 rounded-md px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
+                <div className="relative">
                   <input
                     id="confirmPassword"
                     name="confirmPassword"
-                    type={confirmPasswordType ? 'password' : 'text'}
-                    value={formData.confirmPassword}
+                    type={showConfirm ? "text" : "password"}
+                    value={form.confirmPassword}
                     onChange={handleChange}
-                    className="flex-1 focus:outline-none"
-                    required
+                    className={`w-full px-4 py-3 pr-12 border ${errors.confirmPassword ? "border-red-400" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
                     disabled={isLoading}
+                    required
+                    placeholder="Confirm your password"
                   />
-                  {confirmPasswordType ? (
-                    <Eye
-                      className="w-4 h-4 text-gray-500 cursor-pointer"
-                      onClick={() => setConfirmPasswordType(false)}
-                    />
-                  ) : (
-                    <EyeOff
-                      className="w-4 h-4 text-gray-500 cursor-pointer"
-                      onClick={() => setConfirmPasswordType(true)}
-                    />
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(s => !s)}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 transition-colors"
+                    aria-label={showConfirm ? "Hide password" : "Show password"}
+                  >
+                    {showConfirm ? (
+                      <EyeOff className="w-5 h-5 text-gray-500" />
+                    ) : (
+                      <Eye className="w-5 h-5 text-gray-500" />
+                    )}
+                  </button>
                 </div>
+                {errors.confirmPassword && (
+                  <p className="text-red-600 text-xs mt-1">{errors.confirmPassword}</p>
+                )}
               </div>
+            </>
+          )}
 
-              {/* Submit Button */}
+          {/* Navigation Buttons */}
+          <div className="flex justify-between items-center mt-6">
+            {step > 0 ? (
               <button
-                type="submit"
+                type="button"
+                onClick={handleBack}
+                className="px-4 py-2 text-sm rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700"
                 disabled={isLoading}
-                className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? 'Creating Account...' : 'Sign Up'}
+                Back
               </button>
-            </form>
+            ) : <span />}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`px-4 py-2 rounded-md bg-blue-600 text-white font-semibold transition-colors hover:bg-blue-700 disabled:opacity-50`}
+            >
+              {isLoading
+                ? step === 2 ? "Creating Account..." : "Next..."
+                : step === 2 ? "Sign Up" : "Next"
+              }
+            </button>
+          </div>
+        </form>
 
-            {/* Sign In Link */}
-            <div className="mt-6 text-center text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link href="/login" className="text-blue-600 hover:text-blue-500 font-medium">
-                Sign in
-              </Link>
-            </div>
+        <div className="mt-8 text-center text-gray-600 text-sm">
+          Already have an account?{" "}
+          <Link href="/login" className="text-blue-600 hover:text-blue-500 font-medium">
+            Login
+          </Link>
+        </div>
+
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
+            <Link href="/terms" className="hover:text-gray-700 transition-colors">
+              Terms
+            </Link>
+            <span className="text-gray-300">•</span>
+            <Link href="/privacy" className="hover:text-gray-700 transition-colors">
+              Privacy
+            </Link>
+            <span className="text-gray-300">•</span>
+            <Link href="/help" className="hover:text-gray-700 transition-colors">
+              Help
+            </Link>
           </div>
         </div>
       </div>
