@@ -1,10 +1,11 @@
+// lib/auth/auth.ts (Updated with DAL)
+
 import { AuthOptions } from 'next-auth';
-import { NEXTAUTH_SECRET } from '@/lib/secret'
+import { NEXTAUTH_SECRET } from '@/lib/secret';
 import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { connectDB } from '@/lib/security/auth/db/provider';
-import { User } from '@/lib/units/models/User';
-import crypto from 'crypto';
+import { UserDAL } from '@/lib/dal/user.dal';
+import { UserMapper } from '@/lib/mappers/user.mapper';
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -24,15 +25,10 @@ export const authOptions: AuthOptions = {
         }
 
         try {
-          await connectDB();
-
-          // Find user by email or username
-          const user = await User.findOne({
-            $or: [
-              { email: credentials.usernameOrEmail.toLowerCase() },
-              { user_handler: credentials.usernameOrEmail.toLowerCase() },
-            ],
-          });
+          // Use DAL to find user
+          const user = await UserDAL.findByEmailOrUsername(
+            credentials.usernameOrEmail
+          );
 
           if (!user) {
             throw new Error('Invalid credentials');
@@ -40,12 +36,16 @@ export const authOptions: AuthOptions = {
 
           // Check if account is locked
           if (user.isAccountLocked()) {
-            throw new Error('Account is temporarily locked due to multiple failed login attempts. Please try again later.');
+            throw new Error(
+              'Account is temporarily locked due to multiple failed login attempts. Please try again later.'
+            );
           }
 
           // Verify password
-          const isPasswordValid = await user.comparePassword(credentials.password);
-          
+          const isPasswordValid = await user.comparePassword(
+            credentials.password
+          );
+
           if (!isPasswordValid) {
             await user.incrementFailedLogins();
             throw new Error('Invalid credentials');
@@ -54,19 +54,11 @@ export const authOptions: AuthOptions = {
           // Reset failed login attempts on successful login
           await user.resetFailedLogins();
 
-          // Update last login
-          user.last_login = new Date();
-          await user.save();
+          // Update last login using DAL
+          await UserDAL.updateLastLogin(user._id.toString());
 
-          return {
-            id: user._id.toString(),
-            email: user.email,
-            name: user.user_full_name,
-            image: user.profile_image_url || null,
-            role: user.user_role,
-            username: user.user_handler,
-            isEmailVerified: user.is_email_verified,
-          };
+          // Convert to session DTO
+          return UserMapper.toSessionDTO(user);
         } catch (error) {
           console.error('Auth error:', error);
           if (error instanceof Error) {
@@ -85,7 +77,7 @@ export const authOptions: AuthOptions = {
     maxAge: 7 * 24 * 60 * 60, // 7 days
   },
   callbacks: {
-    async jwt({ token, user, account, trigger }) {
+    async jwt({ token, user, account }) {
       // Initial sign in
       if (user) {
         token.role = user.role;
@@ -96,39 +88,26 @@ export const authOptions: AuthOptions = {
       // Handle Google OAuth
       if (account?.provider === 'google' && user) {
         try {
-          await connectDB();
-          let dbUser = await User.findOne({ email: user.email });
+          let dbUser = await UserDAL.findByEmail(user.email!);
 
           if (!dbUser) {
-            // Create new user from Google profile
-            const username = user.email?.split('@')[0]?.toLowerCase() || '';
-            
-            // Ensure unique username
-            let finalUsername = username;
-            let counter = 1;
-            while (await User.findOne({ user_handler: finalUsername })) {
-              finalUsername = `${username}${counter}`;
-              counter++;
-            }
+            // Generate unique username from email
+            const baseUsername = user.email?.split('@')[0]?.toLowerCase() || '';
+            const finalUsername = await UserDAL.generateUniqueUsername(
+              baseUsername
+            );
 
-            // Generate secure random password for OAuth users
-            const securePassword = crypto.randomBytes(32).toString('hex');
-
-            dbUser = new User({
-              email: user.email?.toLowerCase(),
-              user_full_name: user.name || '',
-              user_handler: finalUsername,
-              password: securePassword,
-              is_email_verified: true,
-              profile_image_url: user.image,
-              oauth_provider: 'google',
-              user_role: ['REG'],
+            // Create OAuth user using DAL
+            dbUser = await UserDAL.createOAuthUser({
+              email: user.email!,
+              fullName: user.name || '',
+              username: finalUsername,
+              profileImageUrl: user.image,
+              oauthProvider: 'google',
             });
-            await dbUser.save();
           } else {
             // Update last login for existing OAuth user
-            dbUser.last_login = new Date();
-            await dbUser.save();
+            await UserDAL.updateLastLogin(dbUser._id.toString());
           }
 
           token.role = dbUser.user_role;
@@ -161,9 +140,10 @@ export const authOptions: AuthOptions = {
   },
   cookies: {
     sessionToken: {
-      name: process.env.NODE_ENV === 'production' 
-        ? '__Secure-next-auth.session-token' 
-        : 'next-auth.session-token',
+      name:
+        process.env.NODE_ENV === 'production'
+          ? '__Secure-next-auth.session-token'
+          : 'next-auth.session-token',
       options: {
         httpOnly: true,
         sameSite: 'lax',

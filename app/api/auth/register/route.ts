@@ -1,9 +1,11 @@
+// app/api/auth/register/route.ts (Updated with DAL)
+
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/security/auth/db/provider';
-import { User } from '@/lib/units/models/User';
+import { UserDAL } from '@/lib/dal/user.dal';
 import { RateLimiterSystem } from '@/lib/security/auth/rate-limiter';
 import { ValidationUtils } from '@/lib/utils/validation';
-import crypto from 'crypto';
+import { RegisterUserDTO } from '@/lib/dtos/user.dto';
+import { UserMapper } from '@/lib/mappers/user.mapper';
 
 const rateLimiter = new RateLimiterSystem();
 
@@ -15,9 +17,9 @@ export async function POST(req: NextRequest) {
 
     if (!isAllowed) {
       return NextResponse.json(
-        { 
+        {
           error: 'Too many registration attempts. Please try again later.',
-          retryAfter: 900 // 15 minutes in seconds
+          retryAfter: 900, // 15 minutes in seconds
         },
         { status: 429 }
       );
@@ -76,56 +78,49 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await connectDB();
-
-    // Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [
-        { email: email },
-        { user_handler: username },
-      ],
-    });
+    // Check if user already exists using DAL
+    const existingUser = await UserDAL.existsByEmailOrUsername(email, username);
 
     if (existingUser) {
-      const field = existingUser.email === email ? 'email' : 'username';
+      // Determine which field conflicts
+      const emailUser = await UserDAL.findByEmail(email);
+      const field = emailUser ? 'email' : 'username';
+      
       return NextResponse.json(
         { error: `A user with this ${field} already exists` },
         { status: 409 }
       );
     }
 
-    // Generate email verification token
-    const emailVerificationToken = crypto.randomBytes(32).toString('hex');
-    const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
-    // Create new user
-    const user = new User({
+    // Create user DTO
+    const registerDTO: RegisterUserDTO = {
       email,
       password,
-      user_handler: username,
-      user_full_name: fullName,
-      user_dob: dob,
-      user_role: ['REG'],
-      emailVerificationToken,
-      emailVerificationExpires,
-      is_email_verified: false,
-    });
+      username,
+      fullName,
+      dob,
+    };
 
-    await user.save();
+    // Create new user using DAL
+    const user = await UserDAL.createUser(registerDTO);
+
+    // Convert to base DTO for response
+    const userResponse = UserMapper.toBaseDTO(user);
 
     // TODO: Send verification email
-    // await sendVerificationEmail(email, emailVerificationToken);
+    // await sendVerificationEmail(email, user.emailVerificationToken);
 
     return NextResponse.json(
       {
-        message: 'User registered successfully. Please check your email to verify your account.',
-        userId: user._id.toString(),
+        message:
+          'User registered successfully. Please check your email to verify your account.',
+        user: userResponse,
       },
       { status: 201 }
     );
   } catch (error) {
     console.error('Registration error:', error);
-    
+
     // Handle specific MongoDB errors
     if (error instanceof Error) {
       if (error.name === 'ValidationError') {
