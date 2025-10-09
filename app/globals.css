@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body{
-  font-family: "Styrene B Regular Regular";
+  font-family: "Styrene B Regular Regular" !important;
 }
 
 .logo-style-font {
