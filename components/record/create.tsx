@@ -153,8 +153,8 @@ export default function MediaWikiEditor() {
         </div>
       </div>
 
-      <div className='flex items-center justify-between p-2 w-full'>
-        <div className='flex items-center flex-wrap gap-1 p-2 w-full flex-1'>
+      <div className='flex items-center justify-between w-full'>
+        <div className='flex items-center flex-wrap gap-1 px-0 p-2 w-full flex-1'>
           {Blocks.map((block, i) => (
             <button
               key={i}
@@ -173,7 +173,7 @@ export default function MediaWikiEditor() {
         </button>
       </div>
 
-      <div className='w-full min-h-screen bg-gray-50 p-4 hide'>
+      <div className='w-full min-h-screen bg-gray-50'>
         <textarea
           ref={textareaRef}
           value={wikitext}
@@ -183,7 +183,7 @@ export default function MediaWikiEditor() {
           placeholder='Start writing your article...'
         />
         <div
-          className='mt-4 p-3 bg-white shadow-sm prose max-w-none'
+          className='bg-white prose max-w-none'
           dangerouslySetInnerHTML={{ __html: `<style>${DEFAULT_STYLES}</style> \n ${preview}` }}
         />
       </div>
