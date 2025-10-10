@@ -220,7 +220,7 @@ export default function MediaWikiEditor() {
         )}
 
         <div
-          className={`prose max-w-none w-full bg-white rounded p-4 border ${
+          className={`prose max-w-none w-full h-full bg-white rounded p-4 border ${
             editorMode === "source" ? "w-1/2" : "w-full"
           }`}
           dangerouslySetInnerHTML={{
