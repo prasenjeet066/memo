@@ -154,12 +154,12 @@ export default function MediaWikiEditor() {
       </div>
 
       <div className='flex items-center justify-between p-2 w-full'>
-        <div className='flex items-center flex-wrap gap-1 p-2 w-full bg-indigo-50 rounded flex-1'>
+        <div className='flex items-center flex-wrap gap-1 p-2 w-full flex-1'>
           {Blocks.map((block, i) => (
             <button
               key={i}
               onClick={() => applyCommand(block.action)}
-              className='p-1 hover:bg-indigo-200 rounded transition'
+              className='p-1 rounded transition border'
             >
               <block.icon className='h-4 w-4' />
             </button>
@@ -167,23 +167,23 @@ export default function MediaWikiEditor() {
         </div>
         <button
           onClick={handleSave}
-          className='text-sm rounded bg-black text-white px-3 py-1 ml-2 hover:bg-gray-800 transition'
+          className='text-sm rounded-full bg-black text-white px-3 py-1 ml-2 hover:bg-gray-800 transition'
         >
           Publish
         </button>
       </div>
 
-      <div className='w-full min-h-screen bg-gray-50 p-4'>
+      <div className='w-full min-h-screen bg-gray-50 p-4 hide'>
         <textarea
           ref={textareaRef}
           value={wikitext}
           onChange={(e) => setWikitext(e.target.value)}
           onKeyDown={handleKeyDown}
-          className='w-full h-96 border rounded p-2 font-mono text-sm'
+          className='w-full h-96 rounded p-2 outline-none text-sm'
           placeholder='Start writing your article...'
         />
         <div
-          className='mt-4 p-3 bg-white border rounded shadow-sm prose max-w-none'
+          className='mt-4 p-3 bg-white shadow-sm prose max-w-none'
           dangerouslySetInnerHTML={{ __html: preview }}
         />
       </div>
