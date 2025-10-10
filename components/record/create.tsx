@@ -295,7 +295,7 @@ Examples:
             suppressContentEditableWarning
             spellCheck={true}
             style={{ fontFamily: "inherit" }}
-            dangerouslySetInnerHTML={{ __html: parseResult}}
+            dangerouslySetInnerHTML={{ __html: visualHtml}}
             onKeyDown={handleKeyDown}
           >
             {/* parsed HTML will be injected here by useEffect */}
