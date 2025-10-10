@@ -38,7 +38,7 @@ export default function MediaWikiEditor() {
   const [title, setTitle] = useState("");
   const [mode, setMode] = useState < "edit" | "preview" | "split" > ("split");
   const textareaRef = useRef < HTMLTextAreaElement > (null);
-  const [editorMode, setEditorMode] = useState < "visual" | "source" > ("source");
+  const [editorMode, setEditorMode] = useState < "visual" | "source" > ("visual");
   
   // Update preview when wikitext changes
   useEffect(() => {
