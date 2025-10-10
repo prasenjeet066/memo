@@ -121,12 +121,7 @@ export default function Header({ navlist }: HeaderProps) {
 
             {/* Navigation Items */}
             <div className='flex-1 p-4'>
-              {session && (
-                <div className='flex items-center py-2 justify-start gap-3 divide-x'>
-                  <Bell className='h-5 w-5'/>
-                  <Mail className='h-5 w-5'/>
-                </div>
-              )}
+              
               <nav className='space-y-2'>
                 {navlist.map((item) => (
                   <Link 
