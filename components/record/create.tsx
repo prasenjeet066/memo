@@ -1,21 +1,21 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bold, Italic, Underline, Strikethrough, Heading1, Heading2, Heading3, List, ListOrdered, Quote, Code, Link, Image, Eye, FileCode, Highlighter, Type, Minus, Video, CheckSquare } from 'lucide-react';
+import { Bold, Italic, Strikethrough, Heading1, Heading2, Heading3, List, ListOrdered, Code, Link, Image, Eye, FileCode, Type, Video, Table, Superscript, Subscript, FileText, Hash, Minus, BookOpen, Package, Quote, AlignLeft } from 'lucide-react';
 import { parseMarkup, applyEditorCommand } from '@/lib/utils/dist/markup';
 
-export default function WYSIWYGEditor() {
-  const [markdown, setMarkdown] = useState('');
+export default function MediaWikiEditor() {
+  const [wikitext, setWikitext] = useState('');
   const [preview, setPreview] = useState('');
   const [metadata, setMetadata] = useState<any>({});
   const [title, setTitle] = useState('');
   const [mode, setMode] = useState<'edit' | 'preview' | 'split'>('split');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Update preview when markdown changes
+  // Update preview when wikitext changes
   useEffect(() => {
-    const result = parseMarkup(markdown);
+    const result = parseMarkup(wikitext);
     setPreview(result.html);
     setMetadata(result.metadata);
-  }, [markdown]);
+  }, [wikitext]);
 
   // Apply editor command
   const applyCommand = (command: string, ...args: any[]) => {
@@ -25,10 +25,9 @@ export default function WYSIWYGEditor() {
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
 
-    const result = applyEditorCommand(markdown, command, start, end, ...args);
-    setMarkdown(result.text);
+    const result = applyEditorCommand(wikitext, command, start, end, ...args);
+    setWikitext(result.text);
 
-    // Restore selection
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(result.newSelectionStart, result.newSelectionEnd);
@@ -42,8 +41,8 @@ export default function WYSIWYGEditor() {
 
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const newContent = markdown.substring(0, start) + text + markdown.substring(end);
-    setMarkdown(newContent);
+    const newContent = wikitext.substring(0, start) + text + wikitext.substring(end);
+    setWikitext(newContent);
 
     setTimeout(() => {
       textarea.focus();
@@ -70,7 +69,14 @@ export default function WYSIWYGEditor() {
         case 'k':
           e.preventDefault();
           const url = prompt('Enter URL:');
-          if (url) applyCommand('link', url);
+          if (url) {
+            const text = prompt('Link text (optional):');
+            if (text) {
+              insertText(`[${url} ${text}]`);
+            } else {
+              insertText(`[${url}]`);
+            }
+          }
           break;
         case 's':
           e.preventDefault();
@@ -81,27 +87,30 @@ export default function WYSIWYGEditor() {
   };
 
   const handleSave = () => {
-    console.log('Saving:', { title, markdown, metadata });
-    alert('Document saved! Check console for details.');
+    console.log('Saving:', { title, wikitext, metadata });
+    alert('Article saved! Check console for details.');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                Rich Text Editor
-              </h1>
-              <p className="text-sm text-gray-500 mt-1">Powered by markup.ts parser</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
+      {/* Header - Wikipedia style */}
+      <header className="bg-white border-b-2 border-gray-300 shadow-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-3">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <BookOpen className="text-gray-700" size={32} />
+                <h1 className="text-2xl font-serif font-bold text-gray-900">
+                  MediaWiki Editor
+                </h1>
+              </div>
+              <span className="text-sm text-gray-500 border-l pl-4 ml-4">Visual Editor</span>
             </div>
             <button
               onClick={handleSave}
-              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition shadow-lg hover:shadow-xl font-medium"
+              className="px-5 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-medium"
             >
-              Save Document
+              Publish changes
             </button>
           </div>
 
@@ -109,198 +118,256 @@ export default function WYSIWYGEditor() {
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Enter document title..."
-            className="w-full px-5 py-3.5 text-xl font-medium border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white shadow-sm"
+            placeholder="Article title"
+            className="w-full px-4 py-2.5 text-xl font-serif border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white"
           />
         </div>
       </header>
 
-      {/* Mode Toggle & Toolbar */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 shadow-sm sticky top-[132px] z-40">
-        <div className="max-w-7xl mx-auto px-6 py-3">
+      {/* Mode Toggle & Toolbar - Wikipedia style */}
+      <div className="bg-gray-50 border-b border-gray-300 sticky top-[108px] z-40">
+        <div className="max-w-7xl mx-auto px-6 py-2">
           {/* Mode Toggle */}
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-1 mb-2">
             <button
               onClick={() => setMode('edit')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition ${
                 mode === 'edit' 
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-white border border-gray-300 border-b-white text-blue-600 -mb-px' 
+                  : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <FileCode size={16} />
+              <FileCode size={14} />
               Edit
             </button>
             <button
               onClick={() => setMode('split')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition ${
                 mode === 'split' 
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-white border border-gray-300 border-b-white text-blue-600 -mb-px' 
+                  : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <Type size={16} />
-              Split
+              <Type size={14} />
+              Split view
             </button>
             <button
               onClick={() => setMode('preview')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition ${
                 mode === 'preview' 
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-white border border-gray-300 border-b-white text-blue-600 -mb-px' 
+                  : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <Eye size={16} />
+              <Eye size={14} />
               Preview
             </button>
           </div>
 
           {/* Formatting Toolbar */}
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1 pb-2">
             {/* Text Formatting */}
-            <div className="flex gap-1 bg-gray-50 rounded-lg p-1">
+            <div className="flex items-center gap-0.5 border-r border-gray-300 pr-2">
               <button onClick={() => applyCommand('bold')} className="toolbar-btn" title="Bold (Ctrl+B)">
-                <Bold size={18} />
+                <Bold size={16} />
               </button>
               <button onClick={() => applyCommand('italic')} className="toolbar-btn" title="Italic (Ctrl+I)">
-                <Italic size={18} />
+                <Italic size={16} />
               </button>
               <button onClick={() => applyCommand('underline')} className="toolbar-btn" title="Underline (Ctrl+U)">
-                <Underline size={18} />
+                <span className="text-sm font-bold underline">U</span>
               </button>
               <button onClick={() => applyCommand('strikethrough')} className="toolbar-btn" title="Strikethrough">
-                <Strikethrough size={18} />
-              </button>
-              <button onClick={() => applyCommand('highlight')} className="toolbar-btn" title="Highlight">
-                <Highlighter size={18} />
+                <Strikethrough size={16} />
               </button>
             </div>
 
             {/* Headings */}
-            <div className="flex gap-1 bg-gray-50 rounded-lg p-1">
-              <button onClick={() => applyCommand('heading', 1)} className="toolbar-btn" title="Heading 1">
-                <Heading1 size={18} />
-              </button>
+            <div className="flex items-center gap-0.5 border-r border-gray-300 pr-2">
               <button onClick={() => applyCommand('heading', 2)} className="toolbar-btn" title="Heading 2">
-                <Heading2 size={18} />
+                <Heading1 size={16} />
               </button>
               <button onClick={() => applyCommand('heading', 3)} className="toolbar-btn" title="Heading 3">
-                <Heading3 size={18} />
+                <Heading2 size={16} />
+              </button>
+              <button onClick={() => applyCommand('heading', 4)} className="toolbar-btn" title="Heading 4">
+                <Heading3 size={16} />
               </button>
             </div>
 
             {/* Links & Media */}
-            <div className="flex gap-1 bg-gray-50 rounded-lg p-1">
+            <div className="flex items-center gap-0.5 border-r border-gray-300 pr-2">
               <button
                 onClick={() => {
-                  const url = prompt('Enter URL:');
-                  if (url) applyCommand('link', url);
+                  const page = prompt('Internal page name:');
+                  if (page) {
+                    const displayText = prompt('Display text (optional):');
+                    applyCommand('internalLink', page, displayText || undefined);
+                  }
                 }}
                 className="toolbar-btn"
-                title="Link (Ctrl+K)"
+                title="Internal Link [[Page]]"
               >
-                <Link size={18} />
+                <Link size={16} />
               </button>
               <button
                 onClick={() => {
-                  const src = prompt('Enter image URL:');
-                  const alt = prompt('Enter alt text:') || '';
-                  if (src) insertText(`![${alt}](${src})`);
+                  const url = prompt('External URL:');
+                  if (url) {
+                    const text = prompt('Link text (optional):');
+                    insertText(text ? `[${url} ${text}]` : `[${url}]`);
+                  }
                 }}
                 className="toolbar-btn"
-                title="Image"
+                title="External Link [URL]"
               >
-                <Image size={18} />
+                <span className="text-xs font-bold">🔗</span>
               </button>
               <button
                 onClick={() => {
-                  const id = prompt('Enter YouTube video ID or URL:');
-                  if (id) insertText(`[!youtube](${id})`);
+                  const filename = prompt('Image filename (e.g., Example.jpg):');
+                  if (filename) {
+                    const caption = prompt('Caption (optional):');
+                    applyCommand('thumbnail', filename, caption || undefined, '300px');
+                  }
                 }}
                 className="toolbar-btn"
-                title="YouTube Video"
+                title="Image [[File:...]]"
               >
-                <Video size={18} />
+                <Image size={16} />
+              </button>
+              <button
+                onClick={() => {
+                  const filename = prompt('Video filename (e.g., Video.mp4):');
+                  if (filename) {
+                    applyCommand('video', filename);
+                  }
+                }}
+                className="toolbar-btn"
+                title="Video [[Media:...]]"
+              >
+                <Video size={16} />
               </button>
             </div>
 
             {/* Lists */}
-            <div className="flex gap-1 bg-gray-50 rounded-lg p-1">
+            <div className="flex items-center gap-0.5 border-r border-gray-300 pr-2">
               <button
-                onClick={() => insertText('- ')}
+                onClick={() => insertText('* ')}
                 className="toolbar-btn"
-                title="Bullet List"
+                title="Unordered List"
               >
-                <List size={18} />
+                <List size={16} />
               </button>
               <button
-                onClick={() => insertText('1. ')}
+                onClick={() => insertText('# ')}
                 className="toolbar-btn"
-                title="Numbered List"
+                title="Ordered List"
               >
-                <ListOrdered size={18} />
+                <ListOrdered size={16} />
               </button>
               <button
-                onClick={() => insertText('- [ ] ')}
+                onClick={() => {
+                  insertText('; Term\n: Definition');
+                }}
                 className="toolbar-btn"
-                title="Task List"
+                title="Definition List"
               >
-                <CheckSquare size={18} />
+                <AlignLeft size={16} />
               </button>
             </div>
 
-            {/* Blocks */}
-            <div className="flex gap-1 bg-gray-50 rounded-lg p-1">
-              <button onClick={() => applyCommand('blockquote')} className="toolbar-btn" title="Quote">
-                <Quote size={18} />
-              </button>
-              <button onClick={() => applyCommand('inlineCode')} className="toolbar-btn" title="Inline Code">
-                <Code size={18} />
+            {/* Code & Math */}
+            <div className="flex items-center gap-0.5 border-r border-gray-300 pr-2">
+              <button onClick={() => applyCommand('inlineCode')} className="toolbar-btn" title="Inline Code <code>">
+                <Code size={16} />
               </button>
               <button
                 onClick={() => {
                   const lang = prompt('Language (optional):') || '';
-                  insertText(`\`\`\`${lang}\n\n\`\`\``);
+                  insertText(`<syntaxhighlight lang="${lang}">\n\n</syntaxhighlight>`);
                 }}
                 className="toolbar-btn"
                 title="Code Block"
               >
                 <span className="text-sm font-bold">{'{}'}</span>
               </button>
-            </div>
-
-            {/* Math & Other */}
-            <div className="flex gap-1 bg-gray-50 rounded-lg p-1">
               <button
-                onClick={() => applyCommand('mathInline')}
+                onClick={() => applyCommand('math')}
                 className="toolbar-btn"
-                title="Inline Math"
+                title="Math Formula <math>"
               >
-                <span className="text-sm font-bold">$x$</span>
-              </button>
-              <button
-                onClick={() => insertText('$$\n\n$$')}
-                className="toolbar-btn"
-                title="Math Block"
-              >
-                <span className="text-sm font-bold">$$</span>
-              </button>
-              <button onClick={() => applyCommand('horizontalRule')} className="toolbar-btn" title="Horizontal Rule">
-                <Minus size={18} />
+                <span className="text-sm font-bold">Σ</span>
               </button>
             </div>
 
-            {/* Callout */}
-            <div className="flex gap-1 bg-gray-50 rounded-lg p-1">
+            {/* Special */}
+            <div className="flex items-center gap-0.5 border-r border-gray-300 pr-2">
               <button
                 onClick={() => {
-                  const type = prompt('Type (info/warning/success/error/note/tip):') || 'info';
-                  insertText(`!!! ${type}\nYour content here\n!!!`);
+                  const headers = prompt('Headers (comma-separated):');
+                  if (headers) {
+                    const headersArr = headers.split(',').map(h => h.trim());
+                    const rows = prompt('Number of rows:');
+                    const numRows = parseInt(rows || '2');
+                    const tableRows: string[][] = [];
+                    for (let i = 0; i < numRows; i++) {
+                      tableRows.push(headersArr.map(() => 'Cell'));
+                    }
+                    const tableText = applyCommand('table', headersArr, tableRows);
+                  } else {
+                    insertText('{| class="wikitable"\n|+ Caption\n! Header 1 !! Header 2\n|-\n| Cell 1 || Cell 2\n|-\n| Cell 3 || Cell 4\n|}');
+                  }
                 }}
                 className="toolbar-btn"
-                title="Callout"
+                title="Table"
               >
-                <span className="text-sm">⚠️</span>
+                <Table size={16} />
+              </button>
+              <button onClick={() => applyCommand('superscript')} className="toolbar-btn" title="Superscript <sup>">
+                <Superscript size={16} />
+              </button>
+              <button onClick={() => applyCommand('subscript')} className="toolbar-btn" title="Subscript <sub>">
+                <Subscript size={16} />
+              </button>
+              <button onClick={() => applyCommand('horizontalRule')} className="toolbar-btn" title="Horizontal Rule ----">
+                <Minus size={16} />
+              </button>
+            </div>
+
+            {/* References & Templates */}
+            <div className="flex items-center gap-0.5">
+              <button
+                onClick={() => {
+                  const refText = prompt('Reference text:');
+                  if (refText) {
+                    const refName = prompt('Reference name (optional):');
+                    applyCommand('reference', refText, refName || undefined);
+                  }
+                }}
+                className="toolbar-btn"
+                title="Reference <ref>"
+              >
+                <FileText size={16} />
+              </button>
+              <button
+                onClick={() => insertText('{{reflist}}')}
+                className="toolbar-btn"
+                title="References List"
+              >
+                <Hash size={16} />
+              </button>
+              <button
+                onClick={() => {
+                  const templateName = prompt('Template name:');
+                  if (templateName) {
+                    insertText(`{{${templateName}}}`);
+                  }
+                }}
+                className="toolbar-btn"
+                title="Template {{}}"
+              >
+                <Package size={16} />
               </button>
             </div>
           </div>
@@ -310,71 +377,75 @@ export default function WYSIWYGEditor() {
       {/* Editor Area */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className={`grid ${mode === 'split' ? 'grid-cols-2' : 'grid-cols-1'} gap-6`}>
-          {/* Markdown Editor */}
+          {/* Wikitext Editor */}
           {(mode === 'edit' || mode === 'split') && (
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-5 py-3 border-b border-gray-200">
-                <h3 className="font-semibold text-gray-700 flex items-center gap-2">
-                  <FileCode size={18} className="text-blue-600" />
-                  Markdown Editor
+            <div className="bg-white rounded border border-gray-300 overflow-hidden shadow-sm">
+              <div className="bg-gray-100 px-4 py-2 border-b border-gray-300">
+                <h3 className="font-medium text-gray-700 flex items-center gap-2 text-sm">
+                  <FileCode size={16} className="text-blue-600" />
+                  Wikitext Editor
                 </h3>
               </div>
               <textarea
                 ref={textareaRef}
-                value={markdown}
-                onChange={(e) => setMarkdown(e.target.value)}
+                value={wikitext}
+                onChange={(e) => setWikitext(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Start writing your content here...
+                placeholder="Start writing your article...
 
-Try some formatting:
-**Bold** or __bold__
-*Italic* or _italic_
-~~Strikethrough~~
-==Highlight==
-`inline code`
-$x^2 + y^2 = z^2$ (inline math)
+Try MediaWiki syntax:
+'''Bold''' or ''Italic''
+== Heading 2 ==
+=== Heading 3 ===
 
-# Heading 1
-## Heading 2
+* Unordered list
+# Ordered list
+; Term : Definition
 
-> Blockquote
+[[Internal Link]] or [[Page|Display Text]]
+[http://example.com External Link]
 
-- Bullet list
-1. Numbered list
-- [ ] Task list
+[[File:Image.jpg|thumb|Caption]]
+[[Media:Video.mp4]]
 
-[Link text](url)
-![Alt text](image-url)
-[!youtube](video-id)
-
-```javascript
+<code>inline code</code>
+<syntaxhighlight lang='python'>
 code block
-```
+</syntaxhighlight>
 
-$$
-E = mc^2
-$$
+<math>E = mc^2</math>
 
-!!! info
-Callout boxes
-!!!
+{| class='wikitable'
+|+ Table Caption
+! Header 1 !! Header 2
+|-
+| Cell 1 || Cell 2
+|}
+
+<ref>Reference text</ref>
+{{reflist}}
+
+{{Template|param=value}}
+
+----
 "
-                className="w-full h-[600px] p-6 font-mono text-sm resize-none focus:outline-none"
+                className="w-full h-[600px] p-4 font-mono text-sm resize-none focus:outline-none"
+                style={{ lineHeight: '1.6' }}
               />
             </div>
           )}
 
           {/* Preview */}
           {(mode === 'preview' || mode === 'split') && (
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-5 py-3 border-b border-gray-200">
-                <h3 className="font-semibold text-gray-700 flex items-center gap-2">
-                  <Eye size={18} className="text-indigo-600" />
+            <div className="bg-white rounded border border-gray-300 overflow-hidden shadow-sm">
+              <div className="bg-gray-100 px-4 py-2 border-b border-gray-300">
+                <h3 className="font-medium text-gray-700 flex items-center gap-2 text-sm">
+                  <Eye size={16} className="text-green-600" />
                   Live Preview
                 </h3>
               </div>
               <div
-                className="prose prose-lg max-w-none p-6 h-[600px] overflow-auto"
+                className="wiki-content p-6 h-[600px] overflow-auto"
                 dangerouslySetInnerHTML={{ __html: preview }}
               />
             </div>
@@ -382,10 +453,10 @@ Callout boxes
         </div>
 
         {/* Metadata Panel */}
-        {metadata && Object.keys(metadata).some(key => metadata[key]?.length > 0) && (
-          <div className="mt-6 bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-            <h3 className="font-semibold text-gray-700 mb-4 text-lg">Document Metadata</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {metadata && Object.keys(metadata).some((key: string) => metadata[key]?.length > 0) && (
+          <div className="mt-6 bg-white rounded border border-gray-300 p-6 shadow-sm">
+            <h3 className="font-semibold text-gray-700 mb-4 text-lg">Article Metadata</h3>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {metadata.headings?.length > 0 && (
                 <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
                   <span className="font-medium text-blue-900 text-sm">Headings</span>
@@ -410,6 +481,12 @@ Callout boxes
                   <div className="text-2xl font-bold text-orange-700 mt-1">{metadata.videos.length}</div>
                 </div>
               )}
+              {metadata.footnotes?.length > 0 && (
+                <div className="bg-red-50 rounded-lg p-3 border border-red-200">
+                  <span className="font-medium text-red-900 text-sm">References</span>
+                  <div className="text-2xl font-bold text-red-700 mt-1">{metadata.footnotes.length}</div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -417,84 +494,78 @@ Callout boxes
 
       <style jsx>{`
         .toolbar-btn {
-          @apply p-2 rounded-md hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 transition text-gray-700 hover:text-blue-600;
+          @apply p-1.5 rounded hover:bg-gray-200 transition text-gray-700 hover:text-blue-600;
         }
         
-        .prose {
-          @apply text-gray-800;
+        .wiki-content {
+          @apply text-gray-800 font-serif;
+          line-height: 1.6;
         }
         
-        .prose h1 { @apply text-4xl font-bold mt-8 mb-4 text-gray-900; }
-        .prose h2 { @apply text-3xl font-bold mt-6 mb-3 text-gray-900; }
-        .prose h3 { @apply text-2xl font-bold mt-5 mb-2 text-gray-900; }
-        .prose h4 { @apply text-xl font-semibold mt-4 mb-2 text-gray-800; }
-        .prose h5 { @apply text-lg font-semibold mt-3 mb-1 text-gray-800; }
-        .prose h6 { @apply text-base font-semibold mt-2 mb-1 text-gray-800; }
+        .wiki-content h1 { @apply text-3xl font-bold mt-6 mb-4 text-gray-900 border-b-2 border-gray-300 pb-2; }
+        .wiki-content h2 { @apply text-2xl font-bold mt-5 mb-3 text-gray-900 border-b border-gray-300 pb-1; }
+        .wiki-content h3 { @apply text-xl font-bold mt-4 mb-2 text-gray-900; }
+        .wiki-content h4 { @apply text-lg font-semibold mt-3 mb-2 text-gray-800; }
+        .wiki-content h5 { @apply text-base font-semibold mt-2 mb-1 text-gray-800; }
+        .wiki-content h6 { @apply text-sm font-semibold mt-2 mb-1 text-gray-800; }
         
-        .prose p { @apply my-4 leading-relaxed; }
-        .prose a { @apply text-blue-600 hover:text-blue-700 hover:underline transition; }
-        .prose strong { @apply font-bold text-gray-900; }
-        .prose em { @apply italic; }
-        .prose code { @apply bg-gray-100 px-2 py-1 rounded text-sm font-mono text-pink-600; }
-        .prose pre { @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-4; }
-        .prose blockquote { @apply border-l-4 border-blue-500 pl-4 italic my-4 text-gray-700 bg-blue-50 py-2 rounded-r; }
-        .prose hr { @apply my-8 border-gray-300; }
-        .prose ul { @apply list-disc pl-6 my-4; }
-        .prose ol { @apply list-decimal pl-6 my-4; }
-        .prose li { @apply my-2; }
-        .prose table { @apply border-collapse w-full my-4 shadow-sm; }
-        .prose th { @apply border border-gray-300 px-4 py-2 bg-gray-100 font-semibold text-left; }
-        .prose td { @apply border border-gray-300 px-4 py-2; }
-        .prose img { @apply max-w-full h-auto rounded-lg my-4 shadow-md; }
-        .prose mark { @apply bg-yellow-200 px-1 rounded; }
-        .prose del { @apply line-through text-gray-500; }
-        .prose ins { @apply underline decoration-green-500; }
-        .prose kbd { @apply bg-gray-200 px-2 py-1 rounded text-sm font-mono border border-gray-400 shadow-sm; }
+        .wiki-content p { @apply my-3 leading-relaxed; }
+        .wiki-content a.external { @apply text-blue-600 hover:underline; }
+        .wiki-content a.internal { @apply text-blue-700 hover:underline; }
+        .wiki-content strong { @apply font-bold; }
+        .wiki-content em { @apply italic; }
+        .wiki-content code.inline-code { @apply bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-pink-700 border border-gray-300; }
+        .wiki-content pre.code-block { @apply bg-gray-50 border border-gray-300 p-4 rounded my-4 overflow-x-auto text-sm; }
+        .wiki-content pre.code-block code { @apply font-mono text-gray-800; }
+        .wiki-content hr.divider { @apply my-6 border-gray-300; }
         
-        .prose .alert { @apply rounded-lg my-4 shadow-sm; }
-        .prose .math-block { @apply my-4 overflow-x-auto bg-gray-50 p-4 rounded-lg border border-gray-200; }
-        .prose .math-inline { @apply mx-1; }
+        .wiki-content li.list-item { @apply my-1 ml-8; }
+        .wiki-content li.list-item:before { content: "•"; @apply mr-2; }
+        .wiki-content li.list-item.ordered { counter-increment: list; }
+        .wiki-content li.list-item.ordered:before { content: counter(list) "."; @apply mr-2; }
         
-        .prose .table-of-contents {
-          @apply bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-5 mb-6 shadow-md;
-        }
-        .prose .table-of-contents ul {
-          @apply list-none pl-0;
-        }
-        .prose .table-of-contents li {
-          @apply my-1;
-        }
-        .prose .toc-level-2 { @apply pl-4; }
-        .prose .toc-level-3 { @apply pl-8; }
-        .prose .toc-level-4 { @apply pl-12; }
-        .prose .toc-level-5 { @apply pl-16; }
-        .prose .toc-level-6 { @apply pl-20; }
+        .wiki-content dt.definition-term { @apply font-bold mt-2; }
+        .wiki-content dd.definition-desc { @apply ml-8 mb-2; }
         
-        .prose details {
-          @apply border-2 border-gray-300 rounded-lg p-4 my-4 shadow-sm;
-        }
-        .prose summary {
-          @apply font-semibold cursor-pointer hover:text-blue-600 transition;
-        }
+        .wiki-content table.wikitable { @apply border-collapse border border-gray-400 w-full my-4 bg-gray-50; }
+        .wiki-content table.wikitable caption { @apply font-bold py-2 bg-gray-200; }
+        .wiki-content table.wikitable th { @apply border border-gray-400 px-3 py-2 bg-gray-200 font-bold text-left; }
+        .wiki-content table.wikitable td { @apply border border-gray-400 px-3 py-2; }
         
-        .prose figure {
-          @apply my-6;
-        }
-        .prose figcaption {
-          @apply text-center text-sm text-gray-600 mt-2 italic;
-        }
-
-        .prose .youtube-embed {
-          @apply rounded-lg shadow-lg my-6;
-        }
-
-        .prose .task-item {
-          @apply list-none;
-        }
-
-        .prose .task-item input {
-          @apply mr-2;
-        }
+        .wiki-content figure.thumb { @apply float-right ml-4 mb-4 bg-gray-50 border border-gray-300 p-2 max-w-xs; }
+        .wiki-content figure.thumb img { @apply w-full h-auto; }
+        .wiki-content figure.thumb figcaption { @apply text-sm text-gray-600 mt-2 text-center; }
+        
+        .wiki-content img.media-image { @apply max-w-full h-auto my-2; }
+        .wiki-content video.media-video { @apply max-w-full my-4 border border-gray-300; }
+        
+        .wiki-content .math-inline { @apply mx-1 font-serif italic; }
+        
+        .wiki-content sup.reference a { @apply text-blue-600 no-underline text-xs; }
+        
+        .wiki-content .reflist { @apply mt-8 pt-4 border-t-2 border-gray-300; }
+        .wiki-content .reflist h2 { @apply text-xl font-bold mb-3; }
+        .wiki-content .reflist ol { @apply list-decimal pl-6; }
+        .wiki-content .reflist li { @apply my-2 text-sm; }
+        
+        .wiki-content .toc { @apply float-right ml-4 mb-4 bg-gray-50 border border-gray-300 p-4 max-w-xs; }
+        .wiki-content .toc .toc-title { @apply font-bold text-center mb-2 text-lg; }
+        .wiki-content .toc ul { @apply list-none pl-0; }
+        .wiki-content .toc li { @apply my-1; }
+        .wiki-content .toc li.toc-level-2 { @apply pl-0; }
+        .wiki-content .toc li.toc-level-3 { @apply pl-4; }
+        .wiki-content .toc li.toc-level-4 { @apply pl-8; }
+        .wiki-content .toc li.toc-level-5 { @apply pl-12; }
+        .wiki-content .toc li.toc-level-6 { @apply pl-16; }
+        .wiki-content .toc a { @apply text-blue-700 hover:underline text-sm; }
+        
+        .wiki-content .template { @apply bg-yellow-50 border border-yellow-300 p-3 rounded my-3 text-sm; }
+        
+        .wiki-content del { @apply line-through text-gray-500; }
+        .wiki-content ins { @apply underline; }
+        .wiki-content sup { @apply text-xs align-super; }
+        .wiki-content sub { @apply text-xs align-sub; }
+        .wiki-content small { @apply text-sm; }
       `}</style>
     </div>
   );
