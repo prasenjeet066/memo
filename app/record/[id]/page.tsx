@@ -15,7 +15,7 @@ export default function RecordIdPage({params}) {
   }
  
   const isMobile = useMobile()
-  const [isExpanded, setIsExpanded] = useState(true)
+  const [isExpanded, setIsExpanded] = useState(false)
   
   const NavList = [
     { name: 'Home', icon: Home, href: '/' },
