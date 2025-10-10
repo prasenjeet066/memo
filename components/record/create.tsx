@@ -164,6 +164,12 @@ export default function MediaWikiEditor() {
         >
           <Languages className="h-5 w-5" />
         </button>
+        <button
+          onClick={handleSave}
+          className="text-sm bg-black text-white px-3 py-1 ml-2 hover:bg-gray-800 transition"
+        >
+          Publish
+        </button>
       </div>
 
       {/* Toolbar */}
@@ -197,12 +203,7 @@ export default function MediaWikiEditor() {
             )
           )}
         </div>
-        <button
-          onClick={handleSave}
-          className="text-sm bg-black text-white px-3 py-1 ml-2 hover:bg-gray-800 transition"
-        >
-          Publish
-        </button>
+        
       </div>
 
       {/* Editor / Preview Area */}
