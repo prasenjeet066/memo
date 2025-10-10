@@ -165,6 +165,10 @@ export default function MediaWikiEditor() {
             </button>
           ))}
         </div>
+        <select>
+          <option>Markup</option>
+          <option>Visual </option>
+        </select>
         <button
           onClick={handleSave}
           className='text-sm rounded-full bg-black text-white px-3 py-1 ml-2 hover:bg-gray-800 transition'
