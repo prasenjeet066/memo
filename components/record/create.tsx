@@ -145,7 +145,7 @@ export default function MediaWikiEditor() {
   ];
   
   return (
-    <div className='w-full h-full  '>
+    <div className='w-full h-full'>
       <div className='flex items-center justify-between border-b p-2'>
         <div className='flex items-center space-x-2'>
           <List className='h-5 w-5' />
@@ -165,10 +165,7 @@ export default function MediaWikiEditor() {
             </button>
           ))}
         </div>
-        <select>
-          <option>Markup</option>
-          <option>Visual </option>
-        </select>
+        
         <button
           onClick={handleSave}
           className='text-sm rounded-full bg-black text-white px-3 py-1 ml-2 hover:bg-gray-800 transition'
