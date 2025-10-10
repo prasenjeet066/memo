@@ -74,10 +74,10 @@ export default function MediaWikiEditor() {
   // Switch modes, keeping content in sync
   const handleModeSwitch = () => {
     if (editorMode === "visual") {
-      // Going to source: get wikitext from visual editor (extract plain wikitext if needed)
+      // Going to source: get wikitext from visual editor
       if (visualRef.current) {
-        // For true WYSIWYG, convert HTML back to wikitext (optional: you can use stripMarkup or keep as HTML)
-        // For now, use current wikitext state
+        // You may want a proper html-to-wikitext converter here
+        setWikitext(visualRef.current.innerText); // crude fallback
       }
       setEditorMode("source");
     } else {
@@ -127,7 +127,7 @@ export default function MediaWikiEditor() {
         );
         range.insertNode(fragment);
         // Update wikitext (serialize back)
-        setWikitext(el.innerText); // crude, but keeps in sync
+        setWikitext(el.innerText); // crude, but keeps in sync when toolbar is used
         setCaretToEnd(el);
       }
     }
@@ -295,10 +295,6 @@ Examples:
             suppressContentEditableWarning
             spellCheck={true}
             style={{ fontFamily: "inherit" }}
-            onInput={(e) => {
-              // Sync back to wikitext using innerText (crude)
-              setWikitext((e.currentTarget as HTMLDivElement).innerText);
-            }}
             onKeyDown={handleKeyDown}
           >
             {/* parsed HTML will be injected here by useEffect */}
@@ -306,15 +302,16 @@ Examples:
         )}
         <style dangerouslySetInnerHTML={{ __html: DEFAULT_STYLES }} />
         {/* Always show parsed preview (read-only) */}
-        {editorMode === "source" && (        <div
-          className={`bg-white rounded-lg p-6 border-2 border-gray-300 overflow-auto ${
-            editorMode === "source" ? "flex-1" : "w-full"
-          }`}
-        >
-          
-          <div dangerouslySetInnerHTML={{ __html: visualHtml || '<p class="text-gray-400">Preview will appear here...</p>' }} />
-        </div> )}
-        </div>
+        {editorMode === "source" && (
+          <div
+            className={`bg-white rounded-lg p-6 border-2 border-gray-300 overflow-auto ${
+              editorMode === "source" ? "flex-1" : "w-full"
+            }`}
+          >
+            <div dangerouslySetInnerHTML={{ __html: visualHtml || '<p class="text-gray-400">Preview will appear here...</p>' }} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
