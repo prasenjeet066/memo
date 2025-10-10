@@ -267,7 +267,7 @@ export default function MediaWikiEditor() {
       </div>
 
       {/* Editor / Preview Area */}
-      <div className="flex gap-2 p-4">
+      <div className="flex gap-2">
         {editorMode === "source" && (
           <textarea
             ref={textareaRef}
@@ -290,7 +290,7 @@ Examples:
         {editorMode === "visual" && (
           <div
             ref={visualRef}
-            className="flex-1 min-h-[70vh] rounded-lg p-6 border-2 border-gray-300 bg-white outline-none"
+            className="flex-1 min-h-[70vh] rounded-lg p-6 bg-white outline-none"
             contentEditable
             suppressContentEditableWarning
             spellCheck={true}
