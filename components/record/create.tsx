@@ -20,7 +20,7 @@ import {
   Superscript,
   Subscript,
   Type,
-  Translate,
+  Languages,
   FileText,
   ListChecks,
   Puzzle,
@@ -149,7 +149,7 @@ export default function MediaWikiEditor() {
           <h1 className='text-lg font-semibold'>Sakib Al Hasan</h1>
         </div>
         <button className='bg-none outline-none border-none'>
-          <Translate className='h-5 w-5'/>
+          <Languages className='h-5 w-5'/>
         </button>
       </div>
 
@@ -179,7 +179,6 @@ export default function MediaWikiEditor() {
             </select>
           ))}
         </div>
-
         <button
           onClick={handleSave}
           className='text-sm bg-black text-white px-3 py-1 ml-2 hover:bg-gray-800 transition'
