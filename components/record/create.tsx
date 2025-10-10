@@ -582,7 +582,7 @@ export default function MediaWikiEditor() {
       </div>
 
       {/* Editor Area */}
-      <div className="flex gap-4 p-4">
+      <div className="flex gap-4">
         {editorMode === "source" && (
           <>
             {/* Source Editor */}
