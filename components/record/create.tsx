@@ -416,7 +416,7 @@ export default function MediaWikiEditor() {
       </div>
 
       {/* Editor / Preview Area */}
-      <div className="flex gap-4 p-4">
+      <div className="flex gap-4">
         {editorMode === "source" && (
           <>
             <textarea
@@ -424,7 +424,7 @@ export default function MediaWikiEditor() {
               value={wikitext}
               onChange={(e) => setWikitext(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="flex-1 min-h-[70vh] rounded-lg p-4 outline-none text-sm border-2 border-gray-300 bg-white focus:border-blue-500 font-mono resize-none"
+              className="flex-1 min-h-[70vh] p-4 outline-none text-sm bg-white focus:border-blue-500  resize-none"
               placeholder="Start writing your article using MediaWiki syntax...
 
 Examples:
@@ -434,7 +434,7 @@ Examples:
 * List item
 [[Link]]"
             />
-            <div className="flex-1 bg-white rounded-lg p-6 border-2 border-gray-300 overflow-auto min-h-[70vh]">
+            <div className="flex-1 bg-white overflow-auto min-h-[70vh]">
               <style dangerouslySetInnerHTML={{ __html: DEFAULT_STYLES }} />
               <div dangerouslySetInnerHTML={{ __html: parseResult.html || '<p class="text-gray-400">Preview will appear here...</p>' }} />
             </div>
@@ -449,7 +449,7 @@ Examples:
               ref={visualRef}
               onInput={handleVisualInput}
               onKeyDown={handleKeyDown}
-              className="min-h-[70vh] rounded-lg p-6 bg-white border-2 border-gray-300 focus:border-blue-500 outline-none"
+              className="min-h-[70vh] rounded-lg bg-white focus:border-blue-500 outline-none"
               contentEditable
               suppressContentEditableWarning
               spellCheck={true}
