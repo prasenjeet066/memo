@@ -20,6 +20,7 @@ import {
   Superscript,
   Subscript,
   Type,
+  Translate,
   FileText,
   ListChecks,
   Puzzle,
@@ -111,10 +112,6 @@ export default function MediaWikiEditor() {
   const Blocks = [
     { icon: Bold, action: 'bold' },
     { icon: Italic, action: 'italic' },
-    { icon: Type, action: 'boldItalic' },
-    { icon: Strikethrough, action: 'strikethrough' },
-    { icon: Underline, action: 'underline' },
-    { icon: Code, action: 'inlineCode' },
     {
       name: 'Heading',
       items: [
@@ -123,6 +120,11 @@ export default function MediaWikiEditor() {
         { icon: Heading3, action: 'heading3' },
       ]
     },
+    { icon: Type, action: 'boldItalic' },
+    { icon: Strikethrough, action: 'strikethrough' },
+    { icon: Underline, action: 'underline' },
+    { icon: Code, action: 'inlineCode' },
+    
     { icon: Link, action: 'link' },
     { icon: ImageIcon, action: 'image' },
     { icon: Video, action: 'video' },
@@ -146,6 +148,9 @@ export default function MediaWikiEditor() {
           <List className='h-5 w-5' />
           <h1 className='text-lg font-semibold'>Sakib Al Hasan</h1>
         </div>
+        <button className='bg-none outline-none border-none'>
+          <Translate className='h-5 w-5'/>
+        </button>
       </div>
 
       <div className='flex items-center justify-between w-full'>
@@ -154,7 +159,7 @@ export default function MediaWikiEditor() {
             <button
               key={i}
               onClick={() => applyCommand(block.action)}
-              className='p-1 rounded transition border'
+              className='p-1 rounded border transition px-2'
             >
               <block.icon className='h-4 w-4' />
             </button>
@@ -177,13 +182,13 @@ export default function MediaWikiEditor() {
 
         <button
           onClick={handleSave}
-          className='text-sm rounded-full bg-black text-white px-3 py-1 ml-2 hover:bg-gray-800 transition'
+          className='text-sm bg-black text-white px-3 py-1 ml-2 hover:bg-gray-800 transition'
         >
           Publish
         </button>
       </div>
 
-      <div className='w-full min-h-screen bg-gray-50'>
+      <div className='w-full min-h-screen bg-gray-50 hidden'>
         <textarea
           ref={textareaRef}
           value={wikitext}
