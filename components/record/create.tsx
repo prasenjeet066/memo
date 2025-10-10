@@ -26,262 +26,132 @@ import {
   Puzzle,
 } from "lucide-react";
 
-// Inline the markup utilities since we can't import from external files
-interface ParseResult {
-  html: string;
-  metadata: any;
-  styles: string;
+// Import MediaWiki markup utilities
+import {
+  parseMarkup,
+  applyEditorCommand,
+  EditorCommands,
+  DEFAULT_STYLES,
+  type ParseResult,
+} from "../../lib/utils/dist/markup";
+
+// Helper: Set caret after html insertion in contentEditable
+function setCaretToEnd(el: HTMLElement) {
+  if (!el) return;
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
 }
 
-const DEFAULT_STYLES = `
-.markup-content {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-size: 16px;
-  line-height: 1.6;
-  color: #202122;
-  padding: 20px;
-}
-.markup-content h1, .markup-content h2, .markup-content h3 {
-  font-weight: 600;
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
-  color: #000;
-}
-.markup-content h1 { font-size: 2em; border-bottom: 1px solid #a2a9b1; padding-bottom: 0.25em; }
-.markup-content h2 { font-size: 1.7em; border-bottom: 1px solid #a2a9b1; padding-bottom: 0.25em; }
-.markup-content h3 { font-size: 1.4em; }
-.markup-content p { margin: 0.5em 0 1em 0; }
-.markup-content a { color: #0645ad; text-decoration: none; }
-.markup-content a:hover { text-decoration: underline; }
-.markup-content strong { font-weight: 700; }
-.markup-content em { font-style: italic; }
-`;
-
-const parseMarkup = (text: string): ParseResult => {
-  let html = text;
-  const metadata = {
-    images: [],
-    videos: [],
-    links: [],
-    headings: [],
-    footnotes: [],
-    templates: []
-  };
-
-  // Basic MediaWiki parsing
-  // Bold and italic
-  html = html.replace(/'''''(.+?)'''''/g, '<strong><em>$1</em></strong>');
-  html = html.replace(/'''(.+?)'''/g, '<strong>$1</strong>');
-  html = html.replace(/''(.+?)''/g, '<em>$1</em>');
-
-  // Headings
-  for (let i = 6; i >= 1; i--) {
-    const equals = '='.repeat(i);
-    const pattern = new RegExp(`^${equals}\\s*([^=]+?)\\s*${equals}\\s*$`, 'gm');
-    html = html.replace(pattern, (m, text) => {
-      const trimmedText = text.trim();
-      return `<h${i}>${trimmedText}</h${i}>`;
-    });
-  }
-
-  // Paragraphs
-  html = html
-    .split(/\n{2,}/)
-    .map(para => {
-      const trimmed = para.trim();
-      if (!trimmed || trimmed.match(/^<(h[1-6]|table|pre|div)/i)) {
-        return trimmed;
-      }
-      return `<p>${trimmed}</p>`;
-    })
-    .join('\n');
-
-  html = `<div class="markup-content">${html}</div>`;
-  return { html, metadata, styles: DEFAULT_STYLES };
-};
-
-const applyEditorCommand = (
-  text: string,
-  command: string,
-  selectionStart: number,
-  selectionEnd: number,
-  ...args: any[]
-): { text: string; newSelectionStart: number; newSelectionEnd: number } => {
-  const before = text.substring(0, selectionStart);
-  const selection = text.substring(selectionStart, selectionEnd);
-  const after = text.substring(selectionEnd);
-  
-  let transformed = selection;
-  
-  switch (command) {
-    case 'bold':
-      transformed = `'''${selection}'''`;
-      break;
-    case 'italic':
-      transformed = `''${selection}''`;
-      break;
-    case 'boldItalic':
-      transformed = `'''''${selection}'''''`;
-      break;
-    case 'strikethrough':
-      transformed = `<s>${selection}</s>`;
-      break;
-    case 'underline':
-      transformed = `<u>${selection}</u>`;
-      break;
-    case 'inlineCode':
-      transformed = `<code>${selection}</code>`;
-      break;
-    case 'heading1':
-      transformed = `= ${selection} =`;
-      break;
-    case 'heading2':
-      transformed = `== ${selection} ==`;
-      break;
-    case 'heading3':
-      transformed = `=== ${selection} ===`;
-      break;
-    case 'link':
-      const url = prompt("Enter URL:");
-      if (url) {
-        const linkText = selection || prompt("Link text:");
-        transformed = linkText ? `[${url} ${linkText}]` : `[${url}]`;
-      }
-      break;
-    case 'image':
-      const filename = prompt("Enter image filename:");
-      if (filename) {
-        transformed = `[[File:${filename}|thumb|${selection || 'Caption'}]]`;
-      }
-      break;
-    case 'video':
-      const videoFile = prompt("Enter video filename:");
-      if (videoFile) {
-        transformed = `[[Media:${videoFile}|${selection || 'Video'}]]`;
-      }
-      break;
-    case 'codeBlock':
-      const lang = prompt("Programming language (optional):");
-      transformed = lang 
-        ? `<syntaxhighlight lang="${lang}">\n${selection}\n</syntaxhighlight>`
-        : `<syntaxhighlight>\n${selection}\n</syntaxhighlight>`;
-      break;
-    case 'math':
-      transformed = `<math>${selection}</math>`;
-      break;
-    case 'unorderedList':
-      transformed = `* ${selection}`;
-      break;
-    case 'orderedList':
-      transformed = `# ${selection}`;
-      break;
-    case 'table':
-      transformed = `{| class="wikitable"\n! Header\n|-\n| ${selection}\n|}`;
-      break;
-    case 'template':
-      const templateName = prompt("Template name:");
-      if (templateName) {
-        transformed = `{{${templateName}|${selection}}}`;
-      }
-      break;
-    case 'horizontalRule':
-      transformed = '----';
-      break;
-    case 'superscript':
-      transformed = `<sup>${selection}</sup>`;
-      break;
-    case 'subscript':
-      transformed = `<sub>${selection}</sub>`;
-      break;
-    case 'reference':
-      transformed = `<ref>${selection}</ref>`;
-      break;
-    case 'refList':
-      transformed = '{{reflist}}';
-      break;
-  }
-  
-  const newText = before + transformed + after;
-  
-  return {
-    text: newText,
-    newSelectionStart: before.length,
-    newSelectionEnd: before.length + transformed.length
-  };
-};
-
+// Main Editor component
 export default function MediaWikiEditor() {
-  const [wikitext, setWikitext] = useState("");
-  const [preview, setPreview] = useState("");
-  const [metadata, setMetadata] = useState<any>({});
-  const [title, setTitle] = useState("");
+  // Editor states
+  const [wikitext, setWikitext] = useState<string>("");
+  const [title, setTitle] = useState<string>("");
   const [editorMode, setEditorMode] = useState<"visual" | "source">("visual");
+  const [parseResult, setParseResult] = useState<ParseResult>(parseMarkup(""));
+  const [visualHtml, setVisualHtml] = useState<string>("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const editorRef = useRef<HTMLDivElement>(null);
-  
-  // Update preview whenever source (wikitext) changes
+  const visualRef = useRef<HTMLDivElement>(null);
+
+  // Parse wikitext whenever it changes
   useEffect(() => {
     const result = parseMarkup(wikitext);
-    setPreview(result.html);
-    setMetadata(result.metadata);
+    setParseResult(result);
+    setVisualHtml(result.html);
   }, [wikitext]);
-  
-  // Apply formatting commands
-  const applyCommand = (command: string, ...args: any[]) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const result = applyEditorCommand(wikitext, command, start, end, ...args);
-    setWikitext(result.text);
-    
-    // restore caret
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(
-        result.newSelectionStart,
-        result.newSelectionEnd
-      );
-    }, 0);
+
+  // Sync visual mode with parsed HTML
+  useEffect(() => {
+    if (editorMode === "visual" && visualRef.current) {
+      visualRef.current.innerHTML = parseResult.html;
+    }
+  }, [parseResult.html, editorMode]);
+
+  // Switch modes, keeping content in sync
+  const handleModeSwitch = () => {
+    if (editorMode === "visual") {
+      // Going to source: get wikitext from visual editor (extract plain wikitext if needed)
+      if (visualRef.current) {
+        // For true WYSIWYG, convert HTML back to wikitext (optional: you can use stripMarkup or keep as HTML)
+        // For now, use current wikitext state
+      }
+      setEditorMode("source");
+    } else {
+      setEditorMode("visual");
+    }
   };
-  
-  // Insert text helper
-  const insertText = (text: string) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const newContent =
-      wikitext.substring(0, start) + text + wikitext.substring(end);
-    setWikitext(newContent);
-    
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + text.length, start + text.length);
-    }, 0);
+
+  // Toolbar command handler
+  const handleCommand = (command: string, ...args: any[]) => {
+    if (editorMode === "source") {
+      // Source mode: modify wikitext string
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const result = applyEditorCommand(wikitext, command, start, end, ...args);
+      setWikitext(result.text);
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(result.newSelectionStart, result.newSelectionEnd);
+      }, 0);
+    } else {
+      // Visual mode: apply formatting to selection in contentEditable div
+      const el = visualRef.current;
+      if (!el) return;
+      el.focus();
+
+      // Get selection within contentEditable
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        const selectedText = sel.toString();
+        // Use editor commands for markup insertion
+        let htmlSnippet = "";
+        // Use EditorCommands mapping for visual mode
+        if (EditorCommands[command]) {
+          htmlSnippet = EditorCommands[command].execute(selectedText, ...args);
+        } else {
+          // Fallback: wrap selection
+          htmlSnippet = selectedText;
+        }
+        // Replace selection with formatted HTML
+        range.deleteContents();
+        // Insert as HTML node
+        const fragment = document.createRange().createContextualFragment(
+          parseMarkup(htmlSnippet).html.replace(/^<div[^>]*>|<\/div>$/g, "")
+        );
+        range.insertNode(fragment);
+        // Update wikitext (serialize back)
+        setWikitext(el.innerText); // crude, but keeps in sync
+        setCaretToEnd(el);
+      }
+    }
   };
-  
-  // Keyboard shortcuts (Ctrl+B, etc.)
+
+  // Keyboard shortcuts
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.ctrlKey || e.metaKey) {
       switch (e.key) {
         case "b":
           e.preventDefault();
-          applyCommand("bold");
+          handleCommand("bold");
           break;
         case "i":
           e.preventDefault();
-          applyCommand("italic");
+          handleCommand("italic");
           break;
         case "u":
           e.preventDefault();
-          applyCommand("underline");
+          handleCommand("underline");
           break;
         case "k":
           e.preventDefault();
-          applyCommand("link");
+          handleCommand("link");
           break;
         case "s":
           e.preventDefault();
@@ -290,21 +160,23 @@ export default function MediaWikiEditor() {
       }
     }
   };
-  
+
   const handleSave = () => {
-    console.log("Saving:", { title, wikitext, metadata });
+    // You would save title, wikitext, and metadata
+    console.log("Saving:", { title, wikitext, metadata: parseResult.metadata });
     alert("Article saved! Check console for details.");
   };
-  
+
+  // Toolbar blocks
   const Blocks = [
     { icon: Bold, action: "bold", label: "Bold" },
     { icon: Italic, action: "italic", label: "Italic" },
     {
       name: "Heading",
       items: [
-        { icon: Heading1, action: "heading1", label: "Heading 1" },
-        { icon: Heading2, action: "heading2", label: "Heading 2" },
-        { icon: Heading3, action: "heading3", label: "Heading 3" },
+        { icon: Heading1, action: "heading", label: "Heading 1", args: [1] },
+        { icon: Heading2, action: "heading", label: "Heading 2", args: [2] },
+        { icon: Heading3, action: "heading", label: "Heading 3", args: [3] },
       ],
     },
     { icon: Type, action: "boldItalic", label: "Bold Italic" },
@@ -326,7 +198,7 @@ export default function MediaWikiEditor() {
     { icon: FileText, action: "reference", label: "Reference" },
     { icon: ListChecks, action: "refList", label: "Reference List" },
   ];
-  
+
   return (
     <div className="w-full min-h-screen bg-gray-50">
       {/* Header */}
@@ -338,9 +210,7 @@ export default function MediaWikiEditor() {
         <div className="flex items-center gap-2">
           <button
             className="p-2 hover:bg-gray-100 rounded transition"
-            onClick={() =>
-              setEditorMode(editorMode === "visual" ? "source" : "visual")
-            }
+            onClick={handleModeSwitch}
             title="Toggle editor mode"
           >
             <Languages className="h-5 w-5" />
@@ -361,7 +231,7 @@ export default function MediaWikiEditor() {
             !block.name ? (
               <button
                 key={i}
-                onClick={() => applyCommand(block.action)}
+                onClick={() => handleCommand(block.action)}
                 className="p-2 rounded border hover:bg-gray-100 transition"
                 title={block.label}
               >
@@ -371,8 +241,11 @@ export default function MediaWikiEditor() {
               <select
                 key={i}
                 onChange={(e) => {
-                  if (e.target.value) {
-                    applyCommand(e.target.value);
+                  const value = e.target.value;
+                  if (value) {
+                    // Find item args
+                    const item = block.items.find((itm) => itm.action === value);
+                    handleCommand(value, ...(item?.args || []));
                     e.target.value = "";
                   }
                 }}
@@ -413,14 +286,33 @@ Examples:
           />
         )}
 
-        {/* Visual preview */}
+        {/* Visual WYSIWYG Editor */}
+        {editorMode === "visual" && (
+          <div
+            ref={visualRef}
+            className="flex-1 min-h-[70vh] rounded-lg p-6 border-2 border-gray-300 bg-white outline-none"
+            contentEditable
+            suppressContentEditableWarning
+            spellCheck={true}
+            style={{ fontFamily: "inherit" }}
+            onInput={(e) => {
+              // Sync back to wikitext using innerText (crude)
+              setWikitext((e.currentTarget as HTMLDivElement).innerText);
+            }}
+            onKeyDown={handleKeyDown}
+          >
+            {/* parsed HTML will be injected here by useEffect */}
+          </div>
+        )}
+
+        {/* Always show parsed preview (read-only) */}
         <div
           className={`bg-white rounded-lg p-6 border-2 border-gray-300 overflow-auto ${
             editorMode === "source" ? "flex-1" : "w-full"
           }`}
         >
           <style dangerouslySetInnerHTML={{ __html: DEFAULT_STYLES }} />
-          <div dangerouslySetInnerHTML={{ __html: preview || '<p class="text-gray-400">Preview will appear here...</p>' }} />
+          <div dangerouslySetInnerHTML={{ __html: visualHtml || '<p class="text-gray-400">Preview will appear here...</p>' }} />
         </div>
       </div>
     </div>
