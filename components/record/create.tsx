@@ -304,17 +304,17 @@ Examples:
             {/* parsed HTML will be injected here by useEffect */}
           </div>
         )}
-
+        <style dangerouslySetInnerHTML={{ __html: DEFAULT_STYLES }} />
         {/* Always show parsed preview (read-only) */}
-        <div
+        {editorMode === "source" && (        <div
           className={`bg-white rounded-lg p-6 border-2 border-gray-300 overflow-auto ${
             editorMode === "source" ? "flex-1" : "w-full"
           }`}
         >
-          <style dangerouslySetInnerHTML={{ __html: DEFAULT_STYLES }} />
+          
           <div dangerouslySetInnerHTML={{ __html: visualHtml || '<p class="text-gray-400">Preview will appear here...</p>' }} />
+        </div> )}
         </div>
-      </div>
     </div>
   );
 }
