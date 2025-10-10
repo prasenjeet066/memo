@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Bold,
   Italic,
@@ -24,8 +24,10 @@ import {
   FileText,
   ListChecks,
   Puzzle,
+  Save,
+  Undo,
+  Redo,
 } from "lucide-react";
-
 // Import MediaWiki markup utilities
 import {
   parseMarkup,
@@ -62,98 +64,98 @@ function getSelectionInfo(el: HTMLElement) {
   };
 }
 
-// Main Editor component
 export default function MediaWikiEditor() {
-  // Editor states
   const [wikitext, setWikitext] = useState<string>("");
   const [title, setTitle] = useState<string>("");
   const [editorMode, setEditorMode] = useState<"visual" | "source">("visual");
   const [parseResult, setParseResult] = useState<ParseResult>(parseMarkup(""));
+  const [history, setHistory] = useState<string[]>([""]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const [wordCount, setWordCount] = useState(0);
+  const [error, setError] = useState<string>("");
+  
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const visualRef = useRef<HTMLDivElement>(null);
   const isUpdatingRef = useRef(false);
+  const debounceTimer = useRef<number | null>(null);
 
-  // Parse wikitext whenever it changes (only in source mode or initial load)
+  // Debounced wikitext update
+  const updateWikitextDebounced = useCallback((newText: string) => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = window.setTimeout(() => {
+      setWikitext(newText);
+      addToHistory(newText);
+    }, 300);
+  }, []);
+
+  // Add to history
+  const addToHistory = (text: string) => {
+    setHistory(prev => {
+      const newHistory = prev.slice(0, historyIndex + 1);
+      newHistory.push(text);
+      if (newHistory.length > 50) newHistory.shift();
+      return newHistory;
+    });
+    setHistoryIndex(prev => Math.min(prev + 1, 49));
+  };
+
+  // Undo/Redo
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      setWikitext(history[newIndex]);
+      if (editorMode === "visual" && visualRef.current) {
+        const result = parseMarkup(history[newIndex]);
+        visualRef.current.innerHTML = result.html || '<p><br></p>';
+      }
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      setWikitext(history[newIndex]);
+      if (editorMode === "visual" && visualRef.current) {
+        const result = parseMarkup(history[newIndex]);
+        visualRef.current.innerHTML = result.html || '<p><br></p>';
+      }
+    }
+  };
+
+  // Parse wikitext
   useEffect(() => {
     if (!isUpdatingRef.current) {
-      const result = parseMarkup(wikitext);
-      setParseResult(result);
+      try {
+        const result = parseMarkup(wikitext);
+        setParseResult(result);
+        setWordCount(wikitext.split(/\s+/).filter(w => w.length > 0).length);
+        setError("");
+      } catch (err) {
+        setError("পার্সিং ত্রুটি: " + (err as Error).message);
+      }
     }
   }, [wikitext]);
 
-  // Update visual editor when switching to visual mode
+  // Update visual editor
   useEffect(() => {
     if (editorMode === "visual" && visualRef.current && !isUpdatingRef.current) {
-      visualRef.current.innerHTML = parseResult.html || '<p><br></p>';
+      const content = parseResult.html || '<p><br></p>';
+      if (visualRef.current.innerHTML !== content) {
+        visualRef.current.innerHTML = content;
+      }
     }
   }, [editorMode, parseResult.html]);
 
-  // Convert HTML back to wikitext (basic conversion)
-  const htmlToWikitext = (html: string): string => {
-    let text = html;
-    
-    // Remove empty paragraphs at start/end
-    text = text.replace(/^<p><br><\/p>/, '').replace(/<p><br><\/p>$/, '');
-    
-    // Headings
-    text = text.replace(/<h2>(.*?)<\/h2>/g, '== $1 ==\n');
-    text = text.replace(/<h3>(.*?)<\/h3>/g, '=== $1 ===\n');
-    text = text.replace(/<h4>(.*?)<\/h4>/g, '==== $1 ====\n');
-    text = text.replace(/<h5>(.*?)<\/h5>/g, '===== $1 =====\n');
-    text = text.replace(/<h6>(.*?)<\/h6>/g, '====== $1 ======\n');
-    
-    // Bold and italic
-    text = text.replace(/<strong><em>(.*?)<\/em><\/strong>/g, "'''''$1'''''");
-    text = text.replace(/<em><strong>(.*?)<\/strong><\/em>/g, "'''''$1'''''");
-    text = text.replace(/<strong>(.*?)<\/strong>/g, "'''$1'''");
-    text = text.replace(/<b>(.*?)<\/b>/g, "'''$1'''");
-    text = text.replace(/<em>(.*?)<\/em>/g, "''$1''");
-    text = text.replace(/<i>(.*?)<\/i>/g, "''$1''");
-    
-    // Other formatting
-    text = text.replace(/<s>(.*?)<\/s>/g, '<s>$1</s>');
-    text = text.replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');
-    text = text.replace(/<code>(.*?)<\/code>/g, '<code>$1</code>');
-    text = text.replace(/<sup>(.*?)<\/sup>/g, '<sup>$1</sup>');
-    text = text.replace(/<sub>(.*?)<\/sub>/g, '<sub>$1</sub>');
-    
-    // Links
-    text = text.replace(/<a href="#([^"]+)">([^<]+)<\/a>/g, (match, href, linkText) => {
-      return href === linkText ? `[[${href}]]` : `[[${href}|${linkText}]]`;
-    });
-    
-    // Lists
-    text = text.replace(/<ul>(.*?)<\/ul>/gs, (match, content) => {
-      return content.replace(/<li>(.*?)<\/li>/g, '* $1\n');
-    });
-    text = text.replace(/<ol>(.*?)<\/ol>/gs, (match, content) => {
-      return content.replace(/<li>(.*?)<\/li>/g, '# $1\n');
-    });
-    
-    // Horizontal rule
-    text = text.replace(/<hr\s*\/?>/g, '----\n');
-    
-    // Code blocks
-    text = text.replace(/<pre><code>(.*?)<\/code><\/pre>/gs, '<syntaxhighlight lang="javascript">$1</syntaxhighlight>');
-    
-    // Paragraphs
-    text = text.replace(/<p>(.*?)<\/p>/g, '$1\n\n');
-    text = text.replace(/<br\s*\/?>/g, '\n');
-    
-    // Clean up
-    text = text.replace(/\n{3,}/g, '\n\n');
-    text = text.trim();
-    
-    return text;
-  };
-
-  // Handle visual editor input
+  // Handle visual input
   const handleVisualInput = () => {
     if (visualRef.current && !isUpdatingRef.current) {
       isUpdatingRef.current = true;
       const html = visualRef.current.innerHTML;
       const newWikitext = htmlToWikitext(html);
-      setWikitext(newWikitext);
+      updateWikitextDebounced(newWikitext);
       setTimeout(() => {
         isUpdatingRef.current = false;
       }, 100);
@@ -163,10 +165,13 @@ export default function MediaWikiEditor() {
   // Switch modes
   const handleModeSwitch = () => {
     if (editorMode === "visual" && visualRef.current) {
-      // Sync any changes before switching
+      isUpdatingRef.current = true;
       const html = visualRef.current.innerHTML;
       const newWikitext = htmlToWikitext(html);
       setWikitext(newWikitext);
+      setTimeout(() => {
+        isUpdatingRef.current = false;
+      }, 100);
     }
     setEditorMode(editorMode === "visual" ? "source" : "visual");
   };
@@ -174,117 +179,211 @@ export default function MediaWikiEditor() {
   // Toolbar command handler
   const handleCommand = (command: string, ...args: any[]) => {
     if (editorMode === "source") {
-      // Source mode: modify wikitext string
       const textarea = textareaRef.current;
       if (!textarea) return;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const result = applyEditorCommand(wikitext, command, start, end, ...args);
-      setWikitext(result.text);
-      setTimeout(() => {
-        textarea.focus();
-        textarea.setSelectionRange(result.newSelectionStart, result.newSelectionEnd);
-      }, 0);
+      
+      try {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const result = applyEditorCommand(wikitext, command, start, end, ...args);
+        setWikitext(result.text);
+        addToHistory(result.text);
+        
+        setTimeout(() => {
+          textarea.focus();
+          textarea.setSelectionRange(result.newSelectionStart, result.newSelectionEnd);
+        }, 0);
+      } catch (err) {
+        setError("কমান্ড ত্রুটি: " + (err as Error).message);
+      }
     } else {
-      // Visual mode: apply formatting directly
       const el = visualRef.current;
       if (!el) return;
       
+      el.focus();
       document.execCommand('styleWithCSS', false, 'false');
       
-      const selInfo = getSelectionInfo(el);
-      if (!selInfo) {
-        el.focus();
-        return;
-      }
-
-      const { range, text, hasSelection } = selInfo;
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return;
       
-      // Handle different commands
-      switch (command) {
-        case "bold":
-          document.execCommand('bold', false);
-          break;
-        case "italic":
-          document.execCommand('italic', false);
-          break;
-        case "underline":
-          document.execCommand('underline', false);
-          break;
-        case "strikethrough":
-          document.execCommand('strikethrough', false);
-          break;
-        case "boldItalic":
-          document.execCommand('bold', false);
-          document.execCommand('italic', false);
-          break;
-        case "inlineCode":
-          if (hasSelection) {
-            const code = document.createElement('code');
-            code.textContent = text;
-            range.deleteContents();
-            range.insertNode(code);
-          }
-          break;
-        case "heading":
-          const level = args[0] || 2;
-          document.execCommand('formatBlock', false, `h${level}`);
-          break;
-        case "link":
-          const url = prompt('Enter link target:', text || 'Page name');
-          if (url) {
-            const link = document.createElement('a');
-            link.href = '#' + url;
-            link.textContent = text || url;
-            range.deleteContents();
-            range.insertNode(link);
-          }
-          break;
-        case "unorderedList":
-          document.execCommand('insertUnorderedList', false);
-          break;
-        case "orderedList":
-          document.execCommand('insertOrderedList', false);
-          break;
-        case "horizontalRule":
-          document.execCommand('insertHorizontalRule', false);
-          break;
-        case "superscript":
-          document.execCommand('superscript', false);
-          break;
-        case "subscript":
-          document.execCommand('subscript', false);
-          break;
-        case "codeBlock":
-          const pre = document.createElement('pre');
-          const codeEl = document.createElement('code');
-          codeEl.textContent = text || '// code here';
-          pre.appendChild(codeEl);
-          range.deleteContents();
-          range.insertNode(pre);
-          break;
-        default:
-          // Use markup command
-          if (EditorCommands[command]) {
-            const markup = EditorCommands[command].execute(text, ...args);
-            const parsed = parseMarkup(markup);
-            const temp = document.createElement('div');
-            temp.innerHTML = parsed.html;
-            range.deleteContents();
-            while (temp.firstChild) {
-              range.insertNode(temp.firstChild);
+      const range = sel.getRangeAt(0);
+      const text = sel.toString();
+      
+      try {
+        switch (command) {
+          case "bold":
+            document.execCommand('bold', false);
+            break;
+          case "italic":
+            document.execCommand('italic', false);
+            break;
+          case "underline":
+            document.execCommand('underline', false);
+            break;
+          case "strikethrough":
+            document.execCommand('strikethrough', false);
+            break;
+          case "boldItalic":
+            document.execCommand('bold', false);
+            document.execCommand('italic', false);
+            break;
+          case "inlineCode":
+            if (text) {
+              const code = document.createElement('code');
+              code.textContent = text;
+              range.deleteContents();
+              range.insertNode(code);
             }
-          }
+            break;
+          case "heading":
+            const level = args[0] || 2;
+            document.execCommand('formatBlock', false, `h${level}`);
+            break;
+          case "link":
+            const linkTarget = prompt('লিঙ্ক টার্গেট লিখুন:', text || 'পাতার নাম');
+            if (linkTarget) {
+              const link = document.createElement('a');
+              link.href = '#' + linkTarget;
+              link.textContent = text || linkTarget;
+              range.deleteContents();
+              range.insertNode(link);
+            }
+            break;
+          case "image":
+            const imgSrc = prompt('ছবির ফাইল নাম:', 'example.jpg');
+            if (imgSrc) {
+              const caption = prompt('ক্যাপশন (ঐচ্ছিক):', '');
+              const img = document.createElement('img');
+              img.src = imgSrc;
+              img.alt = caption || '';
+              range.deleteContents();
+              range.insertNode(img);
+            }
+            break;
+          case "video":
+            const videoSrc = prompt('ভিডিও ফাইল নাম:', 'example.mp4');
+            if (videoSrc) {
+              const video = document.createElement('video');
+              video.src = videoSrc;
+              video.controls = true;
+              video.className = 'media-video';
+              range.deleteContents();
+              range.insertNode(video);
+            }
+            break;
+          case "unorderedList":
+            document.execCommand('insertUnorderedList', false);
+            break;
+          case "orderedList":
+            document.execCommand('insertOrderedList', false);
+            break;
+          case "horizontalRule":
+            document.execCommand('insertHorizontalRule', false);
+            break;
+          case "superscript":
+            document.execCommand('superscript', false);
+            break;
+          case "subscript":
+            document.execCommand('subscript', false);
+            break;
+          case "codeBlock":
+            const lang = prompt('প্রোগ্রামিং ভাষা:', 'javascript');
+            const pre = document.createElement('pre');
+            pre.className = `code-block language-${lang || 'text'}`;
+            const codeEl = document.createElement('code');
+            codeEl.textContent = text || '// কোড এখানে লিখুন';
+            pre.appendChild(codeEl);
+            range.deleteContents();
+            range.insertNode(pre);
+            range.insertNode(document.createElement('br'));
+            break;
+          case "math":
+            const latex = prompt('LaTeX সূত্র:', 'E = mc^2');
+            if (latex) {
+              const math = document.createElement('span');
+              math.className = 'math-inline';
+              math.textContent = latex;
+              range.deleteContents();
+              range.insertNode(math);
+            }
+            break;
+          case "table":
+            const rows = parseInt(prompt('সারির সংখ্যা:', '3') || '3');
+            const cols = parseInt(prompt('কলামের সংখ্যা:', '3') || '3');
+            const table = document.createElement('table');
+            table.className = 'wikitable';
+            const tbody = document.createElement('tbody');
+            
+            // Header
+            const headerRow = document.createElement('tr');
+            for (let i = 0; i < cols; i++) {
+              const th = document.createElement('th');
+              th.textContent = `শিরোনাম ${i + 1}`;
+              headerRow.appendChild(th);
+            }
+            tbody.appendChild(headerRow);
+            
+            // Data rows
+            for (let i = 0; i < rows - 1; i++) {
+              const tr = document.createElement('tr');
+              for (let j = 0; j < cols; j++) {
+                const td = document.createElement('td');
+                td.textContent = 'তথ্য';
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+            
+            table.appendChild(tbody);
+            range.deleteContents();
+            range.insertNode(table);
+            range.insertNode(document.createElement('br'));
+            break;
+          case "template":
+            const templateName = prompt('টেমপ্লেটের নাম:', 'Infobox');
+            if (templateName) {
+              const tmpl = document.createElement('div');
+              tmpl.className = 'template';
+              tmpl.textContent = templateName;
+              range.deleteContents();
+              range.insertNode(tmpl);
+            }
+            break;
+          case "reference":
+            const refText = prompt('তথ্যসূত্রের বিষয়বস্তু:');
+            if (refText) {
+              const refName = prompt('তথ্যসূত্রের নাম (ঐচ্ছিক):', '');
+              const sup = document.createElement('sup');
+              sup.className = 'reference';
+              sup.textContent = '[' + (parseResult.metadata.footnotes.length + 1) + ']';
+              range.deleteContents();
+              range.insertNode(sup);
+            }
+            break;
+          case "refList":
+            const refDiv = document.createElement('div');
+            refDiv.className = 'reflist';
+            const refTitle = document.createElement('h3');
+            refTitle.textContent = 'তথ্যসূত্র';
+            refDiv.appendChild(refTitle);
+            range.deleteContents();
+            range.insertNode(refDiv);
+            break;
+        }
+        
+        handleVisualInput();
+      } catch (err) {
+        setError("ফরম্যাটিং ত্রুটি: " + (err as Error).message);
       }
-      
-      handleVisualInput();
     }
   };
 
   // Keyboard shortcuts
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.ctrlKey || e.metaKey) {
-      switch (e.key) {
+    const isMod = e.ctrlKey || e.metaKey;
+    
+    if (isMod) {
+      switch (e.key.toLowerCase()) {
         case "b":
           e.preventDefault();
           handleCommand("bold");
@@ -305,79 +404,146 @@ export default function MediaWikiEditor() {
           e.preventDefault();
           handleSave();
           break;
+        case "z":
+          e.preventDefault();
+          if (e.shiftKey) handleRedo();
+          else handleUndo();
+          break;
+        case "y":
+          e.preventDefault();
+          handleRedo();
+          break;
       }
     }
   };
 
-  const handleSave = () => {
-    console.log("Saving:", { title, wikitext, metadata: parseResult.metadata });
-    alert("Article saved! Check console for details.");
+  // Save handler
+  const handleSave = async () => {
+    if (!title.trim()) {
+      setError("দয়া করে একটি শিরোনাম লিখুন");
+      return;
+    }
+    
+    setIsSaving(true);
+    setError("");
+    
+    try {
+      // Simulate save
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      console.log("সংরক্ষিত:", {
+        title,
+        wikitext,
+        metadata: parseResult.metadata,
+        wordCount
+      });
+      
+      alert("✓ নিবন্ধটি সফলভাবে সংরক্ষিত হয়েছে!");
+    } catch (err) {
+      setError("সংরক্ষণে ত্রুটি: " + (err as Error).message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  // Toolbar blocks
-  const Blocks = [
-    { icon: Bold, action: "bold", label: "Bold (Ctrl+B)" },
-    { icon: Italic, action: "italic", label: "Italic (Ctrl+I)" },
+  // Toolbar configuration
+  const toolbarBlocks = [
+    { icon: Bold, action: "bold", label: "বোল্ড (Ctrl+B)" },
+    { icon: Italic, action: "italic", label: "ইটালিক (Ctrl+I)" },
     {
-      name: "Heading",
+      name: "শিরোনাম",
       items: [
-        { icon: Heading1, action: "heading", label: "Heading 2", args: [2] },
-        { icon: Heading2, action: "heading", label: "Heading 3", args: [3] },
-        { icon: Heading3, action: "heading", label: "Heading 4", args: [4] },
+        { icon: Heading1, action: "heading", label: "শিরোনাম ২", args: [2] },
+        { icon: Heading2, action: "heading", label: "শিরোনাম ৩", args: [3] },
+        { icon: Heading3, action: "heading", label: "শিরোনাম ৪", args: [4] },
       ],
     },
-    { icon: Type, action: "boldItalic", label: "Bold Italic" },
-    { icon: Strikethrough, action: "strikethrough", label: "Strikethrough" },
-    { icon: Underline, action: "underline", label: "Underline (Ctrl+U)" },
-    { icon: Code, action: "inlineCode", label: "Inline Code" },
-    { icon: Link, action: "link", label: "Link (Ctrl+K)" },
-    { icon: Image, action: "image", label: "Image" },
-    { icon: Video, action: "video", label: "Video" },
-    { icon: FileCode, action: "codeBlock", label: "Code Block" },
-    { icon: Sigma, action: "math", label: "Math" },
-    { icon: List, action: "unorderedList", label: "Bullet List" },
-    { icon: ListOrdered, action: "orderedList", label: "Numbered List" },
-    { icon: Table, action: "table", label: "Table" },
-    { icon: Puzzle, action: "template", label: "Template" },
-    { icon: Minus, action: "horizontalRule", label: "Horizontal Rule" },
-    { icon: Superscript, action: "superscript", label: "Superscript" },
-    { icon: Subscript, action: "subscript", label: "Subscript" },
-    { icon: FileText, action: "reference", label: "Reference" },
-    { icon: ListChecks, action: "refList", label: "Reference List" },
+    { icon: Type, action: "boldItalic", label: "বোল্ড ইটালিক" },
+    { icon: Strikethrough, action: "strikethrough", label: "স্ট্রাইকথ্রু" },
+    { icon: Underline, action: "underline", label: "আন্ডারলাইন (Ctrl+U)" },
+    { icon: Code, action: "inlineCode", label: "ইনলাইন কোড" },
+    { icon: Link, action: "link", label: "লিঙ্ক (Ctrl+K)" },
+    { icon: Image, action: "image", label: "ছবি" },
+    { icon: Video, action: "video", label: "ভিডিও" },
+    { icon: FileCode, action: "codeBlock", label: "কোড ব্লক" },
+    { icon: Sigma, action: "math", label: "গণিত" },
+    { icon: List, action: "unorderedList", label: "বুলেট তালিকা" },
+    { icon: ListOrdered, action: "orderedList", label: "সংখ্যাযুক্ত তালিকা" },
+    { icon: Table, action: "table", label: "টেবিল" },
+    { icon: Puzzle, action: "template", label: "টেমপ্লেট" },
+    { icon: Minus, action: "horizontalRule", label: "অনুভূমিক রেখা" },
+    { icon: Superscript, action: "superscript", label: "সুপারস্ক্রিপ্ট" },
+    { icon: Subscript, action: "subscript", label: "সাবস্ক্রিপ্ট" },
+    { icon: FileText, action: "reference", label: "তথ্যসূত্র" },
+    { icon: ListChecks, action: "refList", label: "তথ্যসূত্র তালিকা" },
   ];
 
   return (
     <div className="w-full min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="flex items-center justify-between border-b bg-white p-3 shadow-sm">
-        <div className="flex items-center space-x-2">
-          <List className="h-5 w-5 text-gray-600" />
-          <h1 className="text-lg font-semibold">MediaWiki Editor</h1>
+      <div className="border-b bg-white shadow-sm">
+        <div className="flex items-center justify-between p-3">
+          <div className="flex items-center space-x-3 flex-1">
+            <List className="h-5 w-5 text-blue-600" />
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="নিবন্ধের শিরোনাম লিখুন..."
+              className="text-lg font-semibold outline-none border-b-2 border-transparent focus:border-blue-500 transition flex-1 max-w-md"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleUndo}
+              disabled={historyIndex <= 0}
+              className="p-2 hover:bg-gray-100 rounded transition disabled:opacity-30"
+              title="পূর্বাবস্থায় ফিরুন (Ctrl+Z)"
+            >
+              <Undo className="h-4 w-4" />
+            </button>
+            <button
+              onClick={handleRedo}
+              disabled={historyIndex >= history.length - 1}
+              className="p-2 hover:bg-gray-100 rounded transition disabled:opacity-30"
+              title="পুনরায় করুন (Ctrl+Y)"
+            >
+              <Redo className="h-4 w-4" />
+            </button>
+            <div className="h-6 w-px bg-gray-300 mx-1" />
+            <span className="text-xs text-gray-500 px-2">
+              {editorMode === "visual" ? "ভিজুয়াল" : "সোর্স"} • {wordCount} শব্দ
+            </span>
+            <button
+              className="p-2 hover:bg-gray-100 rounded transition border"
+              onClick={handleModeSwitch}
+              title="এডিটর মোড পরিবর্তন করুন"
+            >
+              <Languages className="h-5 w-5" />
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="flex items-center gap-2 text-sm bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:bg-gray-400"
+            >
+              <Save className="h-4 w-4" />
+              {isSaving ? "সংরক্ষণ হচ্ছে..." : "প্রকাশ করুন"}
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 px-2">
-            Mode: {editorMode === "visual" ? "Visual" : "Source"}
-          </span>
-          <button
-            className="p-2 hover:bg-gray-100 rounded transition border"
-            onClick={handleModeSwitch}
-            title="Toggle editor mode"
-          >
-            <Languages className="h-5 w-5" />
-          </button>
-          <button
-            onClick={handleSave}
-            className="text-sm bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-          >
-            Publish
-          </button>
-        </div>
+        
+        {/* Error message */}
+        {error && (
+          <div className="bg-red-50 border-t border-red-200 px-4 py-2 text-sm text-red-700">
+            ⚠️ {error}
+          </div>
+        )}
       </div>
 
       {/* Toolbar */}
-      <div className="bg-white border-b shadow-sm">
+      <div className="bg-white border-b shadow-sm sticky top-0 z-10">
         <div className="flex items-center flex-wrap gap-1 p-2">
-          {Blocks.map((block, i) =>
+          {toolbarBlocks.map((block, i) =>
             !block.name ? (
               <button
                 key={i}
@@ -415,28 +581,46 @@ export default function MediaWikiEditor() {
         </div>
       </div>
 
-      {/* Editor / Preview Area */}
-      <div className="flex gap-4">
+      {/* Editor Area */}
+      <div className="flex gap-4 p-4">
         {editorMode === "source" && (
           <>
-            <textarea
-              ref={textareaRef}
-              value={wikitext}
-              onChange={(e) => setWikitext(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="flex-1 min-h-[70vh] p-4 outline-none text-sm bg-white focus:border-blue-500  resize-none"
-              placeholder="Start writing your article using MediaWiki syntax...
+            {/* Source Editor */}
+            <div className="flex-1">
+              <textarea
+                ref={textareaRef}
+                value={wikitext}
+                onChange={(e) => {
+                  setWikitext(e.target.value);
+                  addToHistory(e.target.value);
+                }}
+                onKeyDown={handleKeyDown}
+                className="w-full min-h-[70vh] p-4 outline-none text-sm font-mono bg-white border rounded-lg focus:border-blue-500 resize-none"
+                placeholder="MediaWiki সিনট্যাক্স ব্যবহার করে লেখা শুরু করুন...
 
-Examples:
-'''Bold text'''
-''Italic text''
-== Heading ==
-* List item
-[[Link]]"
-            />
-            <div className="flex-1 bg-white overflow-auto min-h-[70vh]">
-              <style dangerouslySetInnerHTML={{ __html: DEFAULT_STYLES }} />
-              <div dangerouslySetInnerHTML={{ __html: parseResult.html || '<p class="text-gray-400">Preview will appear here...</p>' }} />
+উদাহরণ:
+'''বোল্ড টেক্সট'''
+''ইটালিক টেক্সট''
+== শিরোনাম ==
+* তালিকার আইটেম
+[[লিঙ্ক]]
+[[File:example.jpg|thumb|ক্যাপশন]]"
+              />
+            </div>
+
+            {/* Preview */}
+            <div className="flex-1 bg-white border rounded-lg overflow-auto min-h-[70vh]">
+              <div className="p-4">
+                <h3 className="text-sm font-semibold text-gray-600 mb-3 pb-2 border-b">
+                  প্রিভিউ
+                </h3>
+                <style dangerouslySetInnerHTML={{ __html: DEFAULT_STYLES }} />
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: parseResult.html || '<p class="text-gray-400">প্রিভিউ এখানে দেখা যাবে...</p>',
+                  }}
+                />
+              </div>
             </div>
           </>
         )}
@@ -449,7 +633,7 @@ Examples:
               ref={visualRef}
               onInput={handleVisualInput}
               onKeyDown={handleKeyDown}
-              className="min-h-[70vh] rounded-lg bg-white focus:border-blue-500 outline-none"
+              className="min-h-[70vh] p-6 rounded-lg bg-white border focus:border-blue-500 outline-none"
               contentEditable
               suppressContentEditableWarning
               spellCheck={true}
@@ -457,6 +641,27 @@ Examples:
           </div>
         )}
       </div>
+
+      {/* Metadata Info */}
+      {parseResult.metadata.headings.length > 0 && (
+        <div className="mx-4 mb-4 p-4 bg-white border rounded-lg">
+          <h3 className="text-sm font-semibold mb-2">নিবন্ধ তথ্য</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+            <div>
+              <span className="font-medium">শিরোনাম:</span> {parseResult.metadata.headings.length}
+            </div>
+            <div>
+              <span className="font-medium">ছবি:</span> {parseResult.metadata.images.length}
+            </div>
+            <div>
+              <span className="font-medium">লিঙ্ক:</span> {parseResult.metadata.links.length}
+            </div>
+            <div>
+              <span className="font-medium">তথ্যসূত্র:</span> {parseResult.metadata.footnotes.length}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
