@@ -59,6 +59,10 @@ export default function MediaWikiEditor() {
 
   // Parse wikitext whenever it changes
   useEffect(() => {
+    if (editorMode === 'visual') {
+      setVisualHtml(wikitext)
+    }
+    
     const result = parseMarkup(wikitext);
     setParseResult(result);
     setVisualHtml(result.html);
@@ -289,8 +293,9 @@ Examples:
         {/* Visual WYSIWYG Editor */}
         {editorMode === "visual" && (
           <div
+        
             ref={visualRef}
-            onInput={(e)=>{setWikitext(e.target.innerText)}}
+            onInput={(e)=>{setWikitext(e.target.innerHTML)}}
             className="flex-1 min-h-[70vh] rounded-lg p-6 bg-white outline-none"
             contentEditable
             suppressContentEditableWarning
