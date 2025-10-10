@@ -183,7 +183,7 @@ export default function MediaWikiEditor() {
         </button>
       </div>
 
-      <div className='w-full min-h-screen bg-gray-50 p-2'>
+      <div className='w-full min-h-screen bg-gray-50'>
         <textarea
           ref={textareaRef}
           value={wikitext}
@@ -193,7 +193,7 @@ export default function MediaWikiEditor() {
           placeholder='Start writing your article...'
         />
         <div
-          className='bg-white prose max-w-none p-2'
+          className='bg-white prose max-w-none'
           dangerouslySetInnerHTML={{ __html: `<style>${DEFAULT_STYLES}</style>\n${preview}` }}
         />
       </div>
