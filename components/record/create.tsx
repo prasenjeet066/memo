@@ -16,21 +16,15 @@ import {
   List,
   ListOrdered,
   Table,
-  Package,
   Minus,
   Superscript,
   Subscript,
   Type,
   FileText,
   ListChecks,
-  Quote,
-  AlignLeft,
-  BookOpen,
-  Minimize2,
   Puzzle,
-  ListTree,
 } from "lucide-react";
-import { parseMarkup, applyEditorCommand,DEFAULT_STYLES } from '@/lib/utils/dist/markup';
+import { parseMarkup, applyEditorCommand, DEFAULT_STYLES } from '@/lib/utils/dist/markup';
 
 export default function MediaWikiEditor() {
   const [wikitext, setWikitext] = useState('');
@@ -47,7 +41,6 @@ export default function MediaWikiEditor() {
     setMetadata(result.metadata);
   }, [wikitext]);
   
-  // Apply editor command
   const applyCommand = (command: string, ...args: any[]) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -64,7 +57,6 @@ export default function MediaWikiEditor() {
     }, 0);
   };
   
-  // Insert text at cursor
   const insertText = (text: string) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -80,7 +72,6 @@ export default function MediaWikiEditor() {
     }, 0);
   };
   
-  // Handle keyboard shortcuts
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.ctrlKey || e.metaKey) {
       switch (e.key) {
@@ -124,9 +115,14 @@ export default function MediaWikiEditor() {
     { icon: Strikethrough, action: 'strikethrough' },
     { icon: Underline, action: 'underline' },
     { icon: Code, action: 'inlineCode' },
-    { icon: Heading1, action: 'heading1' },
-    { icon: Heading2, action: 'heading2' },
-    { icon: Heading3, action: 'heading3' },
+    {
+      name: 'Heading',
+      items: [
+        { icon: Heading1, action: 'heading1' },
+        { icon: Heading2, action: 'heading2' },
+        { icon: Heading3, action: 'heading3' },
+      ]
+    },
     { icon: Link, action: 'link' },
     { icon: ImageIcon, action: 'image' },
     { icon: Video, action: 'video' },
@@ -139,7 +135,6 @@ export default function MediaWikiEditor() {
     { icon: Minus, action: 'horizontalRule' },
     { icon: Superscript, action: 'superscript' },
     { icon: Subscript, action: 'subscript' },
-    { icon: Minimize2, action: 'small' },
     { icon: FileText, action: 'reference' },
     { icon: ListChecks, action: 'refList' },
   ];
@@ -154,8 +149,8 @@ export default function MediaWikiEditor() {
       </div>
 
       <div className='flex items-center justify-between w-full'>
-        <div className='flex items-center flex-wrap gap-1 px-0 p-2 w-full flex-1'>
-          {Blocks.map((block, i) => (
+        <div className='flex items-center flex-wrap gap-1 px-2 py-2 w-full flex-1'>
+          {Blocks.map((block, i) => !block.name ? (
             <button
               key={i}
               onClick={() => applyCommand(block.action)}
@@ -163,9 +158,23 @@ export default function MediaWikiEditor() {
             >
               <block.icon className='h-4 w-4' />
             </button>
+          ) : (
+            <select
+              key={i}
+              onChange={(e) => applyCommand(e.target.value)}
+              className='p-1 border rounded'
+              defaultValue=""
+            >
+              <option value="" disabled>Select {block.name}</option>
+              {block.items.map((item, idx) => (
+                <option key={idx} value={item.action}>
+                  {item.action}
+                </option>
+              ))}
+            </select>
           ))}
         </div>
-        
+
         <button
           onClick={handleSave}
           className='text-sm rounded-full bg-black text-white px-3 py-1 ml-2 hover:bg-gray-800 transition'
@@ -174,7 +183,7 @@ export default function MediaWikiEditor() {
         </button>
       </div>
 
-      <div className='w-full min-h-screen bg-gray-50'>
+      <div className='w-full min-h-screen bg-gray-50 p-2'>
         <textarea
           ref={textareaRef}
           value={wikitext}
@@ -184,8 +193,8 @@ export default function MediaWikiEditor() {
           placeholder='Start writing your article...'
         />
         <div
-          className='bg-white prose max-w-none'
-          dangerouslySetInnerHTML={{ __html: `<style>${DEFAULT_STYLES}</style> \n ${preview}` }}
+          className='bg-white prose max-w-none p-2'
+          dangerouslySetInnerHTML={{ __html: `<style>${DEFAULT_STYLES}</style>\n${preview}` }}
         />
       </div>
     </div>

@@ -81,7 +81,6 @@ export default function RecordIdPage({params}) {
      <main className="min-h-screen w-full bg-gray-50">
       <Header navlist={NavList} />
       <div className="flex bg-white">
-        {Sidebar}
         <div className='flex-1 p-2 ml-1'>
           <div className='max-w-4xl mx-auto'>
             <CreateRecord/>
