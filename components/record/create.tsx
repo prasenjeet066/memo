@@ -145,8 +145,8 @@ export default function MediaWikiEditor() {
   ];
   
   return (
-    <div className='w-full h-full ml-1 p-2 '>
-      <div className='flex items-center justify-between border-b'>
+    <div className='w-full h-full  '>
+      <div className='flex items-center justify-between border-b p-2'>
         <div className='flex items-center space-x-2'>
           <List className='h-5 w-5' />
           <h1 className='text-lg font-semibold'>Sakib Al Hasan</h1>
