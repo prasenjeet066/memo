@@ -290,6 +290,7 @@ Examples:
         {editorMode === "visual" && (
           <div
             ref={visualRef}
+            onChange={(e)=>{setWikitext(e.target.value)}}
             className="flex-1 min-h-[70vh] rounded-lg p-6 bg-white outline-none"
             contentEditable
             suppressContentEditableWarning
