@@ -168,7 +168,7 @@ export default function MediaWikiEditor() {
 
       {/* Toolbar */}
       <div className="flex items-center justify-between w-full">
-        <div className="flex items-center flex-wrap gap-1 px-2 py-2 w-full flex-1">
+        <div className="flex items-start flex-wrap gap-1 px-2 py-2 w-full flex-1">
           {Blocks.map((block, i) =>
             !block.name ? (
               <button
