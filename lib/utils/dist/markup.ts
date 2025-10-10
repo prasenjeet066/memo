@@ -1,12 +1,12 @@
 interface ParseResult {
   html: string;
   metadata: {
-    images: Array<{ src: string; alt: string }>;
+    images: Array < { src: string;alt: string } > ;
     videos: string[];
     links: string[];
-    headings: Array<{ level: number; text: string; id: string }>;
-    footnotes: Array<{ id: string; text: string }>;
-    templates: Array<{ name: string; params: Record<string, string> }>;
+    headings: Array < { level: number;text: string;id: string } > ;
+    footnotes: Array < { id: string;text: string } > ;
+    templates: Array < { name: string;params: Record < string, string > } > ;
   };
   styles: string;
 }
@@ -15,7 +15,6 @@ interface EditorCommand {
   name: string;
   execute: (selection: string, ...args: any[]) => string;
 }
-
 // Default CSS styles for parsed content
 const DEFAULT_STYLES = `
 /* Base Styles */
@@ -823,38 +822,31 @@ const parseMarkup = (text: string): ParseResult => {
 };
 
 // ========== VISUAL EDITOR COMMANDS ==========
-
-const EditorCommands: Record<string, EditorCommand> = {
+const EditorCommands: Record < string, EditorCommand > = {
   bold: {
     name: 'bold',
     execute: (selection: string) => `'''${selection}'''`
   },
-  
   italic: {
     name: 'italic',
     execute: (selection: string) => `''${selection}''`
   },
-  
   boldItalic: {
     name: 'boldItalic',
     execute: (selection: string) => `'''''${selection}'''''`
   },
-  
   strikethrough: {
     name: 'strikethrough',
     execute: (selection: string) => `<s>${selection}</s>`
   },
-  
   underline: {
     name: 'underline',
     execute: (selection: string) => `<u>${selection}</u>`
   },
-  
   inlineCode: {
     name: 'inlineCode',
     execute: (selection: string) => `<code>${selection}</code>`
   },
-  
   heading: {
     name: 'heading',
     execute: (selection: string, level: number = 2) => {
@@ -863,72 +855,63 @@ const EditorCommands: Record<string, EditorCommand> = {
       return `${equals} ${selection} ${equals}`;
     }
   },
-  
   internalLink: {
     name: 'internalLink',
-    execute: (selection: string, page?: string) => {
+    execute: (selection: string, page ? : string) => {
       if (page && page !== selection) {
         return `[[${page}|${selection}]]`;
       }
       return `[[${selection}]]`;
     }
   },
-  
   externalLink: {
     name: 'externalLink',
-    execute: (url: string, text?: string) => {
+    execute: (url: string, text ? : string) => {
       if (text) return `[${url} ${text}]`;
       return `[${url}]`;
     }
   },
-  
   image: {
     name: 'image',
-    execute: (filename: string, options?: string) => {
+    execute: (filename: string, options ? : string) => {
       if (options) return `[[File:${filename}|${options}]]`;
       return `[[File:${filename}]]`;
     }
   },
-  
   thumbnail: {
     name: 'thumbnail',
-    execute: (filename: string, caption?: string, size?: string) => {
+    execute: (filename: string, caption ? : string, size ? : string) => {
       const opts = ['thumb'];
       if (size) opts.push(size);
       if (caption) opts.push(caption);
       return `[[File:${filename}|${opts.join('|')}]]`;
     }
   },
-  
   video: {
     name: 'video',
-    execute: (filename: string, caption?: string) => {
+    execute: (filename: string, caption ? : string) => {
       if (caption) return `[[Media:${filename}|${caption}]]`;
       return `[[Media:${filename}]]`;
     }
   },
-  
   audio: {
     name: 'audio',
-    execute: (filename: string, caption?: string) => {
+    execute: (filename: string, caption ? : string) => {
       if (caption) return `[[Media:${filename}|${caption}]]`;
       return `[[Media:${filename}]]`;
     }
   },
-  
   codeBlock: {
     name: 'codeBlock',
-    execute: (code: string, language?: string) => {
+    execute: (code: string, language ? : string) => {
       if (language) return `<syntaxhighlight lang="${language}">\n${code}\n</syntaxhighlight>`;
       return `<syntaxhighlight>\n${code}\n</syntaxhighlight>`;
     }
   },
-  
   math: {
     name: 'math',
     execute: (latex: string) => `<math>${latex}</math>`
   },
-  
   unorderedList: {
     name: 'unorderedList',
     execute: (items: string | string[]) => {
@@ -936,7 +919,6 @@ const EditorCommands: Record<string, EditorCommand> = {
       return itemArray.map(item => `* ${item}`).join('\n');
     }
   },
-  
   orderedList: {
     name: 'orderedList',
     execute: (items: string | string[]) => {
@@ -944,10 +926,9 @@ const EditorCommands: Record<string, EditorCommand> = {
       return itemArray.map(item => `# ${item}`).join('\n');
     }
   },
-  
   nestedList: {
     name: 'nestedList',
-    execute: (items: Array<{ text: string; level: number; ordered?: boolean }>) => {
+    execute: (items: Array < { text: string;level: number;ordered ? : boolean } > ) => {
       return items.map(item => {
         const marker = item.ordered ? '#' : '*';
         const prefix = marker.repeat(item.level + 1);
@@ -955,16 +936,14 @@ const EditorCommands: Record<string, EditorCommand> = {
       }).join('\n');
     }
   },
-  
   definitionList: {
     name: 'definitionList',
-    execute: (items: Array<{ term: string; desc: string }>) =>
+    execute: (items: Array < { term: string;desc: string } > ) =>
       items.map(item => `; ${item.term}\n: ${item.desc}`).join('\n')
   },
-  
   table: {
     name: 'table',
-    execute: (headers: string[], rows: string[][], caption?: string, cssClass?: string) => {
+    execute: (headers: string[], rows: string[][], caption ? : string, cssClass ? : string) => {
       let table = `{|${cssClass ? ` class="${cssClass}"` : ' class="wikitable"'}\n`;
       if (caption) table += `|+ ${caption}\n`;
       if (headers.length > 0) {
@@ -976,10 +955,9 @@ const EditorCommands: Record<string, EditorCommand> = {
       return table;
     }
   },
-  
   template: {
     name: 'template',
-    execute: (name: string, params?: Record<string, string>) => {
+    execute: (name: string, params ? : Record < string, string > ) => {
       if (!params || Object.keys(params).length === 0) {
         return `{{${name}}}`;
       }
@@ -989,45 +967,37 @@ const EditorCommands: Record<string, EditorCommand> = {
       return `{{${name}|${paramStr}}}`;
     }
   },
-  
   horizontalRule: {
     name: 'horizontalRule',
     execute: () => '----'
   },
-  
   superscript: {
     name: 'superscript',
     execute: (selection: string) => `<sup>${selection}</sup>`
   },
-  
   subscript: {
     name: 'subscript',
     execute: (selection: string) => `<sub>${selection}</sub>`
   },
-  
   small: {
     name: 'small',
     execute: (selection: string) => `<small>${selection}</small>`
   },
-  
   reference: {
     name: 'reference',
-    execute: (text: string, name?: string) => {
+    execute: (text: string, name ? : string) => {
       if (name) return `<ref name="${name}">${text}</ref>`;
       return `<ref>${text}</ref>`;
     }
   },
-  
   referenceReuse: {
     name: 'referenceReuse',
     execute: (name: string) => `<ref name="${name}" />`
   },
-  
   refList: {
     name: 'refList',
     execute: () => '{{reflist}}'
   },
-  
   comment: {
     name: 'comment',
     execute: (text: string) => `<!-- ${text} -->`
@@ -1041,7 +1011,7 @@ const applyEditorCommand = (
   selectionStart: number,
   selectionEnd: number,
   ...args: any[]
-): { text: string; newSelectionStart: number; newSelectionEnd: number } => {
+): { text: string;newSelectionStart: number;newSelectionEnd: number } => {
   const cmd = EditorCommands[command];
   if (!cmd) throw new Error(`Unknown command: ${command}`);
   
@@ -1164,15 +1134,17 @@ const validateMarkup = (text: string): Array<{ line: number; message: string; se
 };
 
 // Export functions and constants
-export { 
-  parseMarkup, 
-  EditorCommands, 
+
+// Export functions and constants
+export {
+  parseMarkup,
+  EditorCommands,
   applyEditorCommand,
   generateAnchorId,
   stripMarkup,
   countWords,
   validateMarkup,
   DEFAULT_STYLES,
-  type ParseResult, 
-  type EditorCommand 
+  type ParseResult,
+  type EditorCommand
 };
