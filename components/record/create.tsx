@@ -30,7 +30,7 @@ import {
   Puzzle,
   ListTree,
 } from "lucide-react";
-import { parseMarkup, applyEditorCommand } from '@/lib/utils/dist/markup';
+import { parseMarkup, applyEditorCommand,DEFAULT_STYLES } from '@/lib/utils/dist/markup';
 
 export default function MediaWikiEditor() {
   const [wikitext, setWikitext] = useState('');
@@ -184,7 +184,7 @@ export default function MediaWikiEditor() {
         />
         <div
           className='mt-4 p-3 bg-white shadow-sm prose max-w-none'
-          dangerouslySetInnerHTML={{ __html: preview }}
+          dangerouslySetInnerHTML={{ __html: `<style>${DEFAULT_STYLES}</style> \n ${preview}` }}
         />
       </div>
     </div>
