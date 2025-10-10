@@ -243,12 +243,16 @@ const parseMarkup = (text: string): ParseResult => {
   html = html.replace(/\[@(.+?)\]/g, '<cite>$1</cite>');
   
   // ========== TYPOGRAPHY ENHANCEMENTS ==========
+  // Replace -- with en-dash, --- with em-dash, and ... with ellipsis
+  html = html.replace(/---/g, '—'); // em-dash first
   html = html.replace(/--/g, '–'); // en-dash
-  html = html.replace(/---/g, '—'); // em-dash
   html = html.replace(/\.\.\./g, '…'); // ellipsis
-  html = html.replace(/(^|[^\w])'([^']+)'([^\w]|$)/g, '$1'
-    $2 '$3'); // smart quotes
-  html = html.replace(/(^|[^\w])"([^"]+)"([^\w]|$)/g, '$1"$2"$3'); // smart quotes
+  
+  // Smart single quotes
+  html = html.replace(/(^|[\s\W])'([^']+)'([\s\W]|$)/g, '$1‘$2’$3');
+  
+  // Smart double quotes
+  html = html.replace(/(^|[\s\W])"([^"]+)"([\s\W]|$)/g, '$1“$2”$3');
   html = html.replace(/(\d+)\s*x\s*(\d+)/gi, '$1×$2'); // multiplication sign
   html = html.replace(/<->/g, '↔'); // bidirectional arrow
   html = html.replace(/->/g, '→'); // right arrow
