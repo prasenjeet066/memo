@@ -2,7 +2,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/popover";
 import { useState, useRef, useEffect } from "react";
 import {
   Bold,
@@ -41,27 +41,28 @@ export default function MediaWikiEditor() {
   const [preview, setPreview] = useState("");
   const [metadata, setMetadata] = useState < any > ({});
   const [title, setTitle] = useState("");
-  const [mode, setMode] = useState < "edit" | "preview" | "split" > ("split");
-  const textareaRef = useRef < HTMLTextAreaElement > (null);
   const [editorMode, setEditorMode] = useState < "visual" | "source" > ("visual");
+  const textareaRef = useRef < HTMLTextAreaElement > (null);
+  const editorRef = useRef < HTMLDivElement > (null);
   
-  // Update preview when wikitext changes
+  // --- Update preview whenever source (wikitext) changes ---
   useEffect(() => {
     const result = parseMarkup(wikitext);
     setPreview(result.html);
     setMetadata(result.metadata);
   }, [wikitext]);
   
+  // --- Apply formatting commands ---
   const applyCommand = (command: string, ...args: any[]) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
     
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    
     const result = applyEditorCommand(wikitext, command, start, end, ...args);
     setWikitext(result.text);
     
+    // restore caret
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(
@@ -71,13 +72,15 @@ export default function MediaWikiEditor() {
     }, 0);
   };
   
+  // --- Insert text helper ---
   const insertText = (text: string) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
     
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const newContent = wikitext.substring(0, start) + text + wikitext.substring(end);
+    const newContent =
+      wikitext.substring(0, start) + text + wikitext.substring(end);
     setWikitext(newContent);
     
     setTimeout(() => {
@@ -86,6 +89,7 @@ export default function MediaWikiEditor() {
     }, 0);
   };
   
+  // --- Keyboard shortcuts (Ctrl+B, etc.) ---
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.ctrlKey || e.metaKey) {
       switch (e.key) {
@@ -162,20 +166,20 @@ export default function MediaWikiEditor() {
           <h1 className="text-lg font-semibold">Sakib Al Hasan</h1>
         </div>
         <div>
-        <button
-          className="bg-none outline-none border-none"
-          onClick={() =>
-            setEditorMode(editorMode === "visual" ? "source" : "visual")
-          }
-        >
-          <Languages className="h-5 w-5" />
-        </button>
-        <button
-          onClick={handleSave}
-          className="text-sm bg-black text-white px-3 py-1 ml-2 hover:bg-gray-800 transition"
-        >
-          Publish
-        </button>
+          <button
+            className="bg-none outline-none border-none"
+            onClick={() =>
+              setEditorMode(editorMode === "visual" ? "source" : "visual")
+            }
+          >
+            <Languages className="h-5 w-5" />
+          </button>
+          <button
+            onClick={handleSave}
+            className="text-sm bg-black text-white px-3 py-1 ml-2 hover:bg-gray-800 transition"
+          >
+            Publish
+          </button>
         </div>
       </div>
 
@@ -210,7 +214,6 @@ export default function MediaWikiEditor() {
             )
           )}
         </div>
-        
       </div>
 
       {/* Editor / Preview Area */}
@@ -226,7 +229,12 @@ export default function MediaWikiEditor() {
           />
         )}
 
+        {/* Visual editor */}
         <div
+          ref={editorRef}
+          contentEditable
+          suppressContentEditableWarning
+          onInput={(e) => setWikitext(e.currentTarget.innerHTML)}
           className={`prose max-w-none w-full h-full bg-white rounded p-4 border ${
             editorMode === "source" ? "w-1/2" : "w-full"
           }`}
