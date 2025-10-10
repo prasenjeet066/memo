@@ -86,6 +86,7 @@ export default function RecordIdPage({params}) {
             <CreateRecord/>
           </div>
         </div>
+        {Sidebar}
       </div>
     </main>
    )
