@@ -156,6 +156,7 @@ export default function MediaWikiEditor() {
           <List className="h-5 w-5" />
           <h1 className="text-lg font-semibold">Sakib Al Hasan</h1>
         </div>
+        <div>
         <button
           className="bg-none outline-none border-none"
           onClick={() =>
@@ -170,6 +171,7 @@ export default function MediaWikiEditor() {
         >
           Publish
         </button>
+        </div>
       </div>
 
       {/* Toolbar */}
