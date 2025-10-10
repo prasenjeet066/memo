@@ -26,6 +26,7 @@ import {
   Puzzle,
 } from "lucide-react";
 
+// Import MediaWiki markup utilities
 import {
   parseMarkup,
   applyEditorCommand,
@@ -34,6 +35,7 @@ import {
   type ParseResult,
 } from "../../lib/utils/dist/markup";
 
+// Helper: Set caret after html insertion in contentEditable
 function setCaretToEnd(el: HTMLElement) {
   if (!el) return;
   const range = document.createRange();
@@ -44,40 +46,42 @@ function setCaretToEnd(el: HTMLElement) {
   sel.addRange(range);
 }
 
+// Main Editor component
 export default function MediaWikiEditor() {
+  // Editor states
   const [wikitext, setWikitext] = useState<string>("");
   const [title, setTitle] = useState<string>("");
   const [editorMode, setEditorMode] = useState<"visual" | "source">("visual");
   const [parseResult, setParseResult] = useState<ParseResult>(parseMarkup(""));
   const [visualHtml, setVisualHtml] = useState<string>("");
-
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const visualRef = useRef<HTMLDivElement>(null);
 
-  // Parse only when in visual mode
+  // Parse wikitext whenever it changes
   useEffect(() => {
-    if (editorMode === "source") return;
+    if (editorMode === 'visual') {
+      setVisualHtml(wikitext)
+    }
+    
     const result = parseMarkup(wikitext);
     setParseResult(result);
     setVisualHtml(result.html);
-  }, [wikitext, editorMode]);
+  }, [wikitext]);
 
-  // Keep HTML in sync without breaking caret
+  // Sync visual mode with parsed HTML
   useEffect(() => {
-    if (
-      editorMode === "visual" &&
-      visualRef.current &&
-      document.activeElement !== visualRef.current
-    ) {
+    if (editorMode === "visual" && visualRef.current) {
       visualRef.current.innerHTML = parseResult.html;
     }
   }, [parseResult.html, editorMode]);
 
-  // Switch modes
+  // Switch modes, keeping content in sync
   const handleModeSwitch = () => {
     if (editorMode === "visual") {
+      // Going to source: get wikitext from visual editor
       if (visualRef.current) {
-        setWikitext(visualRef.current.innerText);
+        // You may want a proper html-to-wikitext converter here
+        setWikitext(visualRef.current.innerText); // crude fallback
       }
       setEditorMode("source");
     } else {
@@ -85,9 +89,10 @@ export default function MediaWikiEditor() {
     }
   };
 
-  // Apply formatting commands
+  // Toolbar command handler
   const handleCommand = (command: string, ...args: any[]) => {
     if (editorMode === "source") {
+      // Source mode: modify wikitext string
       const textarea = textareaRef.current;
       if (!textarea) return;
       const start = textarea.selectionStart;
@@ -99,29 +104,34 @@ export default function MediaWikiEditor() {
         textarea.setSelectionRange(result.newSelectionStart, result.newSelectionEnd);
       }, 0);
     } else {
+      // Visual mode: apply formatting to selection in contentEditable div
       const el = visualRef.current;
       if (!el) return;
       el.focus();
 
+      // Get selection within contentEditable
       const sel = window.getSelection();
       if (sel && sel.rangeCount > 0) {
         const range = sel.getRangeAt(0);
         const selectedText = sel.toString();
+        // Use editor commands for markup insertion
         let htmlSnippet = "";
-
+        // Use EditorCommands mapping for visual mode
         if (EditorCommands[command]) {
           htmlSnippet = EditorCommands[command].execute(selectedText, ...args);
         } else {
+          // Fallback: wrap selection
           htmlSnippet = selectedText;
         }
-
+        // Replace selection with formatted HTML
         range.deleteContents();
+        // Insert as HTML node
         const fragment = document.createRange().createContextualFragment(
           parseMarkup(htmlSnippet).html.replace(/^<div[^>]*>|<\/div>$/g, "")
         );
         range.insertNode(fragment);
-
-        setWikitext(el.innerText);
+        // Update wikitext (serialize back)
+        setWikitext(el.innerText); // crude, but keeps in sync when toolbar is used
         setCaretToEnd(el);
       }
     }
@@ -156,10 +166,12 @@ export default function MediaWikiEditor() {
   };
 
   const handleSave = () => {
+    // You would save title, wikitext, and metadata
     console.log("Saving:", { title, wikitext, metadata: parseResult.metadata });
     alert("Article saved! Check console for details.");
   };
 
+  // Toolbar blocks
   const Blocks = [
     { icon: Bold, action: "bold", label: "Bold" },
     { icon: Italic, action: "italic", label: "Italic" },
@@ -235,6 +247,7 @@ export default function MediaWikiEditor() {
                 onChange={(e) => {
                   const value = e.target.value;
                   if (value) {
+                    // Find item args
                     const item = block.items.find((itm) => itm.action === value);
                     handleCommand(value, ...(item?.args || []));
                     e.target.value = "";
@@ -257,7 +270,7 @@ export default function MediaWikiEditor() {
         </div>
       </div>
 
-      {/* Editor Area */}
+      {/* Editor / Preview Area */}
       <div className="flex gap-2">
         {editorMode === "source" && (
           <textarea
@@ -266,43 +279,43 @@ export default function MediaWikiEditor() {
             onChange={(e) => setWikitext(e.target.value)}
             onKeyDown={handleKeyDown}
             className="flex-1 min-h-[70vh] rounded-lg p-4 outline-none text-sm border-2 border-gray-300 bg-white focus:border-blue-500 font-mono"
-            placeholder="Start writing your article using MediaWiki syntax..."
+            placeholder="Start writing your article using MediaWiki syntax...
+
+Examples:
+'''Bold text'''
+''Italic text''
+== Heading ==
+* List item
+[[Link]]"
           />
         )}
 
+        {/* Visual WYSIWYG Editor */}
         {editorMode === "visual" && (
           <div
+        
             ref={visualRef}
-            onInput={(e) => setWikitext(e.currentTarget.innerText)}
+            onInput={(e)=>{setWikitext(e.target.innerHTML)}}
             className="flex-1 min-h-[70vh] rounded-lg p-6 bg-white outline-none"
             contentEditable
             suppressContentEditableWarning
             spellCheck={true}
-            style={{
-              fontFamily: "inherit",
-              direction: "ltr",
-              unicodeBidi: "plaintext",
-            }}
-            dangerouslySetInnerHTML={{ __html: visualHtml }}
+            style={{ fontFamily: "inherit" }}
+            dangerouslySetInnerHTML={{ __html: visualHtml}}
             onKeyDown={handleKeyDown}
-          />
+          >
+            {/* parsed HTML will be injected here by useEffect */}
+          </div>
         )}
-
         <style dangerouslySetInnerHTML={{ __html: DEFAULT_STYLES }} />
-
+        {/* Always show parsed preview (read-only) */}
         {editorMode === "source" && (
           <div
             className={`bg-white rounded-lg p-6 border-2 border-gray-300 overflow-auto ${
               editorMode === "source" ? "flex-1" : "w-full"
             }`}
           >
-            <div
-              dangerouslySetInnerHTML={{
-                __html:
-                  visualHtml ||
-                  '<p class="text-gray-400">Preview will appear here...</p>',
-              }}
-            />
+            <div dangerouslySetInnerHTML={{ __html: visualHtml || '<p class="text-gray-400">Preview will appear here...</p>' }} />
           </div>
         )}
       </div>
