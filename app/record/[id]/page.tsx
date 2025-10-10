@@ -2,15 +2,18 @@
 'use client'
 
 import Header from '@/components/header'
+import CreateRecord from '@/components/record/create'
 import { useMobile } from "@/lib/units/use-mobile"
 import { Home, Compass, HandHeart, Settings } from 'lucide-react'
 import { useState } from 'react'
 
 export default function RecordIdPage({params}) {
   const record_slug = params.id;
-  if (record_slug || record_slug.trim()!=='') {
+  if (!record_slug || record_slug.trim()==='') {
+    
     // back to /record page
   }
+ 
   const isMobile = useMobile()
   const [isExpanded, setIsExpanded] = useState(true)
   
@@ -73,7 +76,21 @@ export default function RecordIdPage({params}) {
       </nav>
     </div>
   )
-  
+  if (record_slug === 'create') {
+   return (
+     <main className="min-h-screen w-full bg-gray-50">
+      <Header navlist={NavList} />
+      <div className="flex bg-white">
+        {Sidebar}
+        <div className='flex-1 p-6'>
+          <div className='max-w-4xl mx-auto'>
+            <CreateRecord/>
+          </div>
+        </div>
+      </div>
+    </main>
+   )
+ }
   return (
     <main className="min-h-screen w-full bg-gray-50">
       <Header navlist={NavList} />
