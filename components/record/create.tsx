@@ -953,7 +953,7 @@ export default function MediaWikiEditor({
                 }}
                 className='border-gray-500 text-sm'
             >
-  <SelectTrigger>
+  <SelectTrigger className='max-w-[100px]'>
     <SelectValue placeholder="Handling" />
   </SelectTrigger>
   <SelectContent>
