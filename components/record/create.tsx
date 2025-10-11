@@ -45,77 +45,77 @@ interface ToolbarItem {
   icon: any;
   action: string;
   label: string;
-  args?: any[];
+  args ? : any[];
 }
 
 interface ToolbarBlock {
-  name?: string;
-  items?: ToolbarItem[];
-  icon?: any;
-  action?: string;
-  label?: string;
+  name ? : string;
+  items ? : ToolbarItem[];
+  icon ? : any;
+  action ? : string;
+  label ? : string;
 }
 
 interface MediaWikiEditorProps {
-  recordName?: string;
-  editingMode?: "visual" | "source";
+  recordName ? : string;
+  editingMode ? : "visual" | "source";
 }
 
 // Utility Functions
 const htmlToWikitext = (html: string): string => {
   const tempDiv = document.createElement("div");
   tempDiv.innerHTML = html;
-
+  
   const processNode = (node: Node, parentTag: string = ""): string => {
     if (node.nodeType === Node.TEXT_NODE) {
       return node.textContent || "";
     }
-
+    
     if (node.nodeType !== Node.ELEMENT_NODE) {
       return "";
     }
-
+    
     const element = node as HTMLElement;
     const tagName = element.tagName.toLowerCase();
-
+    
     const children = Array.from(element.childNodes)
       .map((child) => processNode(child, tagName))
       .join("");
-
+    
     switch (tagName) {
       case "strong":
       case "b":
         return `'''${children}'''`;
-
+        
       case "em":
       case "i":
         return `''${children}''`;
-
+        
       case "del":
       case "s":
         return `<s>${children}</s>`;
-
+        
       case "ins":
       case "u":
         return `<u>${children}</u>`;
-
+        
       case "code":
         if (element.classList.contains("inline-code")) {
           return `<code>${children}</code>`;
         }
         return children;
-
+        
       case "pre":
         const lang =
           Array.from(element.classList)
-            .find((c) => c.startsWith("language-"))
-            ?.replace("language-", "") || "text";
+          .find((c) => c.startsWith("language-"))
+          ?.replace("language-", "") || "text";
         const codeContent =
           element.querySelector("code")?.textContent ||
           element.textContent ||
           "";
         return `\n<syntaxhighlight lang="${lang}">\n${codeContent}\n</syntaxhighlight>\n`;
-
+        
       case "h1":
         return `\n= ${children} =\n`;
       case "h2":
@@ -128,25 +128,25 @@ const htmlToWikitext = (html: string): string => {
         return `\n===== ${children} =====\n`;
       case "h6":
         return `\n====== ${children} ======\n`;
-
+        
       case "a":
         const href = element.getAttribute("href") || "";
         const isExternal = href.startsWith("http");
-
+        
         if (isExternal) {
           return children === href ? `[${href}]` : `[${href} ${children}]`;
         }
-
+        
         const cleanHref = href.replace(/^#/, "");
-        return children === cleanHref
-          ? `[[${children}]]`
-          : `[[${cleanHref}|${children}]]`;
-
+        return children === cleanHref ?
+          `[[${children}]]` :
+          `[[${cleanHref}|${children}]]`;
+        
       case "img":
         const src = element.getAttribute("src") || "";
         const alt = element.getAttribute("alt") || "";
         const parent = element.parentElement;
-
+        
         if (
           parent?.tagName.toLowerCase() === "figure" &&
           parent.classList.contains("thumb")
@@ -154,9 +154,9 @@ const htmlToWikitext = (html: string): string => {
           const caption = parent.querySelector("figcaption")?.textContent || alt;
           return `[[File:${src}|thumb|${caption}]]`;
         }
-
+        
         return alt ? `[[File:${src}|${alt}]]` : `[[File:${src}]]`;
-
+        
       case "figure":
         if (element.classList.contains("thumb")) {
           const img = element.querySelector("img");
@@ -165,32 +165,32 @@ const htmlToWikitext = (html: string): string => {
           return `\n[[File:${src}|thumb|${caption}]]\n`;
         }
         return children;
-
+        
       case "ul":
         const ulItems = Array.from(element.children)
           .filter((child) => child.tagName.toLowerCase() === "li")
           .map((li) => `* ${processNode(li, "ul")}`)
           .join("\n");
         return `\n${ulItems}\n`;
-
+        
       case "ol":
         const olItems = Array.from(element.children)
           .filter((child) => child.tagName.toLowerCase() === "li")
           .map((li) => `# ${processNode(li, "ol")}`)
           .join("\n");
         return `\n${olItems}\n`;
-
+        
       case "li":
         return children;
-
+        
       case "table":
         let tableWiki = '\n{| class="wikitable"\n';
-
+        
         const caption = element.querySelector("caption");
         if (caption) {
           tableWiki += `|+ ${caption.textContent}\n`;
         }
-
+        
         const thead = element.querySelector("thead");
         if (thead) {
           const headerRow = thead.querySelector("tr");
@@ -203,12 +203,12 @@ const htmlToWikitext = (html: string): string => {
             }
           }
         }
-
+        
         const tbody = element.querySelector("tbody") || element;
         const rows = Array.from(tbody.querySelectorAll("tr")).filter(
           (row) => !row.closest("thead")
         );
-
+        
         rows.forEach((row) => {
           tableWiki += "|-\n";
           const cells = Array.from(row.querySelectorAll("td")).map(
@@ -218,28 +218,28 @@ const htmlToWikitext = (html: string): string => {
             tableWiki += "| " + cells.join(" || ") + "\n";
           }
         });
-
+        
         tableWiki += "|}\n";
         return tableWiki;
-
+        
       case "hr":
         return "\n----\n";
-
+        
       case "sup":
         if (element.classList.contains("reference")) {
           return "";
         }
         return `<sup>${children}</sup>`;
-
+        
       case "sub":
         return `<sub>${children}</sub>`;
-
+        
       case "p":
         return children + "\n\n";
-
+        
       case "br":
         return "\n";
-
+        
       case "div":
         if (element.classList.contains("template")) {
           const templateName =
@@ -255,7 +255,7 @@ const htmlToWikitext = (html: string): string => {
           return `<math>${tex}</math>`;
         }
         return children;
-
+        
       case "span":
         if (element.classList.contains("math-inline")) {
           const tex =
@@ -263,20 +263,20 @@ const htmlToWikitext = (html: string): string => {
           return `<math>${tex}</math>`;
         }
         return children;
-
+        
       case "video":
         const videoSrc = element.getAttribute("src") || "";
         return `[[Media:${videoSrc}]]`;
-
+        
       case "audio":
         const audioSrc = element.getAttribute("src") || "";
         return `[[Media:${audioSrc}]]`;
-
+        
       default:
         return children;
     }
   };
-
+  
   let result = processNode(tempDiv);
   result = result.replace(/\n{3,}/g, "\n\n").trim();
   return result;
@@ -285,7 +285,7 @@ const htmlToWikitext = (html: string): string => {
 const saveCursorPosition = (el: HTMLElement): CursorPosition | null => {
   const sel = window.getSelection();
   if (!sel || sel.rangeCount === 0) return null;
-
+  
   const range = sel.getRangeAt(0);
   return {
     node: range.startContainer,
@@ -309,7 +309,7 @@ const restoreCursorPosition = (
     }
     return;
   }
-
+  
   try {
     const range = document.createRange();
     range.setStart(
@@ -317,7 +317,7 @@ const restoreCursorPosition = (
       Math.min(position.offset, position.node.textContent?.length || 0)
     );
     range.collapse(true);
-
+    
     const sel = window.getSelection();
     if (sel) {
       sel.removeAllRanges();
@@ -334,35 +334,35 @@ export default function MediaWikiEditor({
   editingMode,
 }: MediaWikiEditorProps) {
   // State
-  const [wikitext, setWikitext] = useState<string>("");
-  const [title, setTitle] = useState<string>("");
-  const [editorMode, setEditorMode] = useState<"visual" | "source">("visual");
-  const [parseResult, setParseResult] = useState<ParseResult>(parseMarkup(""));
-  const [history, setHistory] = useState<string[]>([""]);
+  const [wikitext, setWikitext] = useState < string > ("");
+  const [title, setTitle] = useState < string > ("");
+  const [editorMode, setEditorMode] = useState < "visual" | "source" > ("visual");
+  const [parseResult, setParseResult] = useState < ParseResult > (parseMarkup(""));
+  const [history, setHistory] = useState < string[] > ([""]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [wordCount, setWordCount] = useState(0);
-  const [error, setError] = useState<string>("");
-
+  const [error, setError] = useState < string > ("");
+  
   // Refs
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const visualRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef < HTMLTextAreaElement > (null);
+  const visualRef = useRef < HTMLDivElement > (null);
   const isUpdatingRef = useRef(false);
-  const debounceTimer = useRef<number | null>(null);
-  const lastWikitextRef = useRef<string>("");
-  const cursorPositionRef = useRef<CursorPosition | null>(null);
-
+  const debounceTimer = useRef < number | null > (null);
+  const lastWikitextRef = useRef < string > ("");
+  const cursorPositionRef = useRef < CursorPosition | null > (null);
+  
   // Initialize from props
   useEffect(() => {
     if (recordName && editingMode) {
-      const validModes: Array<"visual" | "source"> = ["visual", "source"];
+      const validModes: Array < "visual" | "source" > = ["visual", "source"];
       if (validModes.includes(editingMode)) {
         setEditorMode(editingMode);
         setTitle(recordName);
       }
     }
   }, [recordName, editingMode]);
-
+  
   // History management
   const addToHistory = useCallback(
     (text: string) => {
@@ -378,7 +378,7 @@ export default function MediaWikiEditor({
     },
     [historyIndex]
   );
-
+  
   const handleUndo = useCallback(() => {
     if (historyIndex > 0) {
       const newIndex = historyIndex - 1;
@@ -386,7 +386,7 @@ export default function MediaWikiEditor({
       const newText = history[newIndex];
       setWikitext(newText);
       lastWikitextRef.current = newText;
-
+      
       if (editorMode === "visual" && visualRef.current) {
         const result = parseMarkup(newText);
         isUpdatingRef.current = true;
@@ -397,7 +397,7 @@ export default function MediaWikiEditor({
       }
     }
   }, [historyIndex, history, editorMode]);
-
+  
   const handleRedo = useCallback(() => {
     if (historyIndex < history.length - 1) {
       const newIndex = historyIndex + 1;
@@ -405,7 +405,7 @@ export default function MediaWikiEditor({
       const newText = history[newIndex];
       setWikitext(newText);
       lastWikitextRef.current = newText;
-
+      
       if (editorMode === "visual" && visualRef.current) {
         const result = parseMarkup(newText);
         isUpdatingRef.current = true;
@@ -416,7 +416,7 @@ export default function MediaWikiEditor({
       }
     }
   }, [historyIndex, history, editorMode]);
-
+  
   // Parse wikitext
   useEffect(() => {
     if (!isUpdatingRef.current) {
@@ -432,16 +432,16 @@ export default function MediaWikiEditor({
       }
     }
   }, [wikitext]);
-
+  
   // Update visual editor
   useEffect(() => {
     if (editorMode === "visual" && visualRef.current && !isUpdatingRef.current) {
       const content = parseResult.html || "<p><br></p>";
-
+      
       if (visualRef.current.innerHTML !== content) {
         const cursorPos = saveCursorPosition(visualRef.current);
         visualRef.current.innerHTML = content;
-
+        
         setTimeout(() => {
           if (visualRef.current) {
             restoreCursorPosition(visualRef.current, cursorPos);
@@ -450,28 +450,28 @@ export default function MediaWikiEditor({
       }
     }
   }, [editorMode, parseResult.html]);
-
+  
   // Visual input handler
   const handleVisualInput = useCallback(() => {
     if (visualRef.current && !isUpdatingRef.current) {
       cursorPositionRef.current = saveCursorPosition(visualRef.current);
-
+      
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current);
       }
-
+      
       debounceTimer.current = window.setTimeout(() => {
         if (visualRef.current) {
           isUpdatingRef.current = true;
           const html = visualRef.current.innerHTML;
           const newWikitext = htmlToWikitext(html);
-
+          
           if (newWikitext !== lastWikitextRef.current) {
             lastWikitextRef.current = newWikitext;
             setWikitext(newWikitext);
             addToHistory(newWikitext);
           }
-
+          
           setTimeout(() => {
             isUpdatingRef.current = false;
             if (visualRef.current && cursorPositionRef.current) {
@@ -482,10 +482,11 @@ export default function MediaWikiEditor({
       }, 500);
     }
   }, [addToHistory]);
-
+  
   // Mode switch
   const handleModeSwitch = useCallback(() => {
     if (editorMode === "visual" && visualRef.current) {
+      // Visual → Source
       isUpdatingRef.current = true;
       const html = visualRef.current.innerHTML;
       const newWikitext = htmlToWikitext(html);
@@ -495,17 +496,27 @@ export default function MediaWikiEditor({
       setTimeout(() => {
         isUpdatingRef.current = false;
       }, 100);
+      setEditorMode("source");
+    } else if (editorMode === "source") {
+      // Source → Visual
+      const result = parseMarkup(wikitext);
+      setParseResult(result);
+      setTimeout(() => {
+        if (visualRef.current) {
+          visualRef.current.innerHTML = result.html || "<p><br></p>";
+        }
+      }, 0);
+      setEditorMode("visual");
     }
-    setEditorMode((prev) => (prev === "visual" ? "source" : "visual"));
-  }, [editorMode, addToHistory]);
-
+  }, [editorMode, wikitext, addToHistory]);
+  
   // Command handler
   const handleCommand = useCallback(
     (command: string, ...args: any[]) => {
       if (editorMode === "source") {
         const textarea = textareaRef.current;
         if (!textarea) return;
-
+        
         try {
           const start = textarea.selectionStart;
           const end = textarea.selectionEnd;
@@ -519,7 +530,7 @@ export default function MediaWikiEditor({
           setWikitext(result.text);
           lastWikitextRef.current = result.text;
           addToHistory(result.text);
-
+          
           setTimeout(() => {
             textarea.focus();
             textarea.setSelectionRange(
@@ -533,16 +544,16 @@ export default function MediaWikiEditor({
       } else {
         const el = visualRef.current;
         if (!el) return;
-
+        
         el.focus();
         document.execCommand("styleWithCSS", false, "false");
-
+        
         const sel = window.getSelection();
         if (!sel || sel.rangeCount === 0) return;
-
+        
         const range = sel.getRangeAt(0);
         const text = sel.toString();
-
+        
         try {
           switch (command) {
             case "bold":
@@ -581,12 +592,12 @@ export default function MediaWikiEditor({
               );
               if (linkTarget) {
                 const link = document.createElement("a");
-                link.href = linkTarget.startsWith("http")
-                  ? linkTarget
-                  : "#" + linkTarget;
-                link.className = linkTarget.startsWith("http")
-                  ? "external"
-                  : "internal";
+                link.href = linkTarget.startsWith("http") ?
+                  linkTarget :
+                  "#" + linkTarget;
+                link.className = linkTarget.startsWith("http") ?
+                  "external" :
+                  "internal";
                 link.textContent = text || linkTarget;
                 range.deleteContents();
                 range.insertNode(link);
@@ -670,7 +681,7 @@ export default function MediaWikiEditor({
               table.className = "wikitable";
               const thead = document.createElement("thead");
               const tbody = document.createElement("tbody");
-
+              
               const headerRow = document.createElement("tr");
               for (let i = 0; i < cols; i++) {
                 const th = document.createElement("th");
@@ -678,7 +689,7 @@ export default function MediaWikiEditor({
                 headerRow.appendChild(th);
               }
               thead.appendChild(headerRow);
-
+              
               for (let i = 0; i < rows; i++) {
                 const tr = document.createElement("tr");
                 for (let j = 0; j < cols; j++) {
@@ -688,7 +699,7 @@ export default function MediaWikiEditor({
                 }
                 tbody.appendChild(tr);
               }
-
+              
               table.appendChild(thead);
               table.appendChild(tbody);
               range.deleteContents();
@@ -727,7 +738,7 @@ export default function MediaWikiEditor({
               range.insertNode(document.createElement("br"));
               break;
           }
-
+          
           handleVisualInput();
         } catch (err) {
           setError("ফরম্যাটিং ত্রুটি: " + (err as Error).message);
@@ -736,12 +747,12 @@ export default function MediaWikiEditor({
     },
     [editorMode, wikitext, addToHistory, handleVisualInput, parseResult]
   );
-
+  
   // Keyboard shortcuts
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       const isMod = e.ctrlKey || e.metaKey;
-
+      
       if (isMod) {
         switch (e.key.toLowerCase()) {
           case "b":
@@ -778,27 +789,27 @@ export default function MediaWikiEditor({
     },
     [handleCommand, handleUndo, handleRedo]
   );
-
+  
   // Save handler
   const handleSave = useCallback(async () => {
     if (!title.trim()) {
       setError("দয়া করে একটি শিরোনাম লিখুন");
       return;
     }
-
+    
     setIsSaving(true);
     setError("");
-
+    
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-
+      
       console.log("সংরক্ষিত:", {
         title,
         wikitext,
         metadata: parseResult.metadata,
         wordCount,
       });
-
+      
       alert("✓ নিবন্ধটি সফলভাবে সংরক্ষিত হয়েছে!");
     } catch (err) {
       setError("সংরক্ষণে ত্রুটি: " + (err as Error).message);
@@ -806,7 +817,7 @@ export default function MediaWikiEditor({
       setIsSaving(false);
     }
   }, [title, wikitext, parseResult.metadata, wordCount]);
-
+  
   // Toolbar configuration
   const toolbarBlocks: ToolbarBlock[] = [
     { icon: Bold, action: "bold", label: "বোল্ড (Ctrl+B)" },
@@ -838,7 +849,7 @@ export default function MediaWikiEditor({
     { icon: FileText, action: "reference", label: "তথ্যসূত্র" },
     { icon: ListChecks, action: "refList", label: "তথ্যসূত্র তালিকা" },
   ];
-
+  
   return (
     <div className="w-full min-h-screen bg-gray-50">
       {/* Header */}
