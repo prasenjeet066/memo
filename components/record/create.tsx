@@ -846,7 +846,7 @@ export default function MediaWikiEditor({
         <div className="flex items-center justify-between p-3">
           <div className="flex items-center space-x-3 flex-1">
             <List className="h-5 w-5 text-blue-600" />
-            <h1 className="text-lg font-semibold">{title || "নতুন নিবন্ধ"}</h1>
+            <h1 className="text-lg font-semibold">{recordName || "নতুন নিবন্ধ"}</h1>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -978,7 +978,7 @@ export default function MediaWikiEditor({
 
         {/* Visual WYSIWYG Editor */}
         {editorMode === "visual" && (
-          <div className="flex-1 bg-white border rounded-lg">
+          <div className="flex-1 bg-white border rounded-lg p-2">
             <style dangerouslySetInnerHTML={{ __html: DEFAULT_STYLES }} />
             <div
               ref={visualRef}
