@@ -1,5 +1,17 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
+  Select,
+  SelectGroup,
+  SelectValue,
+  SelectTrigger,
+  SelectContent,
+  SelectLabel,
+  SelectItem,
+  SelectSeparator,
+  SelectScrollUpButton,
+  SelectScrollDownButton
+} from '@/components/ui/select'
+import {
   Bold,
   Italic,
   Strikethrough,
@@ -417,14 +429,14 @@ export default function MediaWikiEditor({
     }
   }, [historyIndex, history, editorMode]);
   
-  const handleAutoSave = useCallback(()=>{
+  const handleAutoSave = useCallback(() => {
     if (wikitext) {
       
-      setWikitext((prev)=>prev+'')
+      setWikitext((prev) => prev + '')
       lastWikitextRef.current = wikitext;
       addToHistory(wikitext);
     }
-  },[wikitext])
+  }, [wikitext])
   
   // Parse wikitext
   useEffect(() => {
@@ -929,8 +941,8 @@ export default function MediaWikiEditor({
                 {block.icon && <block.icon className="h-4 w-4" />}
               </button>
             ) : (
-              <select
-                key={i}
+            <Select
+            key={i}
                 onChange={(e) => {
                   const value = e.target.value;
                   if (value && block.items) {
@@ -939,18 +951,21 @@ export default function MediaWikiEditor({
                     e.target.value = "";
                   }
                 }}
-                className="p-2 border rounded hover:bg-gray-50 text-sm"
-                defaultValue=""
-              >
-                <option value="" disabled>
-                  {block.name}
-                </option>
+            >
+  <SelectTrigger className="w-[180px]">
+    <SelectValue placeholder="Theme" />
+  </SelectTrigger>
+  <SelectContent>
+    
                 {block.items?.map((item, idx) => (
-                  <option key={idx} value={item.action}>
-                    {item.label}
-                  </option>
+                  <SelectItem key={idx} value={item.action}/>
+                    
                 ))}
-              </select>
+  </SelectContent>
+</Select>
+             
+                
+            
             )
           )}
         </div>
