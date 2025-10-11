@@ -916,9 +916,10 @@ export default function MediaWikiEditor() {
             <style dangerouslySetInnerHTML={{ __html: DEFAULT_STYLES }} />  
             <div  
               ref={visualRef}  
+              data-placeholder = 'Add a block and start....'
               onInput={handleVisualInput}  
               onKeyDown={handleKeyDown}  
-              className="min-h-[70vh] p-6 rounded-lg bg-white border focus:border-blue-500 outline-none"  
+              className="min-h-[70vh] p-6  bg-white outline-none"  
               contentEditable  
               suppressContentEditableWarning  
               spellCheck={true}  
@@ -927,26 +928,7 @@ export default function MediaWikiEditor() {
         )}  
       </div>  
 
-      {/* Metadata Info */}  
-      {parseResult.metadata.headings.length > 0 && (  
-        <div className="p-4 bg-white border rounded-lg">  
-          <h3 className="text-sm font-semibold mb-2">নিবন্ধ তথ্য</h3>  
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">  
-            <div>  
-              <span className="font-medium">শিরোনাম:</span> {parseResult.metadata.headings.length}  
-            </div>  
-            <div>  
-              <span className="font-medium">ছবি:</span> {parseResult.metadata.images.length}  
-            </div>  
-            <div>  
-              <span className="font-medium">লিঙ্ক:</span> {parseResult.metadata.links.length}  
-            </div>  
-            <div>  
-              <span className="font-medium">তথ্যসূত্র:</span> {parseResult.metadata.footnotes.length}  
-            </div>  
-          </div>  
-        </div>  
-      )}
+      
     </div>
     )
 }

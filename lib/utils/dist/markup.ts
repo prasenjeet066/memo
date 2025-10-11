@@ -31,7 +31,6 @@ const DEFAULT_STYLES = `
 /* Headings */
 .markup-content h1, .markup-content h2, .markup-content h3, 
 .markup-content h4, .markup-content h5, .markup-content h6 {
-  font-family: "Linux Libertine", Georgia, Times, serif;
   font-weight: 600;
   line-height: 1.3;
   margin-top: 1.5em;
