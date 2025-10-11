@@ -941,29 +941,25 @@ export default function MediaWikiEditor({
                 {block.icon && <block.icon className="h-4 w-4" />}
               </button>
             ) : (
-            <Select
-            key={i}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value && block.items) {
-                    const item = block.items.find((itm) => itm.action === value);
-                    handleCommand(value, ...(item?.args || []));
-                    e.target.value = "";
-                  }
-                }}
-                className='border-gray-500 text-sm'
-            >
-  <SelectTrigger className='max-w-[100px]'>
+       <Select
+  key={i}
+  onValueChange={(value) => {
+    if (value && block.items) {
+      const item = block.items.find((itm) => itm.action === value);
+      handleCommand(value, ...(item?.args || []));
+    }
+  }}
+>
+  <SelectTrigger className="max-w-[100px] border-gray-500 text-sm">
     <SelectValue placeholder="Handling" />
   </SelectTrigger>
+
   <SelectContent>
-    
-                {block.items?.map((item, idx) => (
-                  <SelectItem key={idx} value={item.action}>
-                    {item.label}
-                  </SelectItem>
-                    
-                ))}
+    {block.items?.map((item, idx) => (
+      <SelectItem key={idx} value={item.action}>
+        {item.label}
+      </SelectItem>
+    ))}
   </SelectContent>
 </Select>
              
