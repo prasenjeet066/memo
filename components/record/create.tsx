@@ -951,14 +951,17 @@ export default function MediaWikiEditor({
                     e.target.value = "";
                   }
                 }}
+                className='border-gray-500 text-sm '
             >
-  <SelectTrigger className="w-[180px]">
-    <SelectValue placeholder="Theme" />
+  <SelectTrigger>
+    <SelectValue placeholder="Handling" />
   </SelectTrigger>
   <SelectContent>
     
                 {block.items?.map((item, idx) => (
-                  <SelectItem key={idx} value={item.action}/>
+                  <SelectItem key={idx} value={item.action}>
+                    {item.label}
+                  </SelectItem>
                     
                 ))}
   </SelectContent>
