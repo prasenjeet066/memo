@@ -4,17 +4,17 @@ import { useEffect, useState } from 'react';
 import Header from '@/components/header';
 import CreateRecord from '@/components/record/create';
 import { useMobile } from "@/lib/units/use-mobile";
-import { 
-  Home, 
-  Compass, 
-  HandHeart, 
-  Settings, 
-  Edit, 
-  Eye, 
-  History, 
-  Share2, 
-  Bookmark, 
-  Flag, 
+import {
+  Home,
+  Compass,
+  HandHeart,
+  Settings,
+  Edit,
+  Eye,
+  History,
+  Share2,
+  Bookmark,
+  Flag,
   ChevronDown,
   ChevronUp,
   FileText,
@@ -45,21 +45,21 @@ interface RecordData {
   updatedAt: Date;
 }
 
-export default function RecordIdPage({params}) {
+export default function RecordIdPage({ params }) {
   const router = useRouter();
   const record_slug = params.id;
   const searchParams = useSearchParams();
   const isMobile = useMobile();
   
   const [isExpanded, setIsExpanded] = useState(true);
-  const [recordData, setRecordData] = useState<RecordData | null>(null);
+  const [recordData, setRecordData] = useState < RecordData | null > (null);
   const [loading, setLoading] = useState(true);
   const [recordExists, setRecordExists] = useState(true);
-  const [activeSection, setActiveSection] = useState<string>('tools');
+  const [activeSection, setActiveSection] = useState < string > ('tools');
   
   const recordName = searchParams.get('r_n');
   const editingMode = searchParams.get('e_mode');
-
+  
   useEffect(() => {
     if (record_slug && record_slug !== 'create') {
       fetchRecordData();
@@ -67,7 +67,7 @@ export default function RecordIdPage({params}) {
       setLoading(false);
     }
   }, [record_slug]);
-
+  
   const fetchRecordData = async () => {
     try {
       setLoading(true);
@@ -90,7 +90,7 @@ export default function RecordIdPage({params}) {
       setLoading(false);
     }
   };
-
+  
   const handleCreateRecord = () => {
     router.push(`/record/create?record=${encodeURIComponent(record_slug)}&editing_mode=true`);
   };
@@ -101,47 +101,46 @@ export default function RecordIdPage({params}) {
     { name: 'Contribute', icon: HandHeart, href: '/contribute' },
     { name: 'Settings', icon: Settings, href: '/settings' },
   ];
-
+  
   const RecordTools = [
-    { 
-      name: 'Edit', 
-      icon: Edit, 
-      onClick: () => router.push(`/record/${record_slug}/edit`),
-      color: 'text-blue-600'
-    },
-    { 
-      name: 'View History', 
-      icon: History, 
-      onClick: () => router.push(`/record/${record_slug}/history`),
-      color: 'text-gray-600'
-    },
-    { 
-      name: 'Watch', 
-      icon: Bookmark, 
-      onClick: () => {/* Add watch functionality */},
-      color: 'text-yellow-600'
-    },
-    { 
-      name: 'Share', 
-      icon: Share2, 
-      onClick: () => {/* Add share functionality */},
-      color: 'text-green-600'
-    },
-    { 
-      name: 'Report Issue', 
-      icon: Flag, 
-      onClick: () => router.push(`/record/${record_slug}/report`),
-      color: 'text-red-600'
-    },
-  ];
-
+  {
+    name: 'Edit',
+    icon: Edit,
+    onClick: () => router.push(`/record/${record_slug}/edit`),
+    color: 'text-blue-600'
+  },
+  {
+    name: 'View History',
+    icon: History,
+    onClick: () => router.push(`/record/${record_slug}/history`),
+    color: 'text-gray-600'
+  },
+  {
+    name: 'Watch',
+    icon: Bookmark,
+    onClick: () => { /* Add watch functionality */ },
+    color: 'text-yellow-600'
+  },
+  {
+    name: 'Share',
+    icon: Share2,
+    onClick: () => { /* Add share functionality */ },
+    color: 'text-green-600'
+  },
+  {
+    name: 'Report Issue',
+    icon: Flag,
+    onClick: () => router.push(`/record/${record_slug}/report`),
+    color: 'text-red-600'
+  }, ];
+  
   const RecordInfo = recordData ? [
     { label: 'Views', value: recordData.viewCount.toLocaleString(), icon: Eye },
     { label: 'Edits', value: recordData.editCount, icon: Edit },
     { label: 'Status', value: recordData.status, icon: FileText },
     { label: 'Created', value: new Date(recordData.createdAt).toLocaleDateString(), icon: Clock },
   ] : [];
-
+  
   const SidebarSection = ({ title, icon: Icon, children, isOpen, onToggle }) => (
     <div className='border-b border-gray-200'>
       <button
@@ -308,30 +307,124 @@ export default function RecordIdPage({params}) {
       </div>
     </div>
   );
-
+  
   if (!record_slug || record_slug.trim() === '') {
     router.push('/record');
     return null;
   }
-
+  
+  // Handle create mode
   // Handle create mode
   if (record_slug === 'create' && recordName && editingMode) {
+    const CreateTools = [
+    {
+      name: 'Save Draft',
+      icon: FileText,
+      onClick: () => {
+        // Save draft logic here
+        console.log("Saving draft...");
+      },
+      color: 'text-green-600',
+    },
+    {
+      name: 'Preview',
+      icon: Eye,
+      onClick: () => {
+        // Preview logic here
+        console.log("Preview record...");
+      },
+      color: 'text-blue-600',
+    },
+    {
+      name: 'Formatting Help',
+      icon: MessageSquare,
+      onClick: () => {
+        // Open formatting guide
+        window.open('/docs/formatting', '_blank');
+      },
+      color: 'text-purple-600',
+    },
+    {
+      name: 'Cancel Creation',
+      icon: Flag,
+      onClick: () => router.push('/record'),
+      color: 'text-red-600',
+    }, ];
+    
+    const SideTools = !isMobile && (
+      <div className="w-auto max-w-72 min-h-screen bg-white border-l border-gray-200 flex flex-col">
+      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-gray-700">
+          {isExpanded ? 'Creation Tools' : 'Tools'}
+        </h3>
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          {isExpanded ? 'Collapse' : 'Expand'}
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        {/* Creation Tools Section */}
+        <SidebarSection
+          title="Creation Tools"
+          icon={Edit}
+          isOpen={activeSection === 'tools'}
+          onToggle={() =>
+            setActiveSection(activeSection === 'tools' ? '' : 'tools')
+          }
+        >
+          <div className="space-y-1">
+            {CreateTools.map((tool) => (
+              <button
+                key={tool.name}
+                onClick={tool.onClick}
+                className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors group"
+              >
+                <tool.icon className={`w-4 h-4 ${tool.color} flex-shrink-0`} />
+                <span className="text-sm text-gray-700 group-hover:text-gray-900">
+                  {tool.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        </SidebarSection>
+
+        {/* Tips Section */}
+        <SidebarSection
+          title="Tips"
+          icon={Star}
+          isOpen={activeSection === 'tips'}
+          onToggle={() =>
+            setActiveSection(activeSection === 'tips' ? '' : 'tips')
+          }
+        >
+          <div className="text-xs text-gray-600 space-y-2">
+            <p>✅ Use clear, descriptive titles</p>
+            <p>💡 Summarize the record’s purpose in 1–2 sentences</p>
+            <p>🧩 Add categories and tags for better discoverability</p>
+            <p>📚 Include references or sources when possible</p>
+          </div>
+        </SidebarSection>
+      </div>
+    </div>
+    );
     
     return (
       <main className="min-h-screen w-full bg-gray-50">
-        <Header navlist={NavList} />
-        <div className="flex bg-white">
-          <div className='flex-1 px-3 border-r'>
-            <div className='max-w-4xl mx-auto'>
-              <CreateRecord recordName = {recordName} editingMode={editingMode}/>
-            </div>
+      <Header navlist={NavList} />
+      <div className="flex bg-white">
+        <div className="flex-1 px-3 border-r">
+          <div className="max-w-4xl mx-auto">
+            <CreateRecord recordName={recordName} editingMode={editingMode} />
           </div>
         </div>
-        {Sidebar}
-      </main>
+        {SideTools}
+      </div>
+    </main>
     );
   }
-
   // Loading state
   if (loading) {
     return (
@@ -351,7 +444,7 @@ export default function RecordIdPage({params}) {
       </main>
     );
   }
-
+  
   // Record doesn't exist - show create option
   if (!recordExists) {
     record_slug = encodeURIComponent(record_slug)
@@ -425,7 +518,7 @@ export default function RecordIdPage({params}) {
       </main>
     );
   }
-
+  
   // Display existing record
   return (
     <main className="min-h-screen w-full bg-gray-50">
