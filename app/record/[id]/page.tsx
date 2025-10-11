@@ -447,7 +447,7 @@ export default function RecordIdPage({ params }) {
   
   // Record doesn't exist - show create option
   if (!recordExists) {
-    record_slug = encodeURIComponent(record_slug)
+    
     return (
       <main className="min-h-screen w-full bg-gray-50">
         <Header navlist={NavList} />
@@ -460,7 +460,7 @@ export default function RecordIdPage({ params }) {
                   Record Not Found
                 </h1>
                 <p className='text-gray-600 mb-1'>
-                  The record "<span className='font-semibold'>{encodeURIComponent(record_slug)}</span>" doesn't exist yet.
+                  The record "<span className='font-semibold'>{decodeURI(record_slug)}</span>" doesn't exist yet.
                 </p>
                 <p className='text-gray-500 text-sm'>
                   Would you like to create it?
@@ -472,14 +472,14 @@ export default function RecordIdPage({ params }) {
                   Create New Record
                 </h2>
                 <p className='text-sm text-blue-700 mb-4'>
-                  Start documenting knowledge about "{record_slug}". Your contribution will help build a comprehensive knowledge base.
+                  Start documenting knowledge about "{decodeURI(record_slug)}". Your contribution will help build a comprehensive knowledge base.
                 </p>
                 <button
                   onClick={handleCreateRecord}
                   className='inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium'
                 >
                   <Plus className='w-5 h-5' />
-                  Create "{record_slug}"
+                  Create "{decodeURI(record_slug)}"
                 </button>
               </div>
 
