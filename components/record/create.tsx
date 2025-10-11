@@ -937,7 +937,7 @@ export default function MediaWikiEditor({
       </div>
 
       {/* Editor Area */}
-      <div className="flex gap-4 p-4">
+      <div className="flex gap-4">
         {editorMode === "source" && (
           <>
             {/* Source Editor */}
@@ -952,14 +952,14 @@ export default function MediaWikiEditor({
                   addToHistory(newText);
                 }}
                 onKeyDown={handleKeyDown}
-                className="w-full min-h-[70vh] p-4 outline-none text-sm font-mono bg-white border rounded-lg focus:border-blue-500 resize-none"
+                className="w-full min-h-[70vh]  outline-none text-sm font-mono bg-white border rounded-lg focus:border-blue-500 resize-none"
                 placeholder="উইকিটেক্সট এখানে লিখুন..."
               />
             </div>
 
             {/* Preview */}
             <div className="flex-1 bg-white border rounded-lg overflow-auto min-h-[70vh]">
-              <div className="p-4">
+              <div className="">
                 <h3 className="text-sm font-semibold text-gray-600 mb-3 pb-2 border-b">
                   প্রিভিউ
                 </h3>
@@ -984,7 +984,7 @@ export default function MediaWikiEditor({
               ref={visualRef}
               onInput={handleVisualInput}
               onKeyDown={handleKeyDown}
-              className="min-h-[70vh] p-6 outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
+              className="min-h-[70vh]  outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
               data-placeholder="এখানে লেখা শুরু করুন..."
               contentEditable
               suppressContentEditableWarning
