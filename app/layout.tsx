@@ -35,7 +35,9 @@ export default function LocaleLayout({ children }: Props) {
       <style>
         {
           `
-          @import url(https://db.onlinewebfonts.com/c/5d86f2e8ccc2811b9392aa03b7ce4a63?family=Styrene+B+Regular+Regular);`
+          @import url(https://db.onlinewebfonts.com/c/5d86f2e8ccc2811b9392aa03b7ce4a63?family=Styrene+B+Regular+Regular);
+          @import url('https://fonts.cdnfonts.com/css/latin-modern-math');
+          `
         }
       </style>
       <body>

@@ -17,7 +17,7 @@ interface EditorCommand {
 }
 // Default CSS styles for parsed content
 const DEFAULT_STYLES = `
-@import url('https://fonts.cdnfonts.com/css/latin-modern-math');
+
 /* Base Styles */
 .markup-content {
   font-size: 16px;
