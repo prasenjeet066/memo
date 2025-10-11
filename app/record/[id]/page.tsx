@@ -1,6 +1,5 @@
-
-'use client'
-
+"use client";
+import { useSearchParams } from "next/navigation";
 import Header from '@/components/header'
 import CreateRecord from '@/components/record/create'
 import { useMobile } from "@/lib/units/use-mobile"
@@ -76,14 +75,19 @@ export default function RecordIdPage({params}) {
       </nav>
     </div>
   )
-  if (record_slug === 'create') {
+  const searchParams = useSearchParams();
+  
+  const recordName = searchParams.get('record');
+  const editingMode = searchParams.get('editing_mode');
+  
+  if (record_slug === 'create' &&  recordName &&  editingMode) {
    return (
      <main className="min-h-screen w-full bg-gray-50">
       <Header navlist={NavList} />
       <div className="flex bg-white">
         <div className='flex-1 px-3 border-r'>
           <div className='max-w-4xl mx-auto'>
-            <CreateRecord/>
+            <CreateRecord recordName editingMode/>
           </div>
         </div>
         {Sidebar}

@@ -293,7 +293,7 @@ function restoreCursorPosition(el: HTMLElement, position: { node: Node | null; o
   }
 }
 
-export default function MediaWikiEditor() {
+export default function MediaWikiEditor({recordName , editingMode}) {
   const [wikitext, setWikitext] = useState<string>("");
   const [title, setTitle] = useState<string>("");
   const [editorMode, setEditorMode] = useState<"visual" | "source">("visual");
@@ -310,7 +310,15 @@ export default function MediaWikiEditor() {
   const debounceTimer = useRef<number | null>(null);
   const lastWikitextRef = useRef<string>("");
   const cursorPositionRef = useRef<{ node: Node | null; offset: number } | null>(null);
-  
+  useEffect(()=>{
+    if (recordName &&  editingMode) {
+      let Modes = ['visual','source'].map((a)=>a===editingMode);
+      if (recordName && Modes) {
+        setEditorMode(editingMode)
+        setTitle(recordName)
+      }
+    }
+  },[recordName,editingMode])
   // Add to history
   const addToHistory = useCallback((text: string) => {
     setHistory(prev => {
@@ -776,13 +784,7 @@ export default function MediaWikiEditor() {
         <div className="flex items-center justify-between p-3">
           <div className="flex items-center space-x-3 flex-1">
             <List className="h-5 w-5 text-blue-600" />
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="নিবন্ধের শিরোনাম লিখুন..."
-              className="text-lg font-semibold outline-none border-b-2 border-transparent focus:border-blue-500 transition flex-1 max-w-md"
-            />
+            <h1>{title}</h1>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -807,7 +809,7 @@ export default function MediaWikiEditor() {
             </span>
             <button  
               className="p-2 hover:bg-gray-100 rounded transition border"  
-              onClick={handleModeSwitch}  
+               
               title="এডিটর মোড পরিবর্তন করুন"  
             >
               <Languages className="h-5 w-5" />
@@ -815,7 +817,7 @@ export default function MediaWikiEditor() {
             <button  
               onClick={handleSave}  
               disabled={isSaving}  
-              className="flex items-center gap-2 text-sm bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:bg-gray-400"  
+              className="flex items-center gap-2 text-sm bg-gray-800 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:bg-gray-400"  
             >
               <Save className="h-4 w-4" />
               {isSaving ? "সংরক্ষণ হচ্ছে..." : "প্রকাশ করুন"}
