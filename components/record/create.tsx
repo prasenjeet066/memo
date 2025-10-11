@@ -28,7 +28,6 @@ import {
   Undo,
   Redo,
 } from "lucide-react";
-// Import MediaWiki markup utilities
 import {
   parseMarkup,
   applyEditorCommand,
@@ -37,25 +36,12 @@ import {
   type ParseResult,
 } from "../../lib/utils/dist/markup";
 
-// Helper: Set caret position
-function setCaretToEnd(el: HTMLElement) {
-  if (!el) return;
-  el.focus();
-  const range = document.createRange();
-  range.selectNodeContents(el);
-  range.collapse(false);
-  const sel = window.getSelection();
-  if (sel) {
-    sel.removeAllRanges();
-    sel.addRange(range);
-  }
-}
-
+// Improved HTML to Wikitext converter
 function htmlToWikitext(html: string): string {
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = html;
   
-  const processNode = (node: Node): string => {
+  const processNode = (node: Node, parentTag: string = ''): string => {
     if (node.nodeType === Node.TEXT_NODE) {
       return node.textContent || '';
     }
@@ -66,158 +52,294 @@ function htmlToWikitext(html: string): string {
     
     const element = node as HTMLElement;
     const tagName = element.tagName.toLowerCase();
-    const children = Array.from(element.childNodes).map(processNode).join('');
+    
+    // Get all child nodes and process them
+    const children = Array.from(element.childNodes)
+      .map(child => processNode(child, tagName))
+      .join('');
     
     switch (tagName) {
       case 'strong':
       case 'b':
         return `'''${children}'''`;
+        
       case 'em':
       case 'i':
         return `''${children}''`;
+        
       case 'del':
       case 's':
         return `<s>${children}</s>`;
+        
       case 'ins':
       case 'u':
         return `<u>${children}</u>`;
+        
       case 'code':
-        return element.classList.contains('inline-code') ? `<code>${children}</code>` : children;
+        if (element.classList.contains('inline-code')) {
+          return `<code>${children}</code>`;
+        }
+        return children;
+        
       case 'pre':
         const lang = Array.from(element.classList)
           .find(c => c.startsWith('language-'))
-          ?.replace('language-', '') || '';
-        const codeContent = element.querySelector('code')?.textContent || children;
-        return `<syntaxhighlight lang="${lang}">\n${codeContent}\n</syntaxhighlight>`;
+          ?.replace('language-', '') || 'text';
+        const codeContent = element.querySelector('code')?.textContent || element.textContent || '';
+        return `\n<syntaxhighlight lang="${lang}">\n${codeContent}\n</syntaxhighlight>\n`;
+        
       case 'h1':
-        return `= ${children} =`;
+        return `\n= ${children} =\n`;
       case 'h2':
-        return `== ${children} ==`;
+        return `\n== ${children} ==\n`;
       case 'h3':
-        return `=== ${children} ===`;
+        return `\n=== ${children} ===\n`;
+      case 'h4':
+        return `\n==== ${children} ====\n`;
+      case 'h5':
+        return `\n===== ${children} =====\n`;
+      case 'h6':
+        return `\n====== ${children} ======\n`;
+        
       case 'a':
         const href = element.getAttribute('href') || '';
-        if (href.startsWith('http')) {
+        const isExternal = href.startsWith('http');
+        
+        if (isExternal) {
           return children === href ? `[${href}]` : `[${href} ${children}]`;
         }
-        return children === href ? `[[${children}]]` : `[[${href}|${children}]]`;
+        
+        const cleanHref = href.replace(/^#/, '');
+        return children === cleanHref ? `[[${children}]]` : `[[${cleanHref}|${children}]]`;
+        
       case 'img':
         const src = element.getAttribute('src') || '';
         const alt = element.getAttribute('alt') || '';
         const parent = element.parentElement;
-        if (parent?.classList.contains('thumb')) {
-          const caption = parent.querySelector('figcaption')?.textContent || '';
+        
+        if (parent?.tagName.toLowerCase() === 'figure' && parent.classList.contains('thumb')) {
+          const caption = parent.querySelector('figcaption')?.textContent || alt;
           return `[[File:${src}|thumb|${caption}]]`;
         }
+        
         return alt ? `[[File:${src}|${alt}]]` : `[[File:${src}]]`;
+        
+      case 'figure':
+        if (element.classList.contains('thumb')) {
+          const img = element.querySelector('img');
+          const caption = element.querySelector('figcaption')?.textContent || '';
+          const src = img?.getAttribute('src') || '';
+          return `\n[[File:${src}|thumb|${caption}]]\n`;
+        }
+        return children;
+        
       case 'ul':
-        return '\n' + children;
+        const ulItems = Array.from(element.children)
+          .filter(child => child.tagName.toLowerCase() === 'li')
+          .map(li => `* ${processNode(li, 'ul')}`)
+          .join('\n');
+        return `\n${ulItems}\n`;
+        
       case 'ol':
-        return '\n' + children;
+        const olItems = Array.from(element.children)
+          .filter(child => child.tagName.toLowerCase() === 'li')
+          .map(li => `# ${processNode(li, 'ol')}`)
+          .join('\n');
+        return `\n${olItems}\n`;
+        
       case 'li':
-        const isOrdered = element.parentElement?.tagName.toLowerCase() === 'ol';
-        const marker = isOrdered ? '#' : '*';
-        return marker + ' ' + children + '\n';
+        // Don't add markers here, parent ul/ol handles it
+        return children;
+        
       case 'table':
-        let tableWiki = '{| class="wikitable"\n';
+        let tableWiki = '\n{| class="wikitable"\n';
+        
         const caption = element.querySelector('caption');
         if (caption) {
           tableWiki += `|+ ${caption.textContent}\n`;
         }
+        
         const thead = element.querySelector('thead');
         if (thead) {
-          const headers = Array.from(thead.querySelectorAll('th'));
-          if (headers.length > 0) {
-            tableWiki += '! ' + headers.map(th => th.textContent).join(' !! ') + '\n';
+          const headerRow = thead.querySelector('tr');
+          if (headerRow) {
+            const headers = Array.from(headerRow.querySelectorAll('th'))
+              .map(th => th.textContent?.trim() || '');
+            if (headers.length > 0) {
+              tableWiki += '! ' + headers.join(' !! ') + '\n';
+            }
           }
         }
-        const tbody = element.querySelector('tbody');
-        if (tbody) {
-          const rows = Array.from(tbody.querySelectorAll('tr'));
-          rows.forEach(row => {
-            tableWiki += '|-\n';
-            const cells = Array.from(row.querySelectorAll('td'));
-            if (cells.length > 0) {
-              tableWiki += '| ' + cells.map(td => td.textContent).join(' || ') + '\n';
-            }
-          });
-        }
-        tableWiki += '|}';
+        
+        const tbody = element.querySelector('tbody') || element;
+        const rows = Array.from(tbody.querySelectorAll('tr'))
+          .filter(row => !row.closest('thead'));
+        
+        rows.forEach(row => {
+          tableWiki += '|-\n';
+          const cells = Array.from(row.querySelectorAll('td'))
+            .map(td => td.textContent?.trim() || '');
+          if (cells.length > 0) {
+            tableWiki += '| ' + cells.join(' || ') + '\n';
+          }
+        });
+        
+        tableWiki += '|}\n';
         return tableWiki;
+        
       case 'hr':
-        return '----';
+        return '\n----\n';
+        
+      case 'sup':
+        if (element.classList.contains('reference')) {
+          return ''; // References are handled separately
+        }
+        return `<sup>${children}</sup>`;
+        
+      case 'sub':
+        return `<sub>${children}</sub>`;
+        
       case 'p':
         return children + '\n\n';
+        
       case 'br':
         return '\n';
+        
+      case 'div':
+        // Handle special divs
+        if (element.classList.contains('template')) {
+          const templateName = element.getAttribute('data-template') || 'Template';
+          return `{{${templateName}}}`;
+        }
+        if (element.classList.contains('reflist')) {
+          return '\n{{reflist}}\n';
+        }
+        if (element.classList.contains('math-inline')) {
+          const tex = element.getAttribute('data-tex') || element.textContent || '';
+          return `<math>${tex}</math>`;
+        }
+        return children;
+        
+      case 'span':
+        if (element.classList.contains('math-inline')) {
+          const tex = element.getAttribute('data-tex') || element.textContent || '';
+          return `<math>${tex}</math>`;
+        }
+        return children;
+        
+      case 'video':
+        const videoSrc = element.getAttribute('src') || '';
+        return `[[Media:${videoSrc}]]`;
+        
+      case 'audio':
+        const audioSrc = element.getAttribute('src') || '';
+        return `[[Media:${audioSrc}]]`;
+        
       default:
         return children;
     }
   };
   
   let result = processNode(tempDiv);
-  result = result.replace(/\n{3,}/g, '\n\n').trim();
+  
+  // Clean up excessive newlines
+  result = result.replace(/\n{3,}/g, '\n\n');
+  result = result.trim();
   
   return result;
 }
-// Helper: Get current selection info
-function getSelectionInfo(el: HTMLElement) {
+
+// Save cursor position
+function saveCursorPosition(el: HTMLElement): { node: Node | null; offset: number } | null {
   const sel = window.getSelection();
   if (!sel || sel.rangeCount === 0) return null;
   
   const range = sel.getRangeAt(0);
   return {
-    range,
-    text: sel.toString(),
-    hasSelection: sel.toString().length > 0
+    node: range.startContainer,
+    offset: range.startOffset
   };
 }
 
+// Restore cursor position
+function restoreCursorPosition(el: HTMLElement, position: { node: Node | null; offset: number } | null) {
+  if (!position || !position.node) {
+    // Set cursor to end
+    el.focus();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const sel = window.getSelection();
+    if (sel) {
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    return;
+  }
+  
+  try {
+    const range = document.createRange();
+    range.setStart(position.node, Math.min(position.offset, position.node.textContent?.length || 0));
+    range.collapse(true);
+    
+    const sel = window.getSelection();
+    if (sel) {
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  } catch (e) {
+    // If restoration fails, set to end
+    el.focus();
+  }
+}
+
 export default function MediaWikiEditor() {
-  const [wikitext, setWikitext] = useState < string > ("");
-  const [title, setTitle] = useState < string > ("");
-  const [editorMode, setEditorMode] = useState < "visual" | "source" > ("visual");
-  const [parseResult, setParseResult] = useState < ParseResult > (parseMarkup(""));
-  const [history, setHistory] = useState < string[] > ([""]);
+  const [wikitext, setWikitext] = useState<string>("");
+  const [title, setTitle] = useState<string>("");
+  const [editorMode, setEditorMode] = useState<"visual" | "source">("visual");
+  const [parseResult, setParseResult] = useState<ParseResult>(parseMarkup(""));
+  const [history, setHistory] = useState<string[]>([""]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [wordCount, setWordCount] = useState(0);
-  const [error, setError] = useState < string > ("");
+  const [error, setError] = useState<string>("");
   
-  const textareaRef = useRef < HTMLTextAreaElement > (null);
-  const visualRef = useRef < HTMLDivElement > (null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const visualRef = useRef<HTMLDivElement>(null);
   const isUpdatingRef = useRef(false);
-  const debounceTimer = useRef < number | null > (null);
-  
-  // Debounced wikitext update
-  const updateWikitextDebounced = useCallback((newText: string) => {
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = window.setTimeout(() => {
-      setWikitext(newText);
-      addToHistory(newText);
-    }, 300);
-  }, []);
+  const debounceTimer = useRef<number | null>(null);
+  const lastWikitextRef = useRef<string>("");
+  const cursorPositionRef = useRef<{ node: Node | null; offset: number } | null>(null);
   
   // Add to history
-  const addToHistory = (text: string) => {
+  const addToHistory = useCallback((text: string) => {
     setHistory(prev => {
       const newHistory = prev.slice(0, historyIndex + 1);
-      newHistory.push(text);
-      if (newHistory.length > 50) newHistory.shift();
+      if (newHistory[newHistory.length - 1] !== text) {
+        newHistory.push(text);
+        if (newHistory.length > 50) newHistory.shift();
+      }
       return newHistory;
     });
     setHistoryIndex(prev => Math.min(prev + 1, 49));
-  };
+  }, [historyIndex]);
   
   // Undo/Redo
   const handleUndo = () => {
     if (historyIndex > 0) {
       const newIndex = historyIndex - 1;
       setHistoryIndex(newIndex);
-      setWikitext(history[newIndex]);
+      const newText = history[newIndex];
+      setWikitext(newText);
+      lastWikitextRef.current = newText;
+      
       if (editorMode === "visual" && visualRef.current) {
-        const result = parseMarkup(history[newIndex]);
+        const result = parseMarkup(newText);
+        isUpdatingRef.current = true;
         visualRef.current.innerHTML = result.html || '<p><br></p>';
+        setTimeout(() => {
+          isUpdatingRef.current = false;
+        }, 100);
       }
     }
   };
@@ -226,10 +348,17 @@ export default function MediaWikiEditor() {
     if (historyIndex < history.length - 1) {
       const newIndex = historyIndex + 1;
       setHistoryIndex(newIndex);
-      setWikitext(history[newIndex]);
+      const newText = history[newIndex];
+      setWikitext(newText);
+      lastWikitextRef.current = newText;
+      
       if (editorMode === "visual" && visualRef.current) {
-        const result = parseMarkup(history[newIndex]);
+        const result = parseMarkup(newText);
+        isUpdatingRef.current = true;
         visualRef.current.innerHTML = result.html || '<p><br></p>';
+        setTimeout(() => {
+          isUpdatingRef.current = false;
+        }, 100);
       }
     }
   };
@@ -248,28 +377,62 @@ export default function MediaWikiEditor() {
     }
   }, [wikitext]);
   
-  // Update visual editor
+  // Update visual editor when parseResult changes
   useEffect(() => {
     if (editorMode === "visual" && visualRef.current && !isUpdatingRef.current) {
       const content = parseResult.html || '<p><br></p>';
+      
+      // Only update if content actually changed
       if (visualRef.current.innerHTML !== content) {
+        const cursorPos = saveCursorPosition(visualRef.current);
         visualRef.current.innerHTML = content;
+        
+        // Restore cursor after a brief delay
+        setTimeout(() => {
+          if (visualRef.current) {
+            restoreCursorPosition(visualRef.current, cursorPos);
+          }
+        }, 0);
       }
     }
   }, [editorMode, parseResult.html]);
   
-  // Handle visual input
-  const handleVisualInput = () => {
+  // Handle visual input with improved debouncing
+  const handleVisualInput = useCallback(() => {
     if (visualRef.current && !isUpdatingRef.current) {
-      isUpdatingRef.current = true;
-      const html = visualRef.current.innerHTML;
-      const newWikitext = htmlToWikitext(html);
-      updateWikitextDebounced(newWikitext);
-      setTimeout(() => {
-        isUpdatingRef.current = false;
-      }, 100);
+      // Save cursor position
+      cursorPositionRef.current = saveCursorPosition(visualRef.current);
+      
+      // Clear existing timer
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+      
+      // Set new timer
+      debounceTimer.current = window.setTimeout(() => {
+        if (visualRef.current) {
+          isUpdatingRef.current = true;
+          const html = visualRef.current.innerHTML;
+          const newWikitext = htmlToWikitext(html);
+          
+          // Only update if wikitext actually changed
+          if (newWikitext !== lastWikitextRef.current) {
+            lastWikitextRef.current = newWikitext;
+            setWikitext(newWikitext);
+            addToHistory(newWikitext);
+          }
+          
+          setTimeout(() => {
+            isUpdatingRef.current = false;
+            // Restore cursor
+            if (visualRef.current && cursorPositionRef.current) {
+              restoreCursorPosition(visualRef.current, cursorPositionRef.current);
+            }
+          }, 50);
+        }
+      }, 500); // Increased debounce time
     }
-  };
+  }, [addToHistory]);
   
   // Switch modes
   const handleModeSwitch = () => {
@@ -278,6 +441,8 @@ export default function MediaWikiEditor() {
       const html = visualRef.current.innerHTML;
       const newWikitext = htmlToWikitext(html);
       setWikitext(newWikitext);
+      lastWikitextRef.current = newWikitext;
+      addToHistory(newWikitext);
       setTimeout(() => {
         isUpdatingRef.current = false;
       }, 100);
@@ -296,6 +461,7 @@ export default function MediaWikiEditor() {
         const end = textarea.selectionEnd;
         const result = applyEditorCommand(wikitext, command, start, end, ...args);
         setWikitext(result.text);
+        lastWikitextRef.current = result.text;
         addToHistory(result.text);
         
         setTimeout(() => {
@@ -339,6 +505,7 @@ export default function MediaWikiEditor() {
           case "inlineCode":
             if (text) {
               const code = document.createElement('code');
+              code.className = 'inline-code';
               code.textContent = text;
               range.deleteContents();
               range.insertNode(code);
@@ -352,7 +519,8 @@ export default function MediaWikiEditor() {
             const linkTarget = prompt('লিঙ্ক টার্গেট লিখুন:', text || 'পাতার নাম');
             if (linkTarget) {
               const link = document.createElement('a');
-              link.href = '#' + linkTarget;
+              link.href = linkTarget.startsWith('http') ? linkTarget : '#' + linkTarget;
+              link.className = linkTarget.startsWith('http') ? 'external' : 'internal';
               link.textContent = text || linkTarget;
               range.deleteContents();
               range.insertNode(link);
@@ -362,11 +530,21 @@ export default function MediaWikiEditor() {
             const imgSrc = prompt('ছবির ফাইল নাম:', 'example.jpg');
             if (imgSrc) {
               const caption = prompt('ক্যাপশন (ঐচ্ছিক):', '');
+              const figure = document.createElement('figure');
+              figure.className = 'thumb';
               const img = document.createElement('img');
               img.src = imgSrc;
               img.alt = caption || '';
+              img.className = 'media-image';
+              figure.appendChild(img);
+              if (caption) {
+                const figcaption = document.createElement('figcaption');
+                figcaption.textContent = caption;
+                figure.appendChild(figcaption);
+              }
               range.deleteContents();
-              range.insertNode(img);
+              range.insertNode(figure);
+              range.insertNode(document.createElement('br'));
             }
             break;
           case "video":
@@ -378,6 +556,7 @@ export default function MediaWikiEditor() {
               video.className = 'media-video';
               range.deleteContents();
               range.insertNode(video);
+              range.insertNode(document.createElement('br'));
             }
             break;
           case "unorderedList":
@@ -404,6 +583,7 @@ export default function MediaWikiEditor() {
             pre.appendChild(codeEl);
             range.deleteContents();
             range.insertNode(pre);
+            range.insertNode(document.createElement('p'));
             range.insertNode(document.createElement('br'));
             break;
           case "math":
@@ -411,6 +591,7 @@ export default function MediaWikiEditor() {
             if (latex) {
               const math = document.createElement('span');
               math.className = 'math-inline';
+              math.setAttribute('data-tex', latex);
               math.textContent = latex;
               range.deleteContents();
               range.insertNode(math);
@@ -421,19 +602,18 @@ export default function MediaWikiEditor() {
             const cols = parseInt(prompt('কলামের সংখ্যা:', '3') || '3');
             const table = document.createElement('table');
             table.className = 'wikitable';
+            const thead = document.createElement('thead');
             const tbody = document.createElement('tbody');
             
-            // Header  
             const headerRow = document.createElement('tr');
             for (let i = 0; i < cols; i++) {
               const th = document.createElement('th');
               th.textContent = `শিরোনাম ${i + 1}`;
               headerRow.appendChild(th);
             }
-            tbody.appendChild(headerRow);
+            thead.appendChild(headerRow);
             
-            // Data rows  
-            for (let i = 0; i < rows - 1; i++) {
+            for (let i = 0; i < rows; i++) {
               const tr = document.createElement('tr');
               for (let j = 0; j < cols; j++) {
                 const td = document.createElement('td');
@@ -443,6 +623,7 @@ export default function MediaWikiEditor() {
               tbody.appendChild(tr);
             }
             
+            table.appendChild(thead);
             table.appendChild(tbody);
             range.deleteContents();
             range.insertNode(table);
@@ -453,7 +634,8 @@ export default function MediaWikiEditor() {
             if (templateName) {
               const tmpl = document.createElement('div');
               tmpl.className = 'template';
-              tmpl.textContent = templateName;
+              tmpl.setAttribute('data-template', templateName);
+              tmpl.textContent = `{{${templateName}}}`;
               range.deleteContents();
               range.insertNode(tmpl);
             }
@@ -461,10 +643,9 @@ export default function MediaWikiEditor() {
           case "reference":
             const refText = prompt('তথ্যসূত্রের বিষয়বস্তু:');
             if (refText) {
-              const refName = prompt('তথ্যসূত্রের নাম (ঐচ্ছিক):', '');
               const sup = document.createElement('sup');
               sup.className = 'reference';
-              sup.textContent = '[' + (parseResult.metadata.footnotes.length + 1) + ']';
+              sup.textContent = `[${parseResult.metadata.footnotes.length + 1}]`;
               range.deleteContents();
               range.insertNode(sup);
             }
@@ -477,15 +658,16 @@ export default function MediaWikiEditor() {
             refDiv.appendChild(refTitle);
             range.deleteContents();
             range.insertNode(refDiv);
+            range.insertNode(document.createElement('br'));
             break;
         }
         
+        // Trigger input event to update wikitext
         handleVisualInput();
       } catch (err) {
         setError("ফরম্যাটিং ত্রুটি: " + (err as Error).message);
       }
     }
-    
   };
   
   // Keyboard shortcuts
@@ -525,7 +707,6 @@ export default function MediaWikiEditor() {
           break;
       }
     }
-    
   };
   
   // Save handler
@@ -539,7 +720,6 @@ export default function MediaWikiEditor() {
     setError("");
     
     try {
-      // Simulate save  
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       console.log("সংরক্ষিত:", {
@@ -555,7 +735,6 @@ export default function MediaWikiEditor() {
     } finally {
       setIsSaving(false);
     }
-    
   };
   
   // Toolbar configuration
@@ -592,191 +771,191 @@ export default function MediaWikiEditor() {
   
   return (
     <div className="w-full min-h-screen bg-gray-50">
-{/* Header */}
-<div className="border-b bg-white shadow-sm">
-<div className="flex items-center justify-between p-3">
-<div className="flex items-center space-x-3 flex-1">
-<List className="h-5 w-5 text-blue-600" />
-<input
-type="text"
-value={title}
-onChange={(e) => setTitle(e.target.value)}
-placeholder="নিবন্ধের শিরোনাম লিখুন..."
-className="text-lg font-semibold outline-none border-b-2 border-transparent focus:border-blue-500 transition flex-1 max-w-md"
-/>
-</div>
-<div className="flex items-center gap-2">
-<button
-onClick={handleUndo}
-disabled={historyIndex <= 0}
-className="p-2 hover:bg-gray-100 rounded transition disabled:opacity-30"
-title="পূর্বাবস্থায় ফিরুন (Ctrl+Z)"
->
-<Undo className="h-4 w-4" />
-</button>
-<button  
-onClick={handleRedo}  
-disabled={historyIndex >= history.length - 1}
-className="p-2 hover:bg-gray-100 rounded transition disabled:opacity-30"
-title="পুনরায় করুন (Ctrl+Y)"
->
-<Redo className="h-4 w-4" />
-</button>
-<div className="h-6 w-px bg-gray-300 mx-1" />
-<span className="text-xs text-gray-500 px-2">
-{editorMode === "visual" ? "ভিজুয়াল" : "সোর্স"} • {wordCount} শব্দ
-</span>
-<button  
-className="p-2 hover:bg-gray-100 rounded transition border"  
-onClick={handleModeSwitch}  
-title="এডিটর মোড পরিবর্তন করুন"  
->
-<Languages className="h-5 w-5" />
-</button>
-<button  
-onClick={handleSave}  
-disabled={isSaving}  
-className="flex items-center gap-2 text-sm bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:bg-gray-400"  
->
-<Save className="h-4 w-4" />
-{isSaving ? "সংরক্ষণ হচ্ছে..." : "প্রকাশ করুন"}
-</button>
-</div>
-</div>
+      {/* Header */}
+      <div className="border-b bg-white shadow-sm">
+        <div className="flex items-center justify-between p-3">
+          <div className="flex items-center space-x-3 flex-1">
+            <List className="h-5 w-5 text-blue-600" />
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="নিবন্ধের শিরোনাম লিখুন..."
+              className="text-lg font-semibold outline-none border-b-2 border-transparent focus:border-blue-500 transition flex-1 max-w-md"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleUndo}
+              disabled={historyIndex <= 0}
+              className="p-2 hover:bg-gray-100 rounded transition disabled:opacity-30"
+              title="পূর্বাবস্থায় ফিরুন (Ctrl+Z)"
+            >
+              <Undo className="h-4 w-4" />
+            </button>
+            <button  
+              onClick={handleRedo}  
+              disabled={historyIndex >= history.length - 1}
+              className="p-2 hover:bg-gray-100 rounded transition disabled:opacity-30"
+              title="পুনরায় করুন (Ctrl+Y)"
+            >
+              <Redo className="h-4 w-4" />
+            </button>
+            <div className="h-6 w-px bg-gray-300 mx-1" />
+            <span className="text-xs text-gray-500 px-2">
+              {editorMode === "visual" ? "ভিজুয়াল" : "সোর্স"} • {wordCount} শব্দ
+            </span>
+            <button  
+              className="p-2 hover:bg-gray-100 rounded transition border"  
+              onClick={handleModeSwitch}  
+              title="এডিটর মোড পরিবর্তন করুন"  
+            >
+              <Languages className="h-5 w-5" />
+            </button>
+            <button  
+              onClick={handleSave}  
+              disabled={isSaving}  
+              className="flex items-center gap-2 text-sm bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:bg-gray-400"  
+            >
+              <Save className="h-4 w-4" />
+              {isSaving ? "সংরক্ষণ হচ্ছে..." : "প্রকাশ করুন"}
+            </button>
+          </div>
+        </div>
 
-{/* Error message */}  
-    {error && (  
-      <div className="bg-red-50 border-t border-red-200 px-4 py-2 text-sm text-red-700">  
-        ⚠️ {error}  
+        {/* Error message */}  
+        {error && (  
+          <div className="bg-red-50 border-t border-red-200 px-4 py-2 text-sm text-red-700">  
+            ⚠️ {error}  
+          </div>  
+        )}  
       </div>  
-    )}  
-  </div>  
 
-  {/* Toolbar */}  
-  <div className="bg-white border-b shadow-sm sticky top-0 z-10">  
-    <div className="flex items-center flex-wrap gap-1 p-2">  
-      {toolbarBlocks.map((block, i) =>  
-        !block.name ? (  
-          <button  
-            key={i}  
-            onClick={() => handleCommand(block.action)}  
-            className="p-2 rounded border hover:bg-blue-50 transition active:bg-blue-100"  
-            title={block.label}  
-          >  
-            <block.icon className="h-4 w-4" />  
-          </button>  
-        ) : (  
-          <select  
-            key={i}  
-            onChange={(e) => {  
-              const value = e.target.value;  
-              if (value) {  
-                const item = block.items.find((itm) => itm.action === value);  
-                handleCommand(value, ...(item?.args || []));  
-                e.target.value = "";  
-              }  
-            }}  
-            className="p-2 border rounded hover:bg-gray-50 text-sm"  
-            defaultValue=""  
-          >  
-            <option value="" disabled>  
-              {block.name}  
-            </option>  
-            {block.items.map((item, idx) => (  
-              <option key={idx} value={item.action}>  
-                {item.label}  
-              </option>  
-            ))}  
-          </select>  
-        )  
-      )}  
-    </div>  
-  </div>  
+      {/* Toolbar */}  
+      <div className="bg-white border-b shadow-sm sticky top-0 z-10">  
+        <div className="flex items-center flex-wrap gap-1 p-2">  
+          {toolbarBlocks.map((block, i) =>  
+            !block.name ? (  
+              <button  
+                key={i}  
+                onClick={() => handleCommand(block.action)}  
+                className="p-2 rounded border hover:bg-blue-50 transition active:bg-blue-100"  
+                title={block.label}  
+              >  
+                <block.icon className="h-4 w-4" />  
+              </button>  
+            ) : (  
+              <select  
+                key={i}  
+                onChange={(e) => {  
+                  const value = e.target.value;  
+                  if (value) {  
+                    const item = block.items.find((itm) => itm.action === value);  
+                    handleCommand(value, ...(item?.args || []));  
+                    e.target.value = "";  
+                  }  
+                }}  
+                className="p-2 border rounded hover:bg-gray-50 text-sm"  
+                defaultValue=""  
+              >  
+                <option value="" disabled>  
+                  {block.name}  
+                </option>  
+                {block.items.map((item, idx) => (  
+                  <option key={idx} value={item.action}>  
+                    {item.label}  
+                  </option>  
+                ))}  
+              </select>  
+            )  
+          )}  
+        </div>  
+      </div>  
 
-  {/* Editor Area */}  
-  <div className="flex gap-4">  
-    {editorMode === "source" && (  
-      <>  
-        {/* Source Editor */}  
-        <div className="flex-1">  
-          <textarea  
-            ref={textareaRef}  
-            value={wikitext}  
-            onChange={(e) => {  
-              setWikitext(e.target.value);  
-              addToHistory(e.target.value);  
-            }}  
-            onKeyDown={handleKeyDown}  
-            className="w-full min-h-[70vh] p-4 outline-none text-sm font-mono bg-white border rounded-lg focus:border-blue-500 resize-none"  
-            placeholder="MediaWiki সিনট্যাক্স ব্যবহার করে লেখা শুরু করুন...
+      {/* Editor Area */}  
+      <div className="flex gap-4 p-4">  
+        {editorMode === "source" && (  
+          <>  
+            {/* Source Editor */}  
+            <div className="flex-1">  
+              <textarea  
+                ref={textareaRef}  
+                value={wikitext}  
+                onChange={(e) => {  
+                  const newText = e.target.value;
+                  setWikitext(newText);  
+                  lastWikitextRef.current = newText;
+                  addToHistory(newText);  
+                }}  
+                onKeyDown={handleKeyDown}  
+                className="w-full min-h-[70vh] p-4 outline-none text-sm font-mono bg-white border rounded-lg focus:border-blue-500 resize-none"  
+                placeholder="MediaWiki সিনট্যাক্স ব্যবহার করে লেখা শুরু করুন...
 
 উদাহরণ:
 '''বোল্ড টেক্সট'''
 ''ইটালিক টেক্সট''
 == শিরোনাম ==
 
-তালিকার আইটেম
+* তালিকার আইটেম
 [[লিঙ্ক]]
 [[File:example.jpg|thumb|ক্যাপশন]]"
-/>
-</div>
+              />
+            </div>
 
-{/* Preview */}  
-      <div className="flex-1 bg-white border rounded-lg overflow-auto min-h-[70vh]">  
-        <div className="p-4">  
-          <h3 className="text-sm font-semibold text-gray-600 mb-3 pb-2 border-b">  
-            প্রিভিউ  
-          </h3>  
-          <style dangerouslySetInnerHTML={{ __html: DEFAULT_STYLES }} />  
-          <div  
-            dangerouslySetInnerHTML={{  
-              __html: parseResult.html || '<p class="text-gray-400">প্রিভিউ এখানে দেখা যাবে...</p>',  
-            }}  
-          />  
+            {/* Preview */}  
+            <div className="flex-1 bg-white border rounded-lg overflow-auto min-h-[70vh]">  
+              <div className="p-4">  
+                <h3 className="text-sm font-semibold text-gray-600 mb-3 pb-2 border-b">  
+                  প্রিভিউ  
+                </h3>  
+                <style dangerouslySetInnerHTML={{ __html: DEFAULT_STYLES }} />  
+                <div  
+                  dangerouslySetInnerHTML={{  
+                    __html: parseResult.html || '<p class="text-gray-400">প্রিভিউ এখানে দেখা যাবে...</p>',  
+                  }}  
+                />  
+              </div>  
+            </div>  
+          </>  
+        )}  
+
+        {/* Visual WYSIWYG Editor */}  
+        {editorMode === "visual" && (  
+          <div className="flex-1">  
+            <style dangerouslySetInnerHTML={{ __html: DEFAULT_STYLES }} />  
+            <div  
+              ref={visualRef}  
+              onInput={handleVisualInput}  
+              onKeyDown={handleKeyDown}  
+              className="min-h-[70vh] p-6 rounded-lg bg-white border focus:border-blue-500 outline-none"  
+              contentEditable  
+              suppressContentEditableWarning  
+              spellCheck={true}  
+            />  
+          </div>  
+        )}  
+      </div>  
+
+      {/* Metadata Info */}  
+      {parseResult.metadata.headings.length > 0 && (  
+        <div className="p-4 bg-white border rounded-lg">  
+          <h3 className="text-sm font-semibold mb-2">নিবন্ধ তথ্য</h3>  
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">  
+            <div>  
+              <span className="font-medium">শিরোনাম:</span> {parseResult.metadata.headings.length}  
+            </div>  
+            <div>  
+              <span className="font-medium">ছবি:</span> {parseResult.metadata.images.length}  
+            </div>  
+            <div>  
+              <span className="font-medium">লিঙ্ক:</span> {parseResult.metadata.links.length}  
+            </div>  
+            <div>  
+              <span className="font-medium">তথ্যসূত্র:</span> {parseResult.metadata.footnotes.length}  
+            </div>  
+          </div>  
         </div>  
-      </div>  
-    </>  
-  )}  
-
-  {/* Visual WYSIWYG Editor */}  
-  {editorMode === "visual" && (  
-    <div className="flex-1">  
-      <style dangerouslySetInnerHTML={{ __html: DEFAULT_STYLES }} />  
-      <div  
-        ref={visualRef}  
-        onInput={handleVisualInput}  
-        onKeyDown={handleKeyDown}  
-        className="min-h-[70vh] p-6 rounded-lg bg-white border focus:border-blue-500 outline-none"  
-        contentEditable  
-        suppressContentEditableWarning  
-        spellCheck={true}  
-      />  
-    </div>  
-  )}  
-</div>  
-
-{/* Metadata Info */}  
-{parseResult.metadata.headings.length > 0 && (  
-  <div className="mx-4 mb-4 p-4 bg-white border rounded-lg">  
-    <h3 className="text-sm font-semibold mb-2">নিবন্ধ তথ্য</h3>  
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">  
-      <div>  
-        <span className="font-medium">শিরোনাম:</span> {parseResult.metadata.headings.length}  
-      </div>  
-      <div>  
-        <span className="font-medium">ছবি:</span> {parseResult.metadata.images.length}  
-      </div>  
-      <div>  
-        <span className="font-medium">লিঙ্ক:</span> {parseResult.metadata.links.length}  
-      </div>  
-      <div>  
-        <span className="font-medium">তথ্যসূত্র:</span> {parseResult.metadata.footnotes.length}  
-      </div>  
-    </div>  
-  </div>  
-)}
-
-  </div>
-  );
+      )}
+    </div>
+    )
 }
-
