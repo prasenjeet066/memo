@@ -956,7 +956,7 @@ export default function MediaWikiEditor({
 
   <SelectContent>
     {block.items?.map((item, idx) => (
-      <SelectItem key={idx} value={item.action}>
+      <SelectItem key={idx} value={item.action} icon = {<item.icon/>}>
         {item.label}
       </SelectItem>
     ))}
