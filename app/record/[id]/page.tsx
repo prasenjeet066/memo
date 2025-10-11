@@ -57,8 +57,8 @@ export default function RecordIdPage({params}) {
   const [recordExists, setRecordExists] = useState(true);
   const [activeSection, setActiveSection] = useState<string>('tools');
   
-  const recordName = searchParams.get('record');
-  const editingMode = searchParams.get('editing_mode');
+  const recordName = searchParams.get('r_n');
+  const editingMode = searchParams.get('e_mode');
 
   useEffect(() => {
     if (record_slug && record_slug !== 'create') {
@@ -323,10 +323,11 @@ export default function RecordIdPage({params}) {
         <div className="flex bg-white">
           <div className='flex-1 px-3 border-r'>
             <div className='max-w-4xl mx-auto'>
-              <CreateRecord recordName editingMode/>
+              <CreateRecord recordName = {recordName} editingMode={editingMode}/>
             </div>
           </div>
         </div>
+        {Sidebar}
       </main>
     );
   }

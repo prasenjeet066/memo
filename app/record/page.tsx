@@ -82,8 +82,8 @@ export default function RecordPage() {
     }
   }
 
-  const handleCreateRecord = () => {
-    router.push('/record/create?record=New Record&editing_mode=true')
+  const handleCreateRecord = (s?:string) => {
+    router.push(`/record/create?r_n=${encodeURIComponent(s || 'Untitle')}&e_mode=true`)
   }
   
   const Sidebar = !isMobile && (
