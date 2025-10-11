@@ -316,6 +316,7 @@ export default function RecordIdPage({params}) {
 
   // Handle create mode
   if (record_slug === 'create' && recordName && editingMode) {
+    
     return (
       <main className="min-h-screen w-full bg-gray-50">
         <Header navlist={NavList} />
@@ -352,6 +353,7 @@ export default function RecordIdPage({params}) {
 
   // Record doesn't exist - show create option
   if (!recordExists) {
+    record_slug = encodeURIComponent(record_slug)
     return (
       <main className="min-h-screen w-full bg-gray-50">
         <Header navlist={NavList} />
@@ -364,7 +366,7 @@ export default function RecordIdPage({params}) {
                   Record Not Found
                 </h1>
                 <p className='text-gray-600 mb-1'>
-                  The record "<span className='font-semibold'>{record_slug}</span>" doesn't exist yet.
+                  The record "<span className='font-semibold'>{encodeURIComponent(record_slug)}</span>" doesn't exist yet.
                 </p>
                 <p className='text-gray-500 text-sm'>
                   Would you like to create it?
