@@ -52,13 +52,9 @@ function setCaretToEnd(el: HTMLElement) {
 }
 
 function htmlToWikitext(html: string): string {
-  let wikitext = html;
-  
-  // Create a temporary DOM element to parse HTML
   const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = wikitext;
+  tempDiv.innerHTML = html;
   
-  // Helper function to process nodes recursively
   const processNode = (node: Node): string => {
     if (node.nodeType === Node.TEXT_NODE) {
       return node.textContent || '';
@@ -76,121 +72,58 @@ function htmlToWikitext(html: string): string {
       case 'strong':
       case 'b':
         return `'''${children}'''`;
-        
       case 'em':
       case 'i':
         return `''${children}''`;
-        
       case 'del':
       case 's':
         return `<s>${children}</s>`;
-        
       case 'ins':
       case 'u':
         return `<u>${children}</u>`;
-        
-      case 'sup':
-        // Check if it's a reference
-        if (element.classList.contains('reference')) {
-          return ''; // References are handled separately
-        }
-        return `<sup>${children}</sup>`;
-        
-      case 'sub':
-        return `<sub>${children}</sub>`;
-        
-      case 'small':
-        return `<small>${children}</small>`;
-        
       case 'code':
-        if (element.classList.contains('inline-code')) {
-          return `<code>${children}</code>`;
-        }
-        return children;
-        
+        return element.classList.contains('inline-code') ? `<code>${children}</code>` : children;
       case 'pre':
         const lang = Array.from(element.classList)
           .find(c => c.startsWith('language-'))
           ?.replace('language-', '') || '';
         const codeContent = element.querySelector('code')?.textContent || children;
         return `<syntaxhighlight lang="${lang}">\n${codeContent}\n</syntaxhighlight>`;
-        
       case 'h1':
         return `= ${children} =`;
       case 'h2':
         return `== ${children} ==`;
       case 'h3':
         return `=== ${children} ===`;
-      case 'h4':
-        return `==== ${children} ====`;
-      case 'h5':
-        return `===== ${children} =====`;
-      case 'h6':
-        return `====== ${children} ======`;
-        
       case 'a':
         const href = element.getAttribute('href') || '';
-        if (element.classList.contains('external')) {
-          const text = children;
-          return href === text ? `[${href}]` : `[${href} ${text}]`;
-        } else if (element.classList.contains('internal')) {
-          const page = href.replace(/^#/, '');
-          return page === children ? `[[${page}]]` : `[[${page}|${children}]]`;
+        if (href.startsWith('http')) {
+          return children === href ? `[${href}]` : `[${href} ${children}]`;
         }
-        return `[[${children}]]`;
-        
+        return children === href ? `[[${children}]]` : `[[${href}|${children}]]`;
       case 'img':
         const src = element.getAttribute('src') || '';
         const alt = element.getAttribute('alt') || '';
         const parent = element.parentElement;
-        
         if (parent?.classList.contains('thumb')) {
           const caption = parent.querySelector('figcaption')?.textContent || '';
           return `[[File:${src}|thumb|${caption}]]`;
         }
         return alt ? `[[File:${src}|${alt}]]` : `[[File:${src}]]`;
-        
-      case 'figure':
-        // Handled by img tag
-        return children;
-        
-      case 'figcaption':
-        // Handled by img tag
-        return '';
-        
-      case 'video':
-        const videoSrc = element.getAttribute('src') || '';
-        return `[[Media:${videoSrc}]]`;
-        
-      case 'audio':
-        const audioSrc = element.getAttribute('src') || '';
-        return `[[Media:${audioSrc}]]`;
-        
       case 'ul':
+        return '\n' + children;
       case 'ol':
-        return children;
-        
+        return '\n' + children;
       case 'li':
-        const level = parseInt(element.getAttribute('data-level') || '0');
-        const isOrdered = element.classList.contains('ordered');
+        const isOrdered = element.parentElement?.tagName.toLowerCase() === 'ol';
         const marker = isOrdered ? '#' : '*';
-        return marker.repeat(level + 1) + ' ' + children + '\n';
-        
-      case 'dt':
-        return '; ' + children + '\n';
-        
-      case 'dd':
-        const ddLevel = parseInt(element.getAttribute('data-level') || '0');
-        return ':'.repeat(ddLevel + 1) + ' ' + children + '\n';
-        
+        return marker + ' ' + children + '\n';
       case 'table':
         let tableWiki = '{| class="wikitable"\n';
-        
         const caption = element.querySelector('caption');
         if (caption) {
           tableWiki += `|+ ${caption.textContent}\n`;
         }
-        
         const thead = element.querySelector('thead');
         if (thead) {
           const headers = Array.from(thead.querySelectorAll('th'));
@@ -198,7 +131,6 @@ function htmlToWikitext(html: string): string {
             tableWiki += '! ' + headers.map(th => th.textContent).join(' !! ') + '\n';
           }
         }
-        
         const tbody = element.querySelector('tbody');
         if (tbody) {
           const rows = Array.from(tbody.querySelectorAll('tr'));
@@ -210,45 +142,20 @@ function htmlToWikitext(html: string): string {
             }
           });
         }
-        
         tableWiki += '|}';
         return tableWiki;
-        
       case 'hr':
         return '----';
-        
-      case 'div':
-        if (element.classList.contains('template')) {
-          const templateName = element.getAttribute('data-template') || '';
-          return `{{${templateName}}}`;
-        }
-        if (element.classList.contains('reflist')) {
-          return '{{reflist}}';
-        }
-        return children;
-        
-      case 'span':
-        if (element.classList.contains('math-inline')) {
-          const tex = element.getAttribute('data-tex') || children;
-          return `<math>${tex}</math>`;
-        }
-        return children;
-        
       case 'p':
         return children + '\n\n';
-        
       case 'br':
         return '\n';
-        
       default:
         return children;
     }
   };
   
-  // Process the entire tree
   let result = processNode(tempDiv);
-  
-  // Clean up extra newlines
   result = result.replace(/\n{3,}/g, '\n\n').trim();
   
   return result;
@@ -872,3 +779,4 @@ className="flex items-center gap-2 text-sm bg-blue-600 text-white px-4 py-2 roun
   </div>
   );
 }
+
