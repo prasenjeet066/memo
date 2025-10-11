@@ -382,7 +382,7 @@ export default function RecordIdPage({ params }) {
                 onClick={tool.onClick}
                 className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors group"
               >
-                <tool.icon className={`w-4 h-4 ${tool.color} flex-shrink-0`} />
+                <tool.icon className={`w-4 h-4  flex-shrink-0`} />
                 <span className="text-sm text-gray-700 group-hover:text-gray-900">
                   {tool.name}
                 </span>
