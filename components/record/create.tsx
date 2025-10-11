@@ -908,13 +908,13 @@ export default function MediaWikiEditor({
 
       {/* Toolbar */}
       <div className="bg-white border-b shadow-sm sticky top-0 z-10">
-        <div className="flex items-center flex-wrap gap-1 p-2">
+        <div className="flex items-center flex-wrap gap-1 border-t border-b p-2">
           {toolbarBlocks.map((block, i) =>
             !block.name ? (
               <button
                 key={i}
                 onClick={() => block.action && handleCommand(block.action)}
-                className="p-2 rounded border hover:bg-blue-50 transition active:bg-blue-100"
+                className="p-2  hover:bg-blue-50 transition active:bg-blue-100"
                 title={block.label}
               >
                 {block.icon && <block.icon className="h-4 w-4" />}
