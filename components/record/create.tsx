@@ -417,6 +417,15 @@ export default function MediaWikiEditor({
     }
   }, [historyIndex, history, editorMode]);
   
+  const handleAutoSave = useCallback(()=>{
+    if (wikitext) {
+      
+      setWikitext((prev)=>prev+'')
+      lastWikitextRef.current = wikitext;
+      addToHistory(wikitext);
+    }
+  },[wikitext])
+  
   // Parse wikitext
   useEffect(() => {
     if (!isUpdatingRef.current) {
@@ -993,6 +1002,7 @@ export default function MediaWikiEditor({
             <style dangerouslySetInnerHTML={{ __html: DEFAULT_STYLES }} />
             <div
               ref={visualRef}
+              onBlur={handleAutoSave}
               onInput={handleVisualInput}
               onKeyDown={handleKeyDown}
               className="min-h-[70vh]  outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
