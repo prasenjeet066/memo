@@ -17,9 +17,9 @@ interface EditorCommand {
 }
 // Default CSS styles for parsed content
 const DEFAULT_STYLES = `
+@import url('https://fonts.cdnfonts.com/css/latin-modern-math');
 /* Base Styles */
 .markup-content {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 16px;
   line-height: 1.6;
   color: #202122;

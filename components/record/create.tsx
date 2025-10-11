@@ -873,7 +873,7 @@ export default function MediaWikiEditor() {
       </div>  
 
       {/* Editor Area */}  
-      <div className="flex gap-4 p-4">  
+      <div className="flex gap-4">  
         {editorMode === "source" && (  
           <>  
             {/* Source Editor */}  
@@ -889,16 +889,7 @@ export default function MediaWikiEditor() {
                 }}  
                 onKeyDown={handleKeyDown}  
                 className="w-full min-h-[70vh] p-4 outline-none text-sm font-mono bg-white border rounded-lg focus:border-blue-500 resize-none"  
-                placeholder="MediaWiki সিনট্যাক্স ব্যবহার করে লেখা শুরু করুন...
-
-উদাহরণ:
-'''বোল্ড টেক্সট'''
-''ইটালিক টেক্সট''
-== শিরোনাম ==
-
-* তালিকার আইটেম
-[[লিঙ্ক]]
-[[File:example.jpg|thumb|ক্যাপশন]]"
+                placeholder=""
               />
             </div>
 
