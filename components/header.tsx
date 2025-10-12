@@ -60,7 +60,7 @@ export default function Header({ navlist }: HeaderProps) {
               </Link>
             </div>
             
-            <div className='flex items-center gap-4'>
+            <div className='flex items-center gap-4 justify-end'>
               <SearchInHeader />
               <div className='flex items-center gap-3'>
                 {status === "loading" ? (
