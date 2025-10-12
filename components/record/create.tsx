@@ -1205,7 +1205,7 @@ export function MediaWikiEditor({
         </div>
 
         {/* Editor Area */}
-        <div className="p-4">
+        <div className="">
           <div className="max-w-7xl mx-auto">
             {editorMode === "source" ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -1221,7 +1221,7 @@ export function MediaWikiEditor({
                       addToHistory(newText);
                     }}
                     onKeyDown={handleKeyDown}
-                    className="w-full min-h-[70vh] p-4 outline-none text-sm font-mono resize-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+                    className="w-full min-h-[70vh] p-4 outline-none text-sm font-mono resize-none"
                     placeholder="উইকিটেক্সট এখানে লিখুন..."
                   />
                 </div>
@@ -1253,7 +1253,7 @@ export function MediaWikiEditor({
                   onBlur={handleAutoSave}
                   onInput={handleVisualInput}
                   onKeyDown={handleKeyDown}
-                  className="min-h-[70vh] p-4 outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
+                  className="min-h-[70vh] p-4 outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
                   data-placeholder="এখানে লেখা শুরু করুন..."
                   contentEditable
                   suppressContentEditableWarning
@@ -1265,25 +1265,10 @@ export function MediaWikiEditor({
         </div>
 
         {/* Status Bar */}
-        <div className="bg-white border-t px-4 py-2 text-xs text-gray-500 flex items-center justify-between sticky bottom-0">
-          <div className="flex items-center gap-4">
-            <span>{parseResult.metadata.images.length} ছবি</span>
-            <span>{parseResult.metadata.links.length} লিঙ্ক</span>
-            <span>{parseResult.metadata.headings.length} শিরোনাম</span>
-            <span>{parseResult.metadata.footnotes.length} তথ্যসূত্র</span>
-          </div>
-          <div>
-            {parseResult.errors.length > 0 && (
-              <span className="text-red-600">
-                {parseResult.errors.length} সতর্কতা
-              </span>
-            )}
-          </div>
-        </div>
 
         {/* Dialog */}
         <Dialog open={dialog.open} onOpenChange={(open) => !open && closeDialog()}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] bg-white border-none">
             <DialogHeader>
               <DialogTitle>{getDialogTitle()}</DialogTitle>
               <DialogDescription>
