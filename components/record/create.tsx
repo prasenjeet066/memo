@@ -1160,7 +1160,7 @@ export function MediaWikiEditor({
         </div>
 
         {/* Toolbar */}
-        <div className="bg-white sticky top-[73px] z-10 border-b">
+        <div className="bg-white sticky top-0 z-10 border-b">
           <div className="flex items-center gap-1 p-2 overflow-x-auto">
             {toolbarBlocks.map((block, i) =>
               !block.name ? (
@@ -1205,7 +1205,7 @@ export function MediaWikiEditor({
         </div>
 
         {/* Editor Area */}
-        <div className="">
+        <div className="w-full">
           <div className="max-w-7xl mx-auto">
             {editorMode === "source" ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
