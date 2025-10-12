@@ -8,7 +8,7 @@ export function EditorDialog({ open, type, data, selection, onClose, onSubmit, e
   // You can split block-specific dialog logic into small sub-components if needed
   return (
     <Dialog open={open} onOpenChange={open => !open && onClose()}>
-      <DialogContent>
+      <DialogContent className= 'bg-white border-none'>
         <DialogHeader>
           <DialogTitle>{type}</DialogTitle>
         </DialogHeader>
