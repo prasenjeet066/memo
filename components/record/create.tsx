@@ -133,6 +133,7 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
     const commandMap: Record<string, () => void> = {
       bold: () => {
         if (text) {
+          alert(text)
           const range = sel.getRangeAt(0);
           range.deleteContents();
           range.insertNode(document.createTextNode(`**${text}**`));
