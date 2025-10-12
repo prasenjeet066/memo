@@ -395,14 +395,14 @@ export default function RecordIdPage({ params }) {
       <Header navlist={NavList} />
       <div className="flex bg-white">
         <div className="flex-1 px-3 border-r">
-          <div className="max-w-4xl mx-auto">
+          <div className="w-full">
             <ErrorBoundary>
               <CreateRecord recordName={recordName} editingMode={editingMode} />
         
             </ErrorBoundary>
             </div>
         </div>
-        {Sidebar}
+      
       </div>
     </main>
     );

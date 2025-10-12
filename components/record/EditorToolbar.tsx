@@ -36,13 +36,13 @@ export function EditorToolbar({ onCommand }) {
                   }
                 }}
               >
-                <SelectTrigger className="w-[140px] h-9 text-sm flex-shrink-0 border-l border-r">
+                <SelectTrigger className="min-w-[140px] h-9 text-sm flex-shrink-0 border-none border-l border-r border-gray-500 z-10">
                   <SelectValue placeholder={block.name} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className='divide-y'>
                   {block.items?.map((item, idx) => (
                     <SelectItem key={idx} value={item.action}>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center w-full gap-2 justify-start p-1">
                         <item.icon className="h-4 w-4" />
                         <span>{item.label}</span>
                       </div>
