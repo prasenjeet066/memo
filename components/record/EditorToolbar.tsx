@@ -30,10 +30,10 @@ export function EditorToolbar({ mode, onCommand, onUndo, onRedo, canUndo, canRed
                   }
                 }}
               >
-                <SelectTrigger className="w-[150px] h-9 text-sm flex-shrink-0">
+                <SelectTrigger className="w-[150px] h-9 text-sm flex-shrink-0 border-l border-r">
                   <SelectValue placeholder={block.name} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className='items-center justify-center'>
                   {block.items?.map((item, idx) => (
                     <SelectItem key={idx} value={item.action}>
                       <div className="flex items-center gap-2">
