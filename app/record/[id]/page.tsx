@@ -353,7 +353,7 @@ export default function RecordIdPage({ params }) {
     }, ];
     
     const SideTools = !isMobile && (
-      <div className="w-auto max-w-72 min-h-screen bg-white border-l border-gray-200 flex flex-col">
+      <div className="w-auto max-w-72 min-h-screen bg-white border-l border-gray-200 flex flex-col ">
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-700">
           {isExpanded ? 'Creation Tools' : 'Tools'}
@@ -368,14 +368,6 @@ export default function RecordIdPage({ params }) {
 
       <div className="flex-1 overflow-y-auto">
         {/* Creation Tools Section */}
-        <SidebarSection
-          title="Creation Tools"
-          icon={Edit}
-          isOpen={activeSection === 'tools'}
-          onToggle={() =>
-            setActiveSection(activeSection === 'tools' ? '' : 'tools')
-          }
-        >
           <div className="space-y-1">
             {CreateTools.map((tool) => (
               <button
@@ -390,24 +382,10 @@ export default function RecordIdPage({ params }) {
               </button>
             ))}
           </div>
-        </SidebarSection>
+        
 
         {/* Tips Section */}
-        <SidebarSection
-          title="Tips"
-          icon={Star}
-          isOpen={activeSection === 'tips'}
-          onToggle={() =>
-            setActiveSection(activeSection === 'tips' ? '' : 'tips')
-          }
-        >
-          <div className="text-xs text-gray-600 space-y-2">
-            <p>✅ Use clear, descriptive titles</p>
-            <p>💡 Summarize the record’s purpose in 1–2 sentences</p>
-            <p>🧩 Add categories and tags for better discoverability</p>
-            <p>📚 Include references or sources when possible</p>
-          </div>
-        </SidebarSection>
+       
       </div>
     </div>
     );
@@ -424,7 +402,7 @@ export default function RecordIdPage({ params }) {
             </ErrorBoundary>
             </div>
         </div>
-        
+        {Sidebar}
       </div>
     </main>
     );
