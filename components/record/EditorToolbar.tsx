@@ -14,12 +14,12 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-export function EditorToolbar({ onCommand }) {
+export function EditorToolbar({ onCommand , handleSave}) {
   // Track selected value for each dropdown by its index
   const [selected, setSelected] = useState({});
   
   return (
-    <div className="bg-white sticky top-0 z-10 border-b">
+    <div className="bg-white sticky top-0 z-10 border-b flex items-center justify-between">
       <TooltipProvider>
         <div className="flex items-center gap-1 p-2 overflow-x-auto">
           {toolbarBlocks.flat().map((block, i) =>
@@ -36,7 +36,7 @@ export function EditorToolbar({ onCommand }) {
                   }
                 }}
               >
-                <SelectTrigger className="min-w-[140px] h-9 text-sm flex-shrink-0 border-none border-l border-r border-gray-500 z-10">
+                <SelectTrigger className="w-[140px] h-9 text-sm flex-shrink-0 border-none border-l border-r border-gray-500 z-10">
                   <SelectValue placeholder={block.name} />
                 </SelectTrigger>
                 <SelectContent className='divide-y'>
@@ -66,6 +66,11 @@ export function EditorToolbar({ onCommand }) {
           )}
         </div>
       </TooltipProvider>
+      <div className='flex items-center justify-end'>
+         <button className='border-l px-4 bg-gray-800 text-white text-sm' onClick={handleSave}>
+            Publish
+          </button>
+      </div>
     </div>
   );
 }
