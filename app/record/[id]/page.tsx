@@ -420,7 +420,7 @@ export default function RecordIdPage({ params }) {
             <CreateRecord recordName={recordName} editingMode={editingMode} />
           </div>
         </div>
-        {SideTools}
+        
       </div>
     </main>
     );
