@@ -5,28 +5,33 @@ import { DialogManager } from './Dialogs';
 import { useEditorHistory } from './hooks/useEditorHistory';
 import { useCursorPosition } from './hooks/useCursorPosition';
 import { useDebouncedEffect } from './hooks/useDebouncedEffect';
-import { parseMarkup, htmlToWikitext, applyEditorCommand } from '@/lib/utils/dist/markup';
-import { DEFAULT_STYLES } from '@/lib/utils/dist/constants';
+import {
+  parseMarkup,
+  htmlToWikitext,
+  DEFAULT_STYLES,
+  applyEditorCommand
+} from '@/lib/utils/dist/markup';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { type EditorMode, type DialogState } from './types';
 import { Loader2, Eye } from 'lucide-react';
 
 export function MediaWikiEditor() {
-  const [mode, setMode] = useState<EditorMode>('visual');
+  const [mode, setMode] = useState < EditorMode > ('visual');
   const [content, setContent] = useState('<p>Start editing…</p>');
   const [isSaving, setIsSaving] = useState(false);
-  const [dialog, setDialog] = useState<DialogState>({ open: false, type: null });
-  const editorRef = useRef<HTMLDivElement | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const [dialog, setDialog] = useState < DialogState > ({ open: false, type: null });
+  const editorRef = useRef < HTMLDivElement | null > (null);
+  const textareaRef = useRef < HTMLTextAreaElement | null > (null);
   const isUpdatingRef = useRef(false);
-
+  
   // History (undo/redo)
   const { history, addToHistory, undo, redo } = useEditorHistory(content, setContent);
-
+  
   // Cursor management
   const { saveCursor, restoreCursor } = useCursorPosition(editorRef);
-
+  
   // Debounced sync between visual/html <-> wikitext
   useDebouncedEffect(
     () => {
@@ -38,12 +43,12 @@ export function MediaWikiEditor() {
     500,
     [content]
   );
-
+  
   const handleModeChange = (newMode: EditorMode) => {
     if (newMode === mode) return;
     isUpdatingRef.current = true;
     saveCursor();
-
+    
     setMode(newMode);
     setTimeout(() => {
       if (newMode === 'visual') {
@@ -59,13 +64,13 @@ export function MediaWikiEditor() {
       });
     }, 10);
   };
-
+  
   const handleInput = (html: string) => {
     if (isUpdatingRef.current) return;
     setContent(html);
     addToHistory(html);
   };
-
+  
   const handleSave = useCallback(async () => {
     setIsSaving(true);
     await new Promise(res => setTimeout(res, 800));
@@ -73,20 +78,38 @@ export function MediaWikiEditor() {
     alert('Document saved!');
     setIsSaving(false);
   }, [content]);
-
+  
   const handleKeyboard = (e: React.KeyboardEvent) => {
     if (e.ctrlKey) {
       switch (e.key.toLowerCase()) {
-        case 'b': e.preventDefault(); applyEditorCommand('bold', editorRef); break;
-        case 'i': e.preventDefault(); applyEditorCommand('italic', editorRef); break;
-        case 'u': e.preventDefault(); applyEditorCommand('underline', editorRef); break;
-        case 's': e.preventDefault(); handleSave(); break;
-        case 'z': e.preventDefault(); undo(); break;
-        case 'y': e.preventDefault(); redo(); break;
+        case 'b':
+          e.preventDefault();
+          applyEditorCommand('bold', editorRef);
+          break;
+        case 'i':
+          e.preventDefault();
+          applyEditorCommand('italic', editorRef);
+          break;
+        case 'u':
+          e.preventDefault();
+          applyEditorCommand('underline', editorRef);
+          break;
+        case 's':
+          e.preventDefault();
+          handleSave();
+          break;
+        case 'z':
+          e.preventDefault();
+          undo();
+          break;
+        case 'y':
+          e.preventDefault();
+          redo();
+          break;
       }
     }
   };
-
+  
   return (
     <Card className="border shadow-md w-full overflow-hidden">
       <div className="flex items-center justify-between border-b bg-muted/40 px-3 py-2">
