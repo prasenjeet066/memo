@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 
-export function useDebouncedEffect(fn: () => void, delay: number, deps: any[]) {
+export function useDebouncedEffect(fn: () => void, delay: number, deps: React.DependencyList) {
   useEffect(() => {
-    const t = setTimeout(fn, delay);
-    return () => clearTimeout(t);
+    const timer = setTimeout(fn, delay);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 }

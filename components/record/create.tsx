@@ -1,10 +1,10 @@
 'use client';
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Toolbar } from './Toolbar';
 import { DialogManager } from './Dialogs';
-import { useEditorHistory } from './hooks/useEditorHistory';
-import { useCursorPosition } from './hooks/useCursorPosition';
-import { useDebouncedEffect } from './hooks/useDebouncedEffect';
+import { useEditorHistory } from '../hooks/useEditorHistory';
+import { useCursorPosition } from '../hooks/useCursorPosition';
+import { useDebouncedEffect } from '../hooks/useDebouncedEffect';
 import {
   parseMarkup,
   htmlToWikitext,
@@ -15,7 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { type EditorMode, type DialogState } from './types';
-import { Loader2, Eye } from 'lucide-react';
+import { Loader2, Save } from 'lucide-react';
 
 export function MediaWikiEditor() {
   const [mode, setMode] = useState < EditorMode > ('visual');
@@ -27,7 +27,7 @@ export function MediaWikiEditor() {
   const isUpdatingRef = useRef(false);
   
   // History (undo/redo)
-  const { history, addToHistory, undo, redo } = useEditorHistory(content, setContent);
+  const { addToHistory, undo, redo, canUndo, canRedo } = useEditorHistory(content, setContent);
   
   // Cursor management
   const { saveCursor, restoreCursor } = useCursorPosition(editorRef);
@@ -41,16 +41,19 @@ export function MediaWikiEditor() {
       }
     },
     500,
-    [content]
+    [content, mode]
   );
   
-  const handleModeChange = (newMode: EditorMode) => {
+  const handleModeChange = useCallback((newMode: EditorMode) => {
     if (newMode === mode) return;
+    
     isUpdatingRef.current = true;
-    saveCursor();
+    const savedRange = saveCursor();
     
     setMode(newMode);
-    setTimeout(() => {
+    
+    // Use requestAnimationFrame for smooth transition
+    requestAnimationFrame(() => {
       if (newMode === 'visual') {
         const html = parseMarkup(content);
         setContent(html);
@@ -58,49 +61,65 @@ export function MediaWikiEditor() {
         const wikitext = htmlToWikitext(content);
         setContent(wikitext);
       }
+      
+      // Restore cursor after content update
       requestAnimationFrame(() => {
-        restoreCursor();
+        restoreCursor(savedRange);
         isUpdatingRef.current = false;
       });
-    }, 10);
-  };
+    });
+  }, [mode, content, saveCursor, restoreCursor]);
   
-  const handleInput = (html: string) => {
+  const handleInput = useCallback((html: string) => {
     if (isUpdatingRef.current) return;
     setContent(html);
     addToHistory(html);
-  };
+  }, [addToHistory]);
   
   const handleSave = useCallback(async () => {
     setIsSaving(true);
-    await new Promise(res => setTimeout(res, 800));
-    console.log('Saved:', content);
-    alert('Document saved!');
-    setIsSaving(false);
+    try {
+      await new Promise(res => setTimeout(res, 800));
+      console.log('Saved:', content);
+      alert('Document saved!');
+    } catch (error) {
+      console.error('Save failed:', error);
+      alert('Failed to save document');
+    } finally {
+      setIsSaving(false);
+    }
   }, [content]);
   
-  const handleKeyboard = (e: React.KeyboardEvent) => {
-    if (e.ctrlKey) {
+  const handleKeyboard = useCallback((e: React.KeyboardEvent) => {
+    if (e.ctrlKey || e.metaKey) {
       switch (e.key.toLowerCase()) {
         case 'b':
-          e.preventDefault();
-          applyEditorCommand('bold', editorRef);
+          if (mode === 'visual') {
+            e.preventDefault();
+            applyEditorCommand('bold', editorRef);
+          }
           break;
         case 'i':
-          e.preventDefault();
-          applyEditorCommand('italic', editorRef);
+          if (mode === 'visual') {
+            e.preventDefault();
+            applyEditorCommand('italic', editorRef);
+          }
           break;
         case 'u':
-          e.preventDefault();
-          applyEditorCommand('underline', editorRef);
+          if (mode === 'visual') {
+            e.preventDefault();
+            applyEditorCommand('underline', editorRef);
+          }
           break;
         case 's':
           e.preventDefault();
           handleSave();
           break;
         case 'z':
-          e.preventDefault();
-          undo();
+          if (!e.shiftKey) {
+            e.preventDefault();
+            undo();
+          }
           break;
         case 'y':
           e.preventDefault();
@@ -108,10 +127,16 @@ export function MediaWikiEditor() {
           break;
       }
     }
-  };
+  }, [mode, handleSave, undo, redo]);
+  
+  const handleDialogInsert = useCallback((cmd: string, data ? : any) => {
+    if (mode === 'visual') {
+      applyEditorCommand(cmd, editorRef, data);
+    }
+  }, [mode]);
   
   return (
-    <Card className="border shadow-md w-full overflow-hidden">
+    <Card className="border shadow-md w-full max-w-4xl mx-auto overflow-hidden">
       <div className="flex items-center justify-between border-b bg-muted/40 px-3 py-2">
         <div className="flex items-center gap-2">
           <Toolbar
@@ -120,43 +145,75 @@ export function MediaWikiEditor() {
             onDialogOpen={setDialog}
             onUndo={undo}
             onRedo={redo}
+            canUndo={canUndo}
+            canRedo={canRedo}
           />
         </div>
         <div className="flex items-center gap-2">
-          <Button variant={mode === 'visual' ? 'default' : 'outline'} size="sm" onClick={() => handleModeChange('visual')}>
+          <Button 
+            variant={mode === 'visual' ? 'default' : 'outline'} 
+            size="sm" 
+            onClick={() => handleModeChange('visual')}
+          >
             Visual
           </Button>
-          <Button variant={mode === 'source' ? 'default' : 'outline'} size="sm" onClick={() => handleModeChange('source')}>
+          <Button 
+            variant={mode === 'source' ? 'default' : 'outline'} 
+            size="sm" 
+            onClick={() => handleModeChange('source')}
+          >
             Source
           </Button>
-          <Button onClick={handleSave} size="sm" disabled={isSaving}>
-            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
-            Save
+          <Button 
+            onClick={handleSave} 
+            size="sm" 
+            disabled={isSaving}
+            className="gap-2"
+          >
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            {isSaving ? 'Saving...' : 'Save'}
           </Button>
         </div>
       </div>
 
-      <CardContent style={DEFAULT_STYLES} onKeyDown={handleKeyboard}>
+      <CardContent 
+        style={DEFAULT_STYLES} 
+        onKeyDown={handleKeyboard}
+        className="p-0"
+      >
         {mode === 'visual' ? (
           <div
             ref={editorRef}
             contentEditable
             suppressContentEditableWarning
-            className="min-h-[300px] p-3 border rounded-lg bg-background focus:outline-none prose max-w-none"
+            className="min-h-[300px] p-4 focus:outline-none prose prose-sm max-w-none"
             dangerouslySetInnerHTML={{ __html: content }}
             onInput={e => handleInput((e.target as HTMLElement).innerHTML)}
+            onBlur={() => {
+              // Save cursor position on blur
+              saveCursor();
+            }}
           />
         ) : (
           <textarea
             ref={textareaRef}
-            className="w-full h-[300px] p-3 border rounded-lg font-mono text-sm resize-none"
+            className="w-full min-h-[300px] p-4 font-mono text-sm resize-none focus:outline-none border-0"
             value={content}
             onChange={e => handleInput(e.target.value)}
+            spellCheck={false}
           />
         )}
       </CardContent>
 
-      <DialogManager dialog={dialog} setDialog={setDialog} onInsert={cmd => applyEditorCommand(cmd, editorRef)} />
+      <DialogManager 
+        dialog={dialog} 
+        setDialog={setDialog} 
+        onInsert={handleDialogInsert} 
+      />
     </Card>
   );
 }

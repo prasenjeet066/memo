@@ -9,9 +9,19 @@ interface ToolbarProps {
   onDialogOpen: (dialog: DialogState) => void;
   onUndo: () => void;
   onRedo: () => void;
+  canUndo ? : boolean;
+  canRedo ? : boolean;
 }
 
-export const Toolbar: React.FC < ToolbarProps > = ({ mode, onCommand, onDialogOpen, onUndo, onRedo }) => {
+export const Toolbar: React.FC < ToolbarProps > = ({
+  mode,
+  onCommand,
+  onDialogOpen,
+  onUndo,
+  onRedo,
+  canUndo = true,
+  canRedo = true
+}) => {
   const actions = [
     { icon: Bold, cmd: 'bold', label: 'Bold' },
     { icon: Italic, cmd: 'italic', label: 'Italic' },
@@ -26,10 +36,10 @@ export const Toolbar: React.FC < ToolbarProps > = ({ mode, onCommand, onDialogOp
           <a.icon className="h-4 w-4" />
         </Button>
       ))}
-      <Button size="icon" variant="ghost" onClick={onUndo} title="Undo">
+      <Button size="icon" variant="ghost" onClick={onUndo} title="Undo" disabled={!canUndo}>
         <Undo2 className="h-4 w-4" />
       </Button>
-      <Button size="icon" variant="ghost" onClick={onRedo} title="Redo">
+      <Button size="icon" variant="ghost" onClick={onRedo} title="Redo" disabled={!canRedo}>
         <Redo2 className="h-4 w-4" />
       </Button>
 
