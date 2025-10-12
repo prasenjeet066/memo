@@ -19,7 +19,11 @@ import { Pen, Code } from "lucide-react"; // assuming you use lucide icons
 export function EditorToolbar({ onCommand, handleSave }) {
   const [selected, setSelected] = useState({});
   const [editorMode, setEditorMode] = useState("visual");
-  
+  useEffect(()=>{
+    if (editorMode) {
+      onModeSwitch(editorMode)
+    }
+  },[editorMode])
   return (
     <div className="bg-white sticky top-0 z-10 border-b flex items-center justify-between px-2">
       <TooltipProvider>
@@ -79,13 +83,13 @@ export function EditorToolbar({ onCommand, handleSave }) {
           <SelectContent className="divide-y">
             <SelectItem value="visual">
               <div className="flex items-center w-full gap-2 justify-start p-1">
-                <Pen className="h-4 w-4" />
+                <Fai style='far' icon= 'pen' className="h-4 w-4" />
                 <span>Visual</span>
               </div>
             </SelectItem>
             <SelectItem value="recordmx">
               <div className="flex items-center w-full gap-2 justify-start p-1">
-                <Code className="h-4 w-4" />
+<Fai style='far' icon= 'code' className="h-4 w-4" />
                 <span>RecordMX</span>
               </div>
             </SelectItem>

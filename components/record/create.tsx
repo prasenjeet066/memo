@@ -94,7 +94,10 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
     }
   }, [addToHistory]);
   
-  const handleModeSwitch = useCallback(() => {
+  const handleModeSwitch = useCallback((mode?:string) => {
+    if (mode) {
+      setEditorMode(mode)
+    }
     if (editorMode === "visual" && visualRef.current) {
       isUpdatingRef.current = true;
       const html = visualRef.current.innerHTML;
