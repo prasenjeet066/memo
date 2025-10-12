@@ -30,7 +30,7 @@ export function EditorToolbar({ mode, onCommand, onUndo, onRedo, canUndo, canRed
                   }
                 }}
               >
-                <SelectTrigger className="w-[150px] h-9 text-sm flex-shrink-0">
+                <SelectTrigger className="w-[150px] h-9 text-sm flex-shrink-0 border-none bg-gray-100 rounded">
                   <SelectValue placeholder={block.name} />
                 </SelectTrigger>
                 <SelectContent>
