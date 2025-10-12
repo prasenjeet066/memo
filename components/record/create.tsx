@@ -2,19 +2,13 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { EditorToolbar } from "./EditorToolbar";
 import { EditorDialog } from "./EditorDialog";
 import { saveCursorPosition, restoreCursorPosition, useEditorHistory } from "@/lib/editor/editorUtils";
-import {
-  RecordMXtoHTML,
-  HtmlToRecordMX,
-  applyRecordMXEditorCommand,
-  RECORDMX_DEFAULT_STYLES,
-  type RecordMXParseResult
-} from "@/lib/recordmx/parser";
+import { parseMarkup, htmlToWikitext, applyEditorCommand, DEFAULT_STYLES, type ParseResult } from "@/lib/utils/dist/markup";
 
-export function RecordMXEditor({ recordName, editingMode }: { recordName ? : string, editingMode ? : "visual" | "source" }) {
-  const [recordMXText, setRecordMXText] = useState("");
+export function MediaWikiEditor({ recordName, editingMode }: { recordName ? : string, editingMode ? : "visual" | "source" }) {
+  const [wikitext, setWikitext] = useState("");
   const [title, setTitle] = useState(recordName ?? "");
   const [editorMode, setEditorMode] = useState < "visual" | "source" > (editingMode ?? "visual");
-  const [parseResult, setParseResult] = useState < RecordMXParseResult > (RecordMXtoHTML(""));
+  const [parseResult, setParseResult] = useState < ParseResult > (parseMarkup(""));
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [wordCount, setWordCount] = useState(0);
@@ -23,16 +17,16 @@ export function RecordMXEditor({ recordName, editingMode }: { recordName ? : str
   const textareaRef = useRef < HTMLTextAreaElement > (null);
   const visualRef = useRef < HTMLDivElement > (null);
   const isUpdatingRef = useRef(false);
-  const lastRecordMXRef = useRef("");
+  const lastWikitextRef = useRef("");
   const cursorPositionRef = useRef < any > (null);
   
   // Undo/redo stack with custom hook
-  const { history, historyIndex, addToHistory, handleUndo, handleRedo } = useEditorHistory(recordMXText, setRecordMXText);
+  const { history, historyIndex, addToHistory, handleUndo, handleRedo } = useEditorHistory(wikitext, setWikitext);
   
   useEffect(() => {
-    setParseResult(RecordMXtoHTML(recordMXText));
-    setWordCount(recordMXText.split(/\s+/).filter(Boolean).length);
-  }, [recordMXText]);
+    setParseResult(parseMarkup(wikitext));
+    setWordCount(wikitext.split(/\s+/).filter(Boolean).length);
+  }, [wikitext]);
   
   useEffect(() => {
     if (editorMode === "visual" && visualRef.current && !isUpdatingRef.current) {
@@ -52,11 +46,11 @@ export function RecordMXEditor({ recordName, editingMode }: { recordName ? : str
         if (visualRef.current) {
           isUpdatingRef.current = true;
           const html = visualRef.current.innerHTML;
-          const newRecordMX = HtmlToRecordMX(html);
-          if (newRecordMX !== lastRecordMXRef.current) {
-            lastRecordMXRef.current = newRecordMX;
-            setRecordMXText(newRecordMX);
-            addToHistory(newRecordMX);
+          const newWikitext = htmlToWikitext(html);
+          if (newWikitext !== lastWikitextRef.current) {
+            lastWikitextRef.current = newWikitext;
+            setWikitext(newWikitext);
+            addToHistory(newWikitext);
           }
           requestAnimationFrame(() => {
             isUpdatingRef.current = false;
@@ -71,17 +65,17 @@ export function RecordMXEditor({ recordName, editingMode }: { recordName ? : str
     if (editorMode === "visual" && visualRef.current) {
       isUpdatingRef.current = true;
       const html = visualRef.current.innerHTML;
-      const newRecordMX = HtmlToRecordMX(html);
-      setRecordMXText(newRecordMX);
-      lastRecordMXRef.current = newRecordMX;
-      addToHistory(newRecordMX);
+      const newWikitext = htmlToWikitext(html);
+      setWikitext(newWikitext);
+      lastWikitextRef.current = newWikitext;
+      addToHistory(newWikitext);
       setEditorMode("source");
     } else if (editorMode === "source") {
-      setParseResult(RecordMXtoHTML(recordMXText));
+      setParseResult(parseMarkup(wikitext));
       if (visualRef.current) visualRef.current.innerHTML = parseResult.html || "<p><br></p>";
       setEditorMode("visual");
     }
-  }, [editorMode, recordMXText, addToHistory, parseResult.html]);
+  }, [editorMode, wikitext, addToHistory, parseResult.html]);
   
   const handleCommand = useCallback((command: string, ...args: any[]) => {
     if (editorMode === "source") {
@@ -89,19 +83,19 @@ export function RecordMXEditor({ recordName, editingMode }: { recordName ? : str
       if (!textarea) return;
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
-      const selection = recordMXText.substring(start, end);
-      if (["link", "image", "codeBlock", "template", "footnote"].includes(command)) {
+      const selection = wikitext.substring(start, end);
+      if (["link", "image", "video", "codeBlock", "math", "table", "template", "reference"].includes(command)) {
         setDialog({ open: true, type: command, data: {}, selection });
         return;
       }
       try {
-        const result = applyRecordMXEditorCommand(recordMXText, command, start, end, ...args);
-        setRecordMXText(result.text);
-        lastRecordMXRef.current = result.text;
+        const result = applyEditorCommand(wikitext, command, start, end, ...args);
+        setWikitext(result.text);
+        lastWikitextRef.current = result.text;
         addToHistory(result.text);
         textarea.setSelectionRange(result.newSelectionStart, result.newSelectionEnd);
       } catch (err) {
-        setError("Command error: " + (err as Error).message);
+        setError("কমান্ড ত্রুটি: " + (err as Error).message);
       }
     } else {
       // Visual mode
@@ -111,13 +105,13 @@ export function RecordMXEditor({ recordName, editingMode }: { recordName ? : str
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0) return;
       const text = sel.toString();
-      if (["link", "image", "codeBlock", "template", "footnote"].includes(command)) {
+      if (["link", "image", "video", "codeBlock", "math", "table", "template", "reference"].includes(command)) {
         setDialog({ open: true, type: command, data: {}, selection: text });
         return;
       }
       handleVisualInput();
     }
-  }, [editorMode, recordMXText, addToHistory, handleVisualInput]);
+  }, [editorMode, wikitext, addToHistory, handleVisualInput]);
   
   const handleDialogSubmit = useCallback((data: any) => {
     // Pass dialog logic to EditorDialog, which handles insert for both modes
@@ -125,11 +119,11 @@ export function RecordMXEditor({ recordName, editingMode }: { recordName ? : str
   }, []);
   
   const handleSave = useCallback(async () => {
-    if (!title.trim()) return setError("Please enter a title");
+    if (!title.trim()) return setError("দয়া করে একটি শিরোনাম লিখুন");
     setIsSaving(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      alert("✓ Record saved!");
+      alert("✓ নিবন্ধটি সফলভাবে সংরক্ষিত হয়েছে!");
     } finally {
       setIsSaving(false);
     }
@@ -158,13 +152,13 @@ export function RecordMXEditor({ recordName, editingMode }: { recordName ? : str
         {editorMode === "source" ? (
           <textarea
             ref={textareaRef}
-            value={recordMXText}
+            value={wikitext}
             onChange={e => {
-              setRecordMXText(e.target.value);
+              setWikitext(e.target.value);
               addToHistory(e.target.value);
             }}
             className="w-full min-h-[70vh] p-4 outline-none text-sm font-mono resize-none"
-            placeholder="Write recordMX markup here..."
+            placeholder="উইকিটেক্সট এখানে লিখুন..."
           />
         ) : (
           <div
@@ -175,7 +169,7 @@ export function RecordMXEditor({ recordName, editingMode }: { recordName ? : str
             contentEditable
             suppressContentEditableWarning
             spellCheck
-            data-placeholder="Start writing here..."
+            data-placeholder="এখানে লেখা শুরু করুন..."
           />
         )}
       </div>
@@ -192,4 +186,4 @@ export function RecordMXEditor({ recordName, editingMode }: { recordName ? : str
     </div>
   );
 }
-export default RecordMXEditor;
+export default MediaWikiEditor;
