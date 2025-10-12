@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { EditorToolbar } from "./EditorToolbar";
 import { EditorDialog } from "./EditorDialog";
 import { saveCursorPosition, restoreCursorPosition, useEditorHistory } from "@/lib/editor/editorUtils";
-import { parseRecordMX, convertHtmlToRecordMX } from "@/lib/recordmx/parser";
+import { parseRecordMX, convertHtmlToRecordMX ,RECORDMX_ADVANCED_STYLES} from "@/lib/recordmx/parser";
 import type { RecordMXParseResult } from "@/lib/recordmx/parser";
 
 export function MediaWikiEditor({ recordName, editingMode }: { recordName?: string, editingMode?: "visual" | "source" }) {
@@ -336,7 +336,7 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
           />
         )}
       </div>
-      
+      <style dangerouslySetInnerHTML={{__html:RECORDMX_ADVANCED_STYLES}}/>
       {/* Show TOC if available */}
       {parseResult?.toc && editorMode === "visual" && (
         <div className="max-w-7xl mx-auto mt-4" dangerouslySetInnerHTML={{ __html: parseResult.toc }} />
