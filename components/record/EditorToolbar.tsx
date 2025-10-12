@@ -13,13 +13,14 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { Pen, Code } from "lucide-react"; // assuming you use lucide icons
 
-export function EditorToolbar({ onCommand , handleSave}) {
-  // Track selected value for each dropdown by its index
+export function EditorToolbar({ onCommand, handleSave }) {
   const [selected, setSelected] = useState({});
+  const [editorMode, setEditorMode] = useState("visual");
   
   return (
-    <div className="bg-white sticky top-0 z-10 border-b flex items-center justify-between">
+    <div className="bg-white sticky top-0 z-10 border-b flex items-center justify-between px-2">
       <TooltipProvider>
         <div className="flex items-center gap-1 overflow-x-auto">
           {toolbarBlocks.flat().map((block, i) =>
@@ -29,17 +30,16 @@ export function EditorToolbar({ onCommand , handleSave}) {
                 value={selected[i] || ""}
                 onValueChange={(value) => {
                   setSelected((prev) => ({ ...prev, [i]: value }));
-
                   if (value && block.items) {
                     const item = block.items.find((itm) => itm.action === value);
                     onCommand(value, ...(item?.args || []));
                   }
                 }}
               >
-                <SelectTrigger className="max-w-[140px] w-auto h-full text-sm flex-shrink-0 border-none border-l border-r border-gray-500 z-10">
+                <SelectTrigger className="min-w-[100px] max-w-[180px] w-auto h-full bg-gray-50 text-sm flex-shrink-0 border-none border-l border-r border-gray-500 z-10">
                   <SelectValue placeholder={block.name} />
                 </SelectTrigger>
-                <SelectContent className='divide-y'>
+                <SelectContent className="divide-y">
                   {block.items?.map((item, idx) => (
                     <SelectItem key={idx} value={item.action}>
                       <div className="flex items-center w-full gap-2 justify-start p-1">
@@ -66,10 +66,37 @@ export function EditorToolbar({ onCommand , handleSave}) {
           )}
         </div>
       </TooltipProvider>
-      <div className='flex items-center justify-end'>
-         <button className='border-l px-4 bg-gray-800 p-2 text-white text-sm' onClick={handleSave}>
-            Publish
-          </button>
+
+      <div className="flex items-center gap-2 ml-4">
+        <Select
+          value={editorMode}
+          onValueChange={(value) => setEditorMode(value)}
+        >
+          <SelectTrigger className="min-w-[100px] max-w-[180px] w-auto h-full bg-gray-50 text-sm flex-shrink-0 border-none border-l border-r border-gray-500 z-10">
+            <SelectValue placeholder="Editor Mode" />
+          </SelectTrigger>
+          <SelectContent className="divide-y">
+            <SelectItem value="visual">
+              <div className="flex items-center w-full gap-2 justify-start p-1">
+                <Pen className="h-4 w-4" />
+                <span>Visual</span>
+              </div>
+            </SelectItem>
+            <SelectItem value="recordmx">
+              <div className="flex items-center w-full gap-2 justify-start p-1">
+                <Code className="h-4 w-4" />
+                <span>RecordMX</span>
+              </div>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+
+        <button
+          className="border-l px-4 bg-gray-800 p-2 text-white text-sm"
+          onClick={handleSave}
+        >
+          Publish
+        </button>
       </div>
     </div>
   );
