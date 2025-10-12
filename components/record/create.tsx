@@ -2,28 +2,30 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { EditorToolbar } from "./EditorToolbar";
 import { EditorDialog } from "./EditorDialog";
 import { saveCursorPosition, restoreCursorPosition, useEditorHistory } from "@/lib/editor/editorUtils";
-import { parseRecordMX, convertHtmlToRecordMX ,RECORDMX_ADVANCED_STYLES} from "@/lib/recordmx/parser";
+import { parseRecordMX, convertHtmlToRecordMX, RECORDMX_ADVANCED_STYLES } from "@/lib/recordmx/parser";
 import type { RecordMXParseResult } from "@/lib/recordmx/parser";
 
-export function MediaWikiEditor({ recordName, editingMode }: { recordName?: string, editingMode?: "visual" | "source" }) {
+export function MediaWikiEditor({ recordName, editingMode }: { recordName ? : string, editingMode ? : "visual" | "source" }) {
   const [markup, setMarkup] = useState("");
   const [title, setTitle] = useState(recordName ?? "");
-  const [editorMode, setEditorMode] = useState<"visual" | "source">(editingMode ?? "visual");
-  const [parseResult, setParseResult] = useState<RecordMXParseResult | null>(null);
+  const [editorMode, setEditorMode] = useState < "visual" | "source" > (editingMode ?? "visual");
+  const [parseResult, setParseResult] = useState < RecordMXParseResult | null > (null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [wordCount, setWordCount] = useState(0);
-  const [dialog, setDialog] = useState<any>({ open: false, type: null, data: {}, selection: "" });
+  const [dialog, setDialog] = useState < any > ({ open: false, type: null, data: {}, selection: "" });
   
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const visualRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef < HTMLTextAreaElement > (null);
+  const visualRef = useRef < HTMLDivElement > (null);
   const isUpdatingRef = useRef(false);
   const lastMarkupRef = useRef("");
-  const cursorPositionRef = useRef<any>(null);
-  
+  const cursorPositionRef = useRef < any > (null);
+  const [content , setContent] =useState('')
   // Undo/redo stack with custom hook
   const { history, historyIndex, addToHistory, handleUndo, handleRedo } = useEditorHistory(markup, setMarkup);
-  
+  useEffect(()=>{
+    setParseResult(parseRecordMX(Comment).html)
+  },[content])
   // Parse RecordMX markup whenever it changes
   useEffect(() => {
     const result = parseRecordMX(markup, {
@@ -71,7 +73,7 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       styleEl.textContent = parseResult.styles;
     }
   }, [parseResult?.styles]);
-  
+  /**
   const handleVisualInput = useCallback(() => {
     if (visualRef.current && !isUpdatingRef.current) {
       cursorPositionRef.current = saveCursorPosition(visualRef.current);
@@ -93,8 +95,20 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       }, 500);
     }
   }, [addToHistory]);
+  **/
+  const handleVisualInput = (e) => {
+    (e) => {
+      if (e){
+      if (visualRef.current) {
+        const offset = getCaretCharacterOffset(contentEditableRef.current)
+        visualRef.current = { node: null, offset: offset }
+      }
+      setContent(e.currentTarget.textContent || "")
+    }
+    }
+  }
   
-  const handleModeSwitch = useCallback((mode?:string) => {
+  const handleModeSwitch = useCallback((mode ? : string) => {
     if (mode) {
       setEditorMode(mode)
     }
@@ -130,7 +144,7 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
     }
     
     // Direct formatting commands
-    const commandMap: Record<string, () => void> = {
+    const commandMap: Record < string, () => void > = {
       bold: () => {
         if (text) {
           alert(text)
@@ -243,12 +257,14 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       case 'table':
         const rows = parseInt(data.rows || '3');
         const cols = parseInt(data.cols || '3');
-        insertText = Array(rows).fill(0).map((_, i) => 
+        insertText = Array(rows).fill(0).map((_, i) =>
           '|' + Array(cols).fill('Cell').join('|') + '|' + (i === 0 ? '\n|' + Array(cols).fill('---').join('|') + '|' : '')
         ).join('\n');
         break;
       case 'template':
-        insertText = `{% ${data.name || 'template'} ${Object.entries(data.params || {}).map(([k, v]) => `${k}=${v}`).join(' ')} %}`;
+        insertText = `{% ${data.name || 'template'} ${Object.entries(data.params || {}).map(([k, v]) => `
+        $ { k } = $ { v }
+        `).join(' ')} %}`;
         break;
       case 'reference':
         insertText = `[@${data.id || 'ref1'}]`;
@@ -337,14 +353,13 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
             suppressContentEditableWarning
             spellCheck
             data-placeholder="এখানে লেখা শুরু করুন..."
+            dangerouslySetInnerHTML={{__html:parseResult}}
           />
         )}
       </div>
       <style dangerouslySetInnerHTML={{__html:RECORDMX_ADVANCED_STYLES}}/>
       {/* Show TOC if available */}
-      {parseResult?.toc && editorMode === "visual" && (
-        <div className="max-w-7xl mx-auto mt-4" dangerouslySetInnerHTML={{ __html: parseResult.toc }} />
-      )}
+      
       
       {/* Show errors/warnings */}
       {parseResult && parseResult.errors.length > 0 && (
