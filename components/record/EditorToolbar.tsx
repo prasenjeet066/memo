@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Fai } from '@/components/Fontawesome'
 import { toolbarBlocks } from "@/lib/editor/toolbarConfig";
 import {
   TooltipProvider,
@@ -43,7 +44,7 @@ export function EditorToolbar({ onCommand, handleSave }) {
                   {block.items?.map((item, idx) => (
                     <SelectItem key={idx} value={item.action}>
                       <div className="flex items-center w-full gap-2 justify-start p-1">
-                        <item.icon className="h-4 w-4" />
+                        <Fai style ='fal' icon = {item.icon} className="h-4 w-4" />
                         <span>{item.label}</span>
                       </div>
                     </SelectItem>
@@ -57,7 +58,7 @@ export function EditorToolbar({ onCommand, handleSave }) {
                     onClick={() => block.action && onCommand(block.action)}
                     className="p-2 hover:bg-blue-50 rounded transition flex-shrink-0"
                   >
-                    {block.icon && <block.icon className="h-4 w-4" />}
+                    {block.icon && <Fai style ='fal' icon = {block.icon} className="h-4 w-4" />}
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>{block.label}</TooltipContent>
