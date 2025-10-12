@@ -131,8 +131,13 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName ? : st
   
   return (
     <div className="w-full min-h-screen bg-gray-50">
-      <div className="border-b bg-white shadow-sm sticky top-0 z-10">
-        {/* header, error, word count, mode switch, save */}
+      <div className="border-b bg-white flex items-center justify-between">
+      <h1>{recordName}</h1>
+      <div className='bg-white flex items-center justify-end gap-2'>
+        <button className='border-l'>
+          Publish
+        </button>
+      </div>
       </div>
       <EditorToolbar
         mode={editorMode}

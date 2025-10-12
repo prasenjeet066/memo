@@ -4,7 +4,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 
 export function EditorToolbar({ mode, onCommand, onUndo, onRedo, canUndo, canRedo, onModeSwitch }) {
   return (
-    <div className="bg-white sticky top-[73px] z-10 border-b">
+    <div className="bg-white sticky top-0 z-10 border-b">
       <TooltipProvider>
         <div className="flex items-center gap-1 p-2 overflow-x-auto">
           {toolbarBlocks.map((block, i) =>
@@ -46,9 +46,6 @@ export function EditorToolbar({ mode, onCommand, onUndo, onRedo, canUndo, canRed
               </Select>
             )
           )}
-          <button disabled={!canUndo} onClick={onUndo} className="p-2">Undo</button>
-          <button disabled={!canRedo} onClick={onRedo} className="p-2">Redo</button>
-          <button onClick={onModeSwitch} className="p-2">Mode: {mode}</button>
         </div>
       </TooltipProvider>
     </div>
