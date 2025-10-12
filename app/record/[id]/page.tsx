@@ -1,6 +1,7 @@
 "use client";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from 'react';
+import {ErrorBoundary} from '@/components/ErrorBoundary'
 import Header from '@/components/header';
 import CreateRecord from '@/components/record/create';
 import { useMobile } from "@/lib/units/use-mobile";
@@ -417,8 +418,11 @@ export default function RecordIdPage({ params }) {
       <div className="flex bg-white">
         <div className="flex-1 px-3 border-r">
           <div className="max-w-4xl mx-auto">
-            <CreateRecord recordName={recordName} editingMode={editingMode} />
-          </div>
+            <ErrorBoundary>
+              <CreateRecord recordName={recordName} editingMode={editingMode} />
+        
+            </ErrorBoundary>
+            </div>
         </div>
         
       </div>
