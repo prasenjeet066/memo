@@ -59,7 +59,6 @@ const FontAwesomeIcon = ({
   ].filter(Boolean).join(' ');
   
   const styles = color ? { color } : {
-    cursor: onClick ? 'pointer' : 'default',
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
