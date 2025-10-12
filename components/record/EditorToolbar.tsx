@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Pen, Code } from "lucide-react"; // assuming you use lucide icons
 
-export function EditorToolbar({ onCommand, handleSave }) {
+export function EditorToolbar({ onCommand,onModeSwitch, handleSave  }) {
   const [selected, setSelected] = useState({});
   const [editorMode, setEditorMode] = useState("visual");
   useEffect(()=>{
