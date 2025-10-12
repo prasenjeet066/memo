@@ -11,6 +11,7 @@ import {
   SelectScrollUpButton,
   SelectScrollDownButton
 } from '@/components/ui/select'
+import { Prompt } from '@components/ui/popover'
 import {
   Bold,
   Italic,
@@ -950,7 +951,7 @@ export default function MediaWikiEditor({
     }
   }}
 >
-  <SelectTrigger className="max-w-[100px] border-gray-500 text-sm">
+  <SelectTrigger className="max-w-[130px] border-gray-500 text-sm">
     <SelectValue placeholder="Handling" />
   </SelectTrigger>
 

@@ -30,7 +30,7 @@ export default function Header({ navlist }: HeaderProps) {
   
   return (
     <>
-      <div className={'w-full px-4 py-3 flex flex-row items-center justify-between gap-4 ' + isMobile ? 'sticky top-0 bg-gray-50 z-40' : 'bg-gray-50'} >
+      <div className={`w-full px-4 py-3 flex flex-row items-center bg-gray-50 justify-between gap-4 ${isMobile &&  'sticky top-0  z-40'}`} >
         {isMobile ? (
           <>
             <div className='flex items-center gap-3'>
@@ -67,13 +67,13 @@ export default function Header({ navlist }: HeaderProps) {
                   <div className='w-20 h-8 bg-gray-200 animate-pulse rounded-full'></div>
                 ) : session ? (
                   <div className='flex items-center gap-4'>
-                  <button className='flex items-center gap-2 px-3 rounded-full px-4 py-2 text-sm text-gray-700 hover:text-gray-900 bg-gray-100 transition-colors'>
-                    <Mail className='w-4 h-4 mr-2'/>
-                    {"Messages"}
+                  <button className='flex items-center gap-2 px-3 rounded-full px-4 py-2 text-sm text-gray-700 hover:text-gray-900 transition-colors'>
+                    <Mail className='w-4 h-4'/>
+                    
                   </button>
-                  <button className='flex items-center gap-2 px-3 rounded-full px-4 py-2 text-sm text-gray-700 hover:text-gray-900 bg-gray-100 transition-colors'>
-                    <Bell className='w-4 h-4 mr-2'/>
-                    {"Notifications"}
+                  <button className='flex items-center gap-2 px-3 rounded-full px-4 py-2 text-sm text-gray-700 hover:text-gray-900 transition-colors'>
+                    <Bell className='w-4 h-4'/>
+                    
                   </button>
                     <button 
                       onClick={() => signOut()}

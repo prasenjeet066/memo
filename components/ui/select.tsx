@@ -125,11 +125,12 @@ const SelectItem = React.forwardRef <
     )}
     {...props}
   >
-    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+      {!icon && (<span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
         <Check className="h-4 w-4" />
       </SelectPrimitive.ItemIndicator>
-    </span>
+    </span>)}
+    
 
     {/* যদি আইকন দেওয়া থাকে, তবে সেটি দেখাও */}
     {icon && <span className="flex h-4 w-4 items-center justify-center">{icon}</span>}
