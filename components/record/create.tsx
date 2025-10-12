@@ -78,39 +78,21 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName ? : st
   }, [editorMode, wikitext, addToHistory, parseResult.html]);
   
   const handleCommand = useCallback((command: string, ...args: any[]) => {
-    if (editorMode === "source") {
-      const textarea = textareaRef.current;
-      if (!textarea) return;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selection = wikitext.substring(start, end);
-      if (["link", "image", "video", "codeBlock", "math", "table", "template", "reference"].includes(command)) {
-        setDialog({ open: true, type: command, data: {}, selection });
-        return;
-      }
-      try {
-        const result = applyEditorCommand(wikitext, command, start, end, ...args);
-        setWikitext(result.text);
-        lastWikitextRef.current = result.text;
-        addToHistory(result.text);
-        textarea.setSelectionRange(result.newSelectionStart, result.newSelectionEnd);
-      } catch (err) {
-        setError("কমান্ড ত্রুটি: " + (err as Error).message);
-      }
-    } else {
       // Visual mode
       const el = visualRef.current;
+      
       if (!el) return;
       el.focus();
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0) return;
       const text = sel.toString();
+      
       if (["link", "image", "video", "codeBlock", "math", "table", "template", "reference"].includes(command)) {
         setDialog({ open: true, type: command, data: {}, selection: text });
         return;
       }
       handleVisualInput();
-    }
+    
   }, [editorMode, wikitext, addToHistory, handleVisualInput]);
   
   const handleDialogSubmit = useCallback((data: any) => {
