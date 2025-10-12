@@ -66,21 +66,6 @@ interface CursorPosition {
   offset: number;
 }
 
-interface ToolbarItem {
-  icon: any;
-  action: string;
-  label: string;
-  args?: any[];
-}
-
-interface ToolbarBlock {
-  name?: string;
-  items?: ToolbarItem[];
-  icon?: any;
-  action?: string;
-  label?: string;
-}
-
 interface MediaWikiEditorProps {
   recordName?: string;
   editingMode?: "visual" | "source";
@@ -260,7 +245,7 @@ export function MediaWikiEditor({
         setError("");
       } catch (err) {
         console.error('Parse error:', err);
-        setError("পার্সিং ত্রুটি: " + (err as Error).message);
+        setError("Parsing error: " + (err as Error).message);
       }
     }
   }, [wikitext]);
@@ -371,19 +356,27 @@ export function MediaWikiEditor({
         
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
-        let command = type || '';
+        let command = '';
         let args: any[] = [];
         
         switch (type) {
           case 'link':
-            command = data.url?.startsWith('http') ? 'externalLink' : 'internalLink';
-            args = [data.url || selection, data.text || selection];
+            if (data.url?.startsWith('http')) {
+              command = 'externalLink';
+              args = [data.url, data.text || selection];
+            } else {
+              command = 'internalLink';
+              args = [selection || data.text || data.url, data.url];
+            }
             break;
           case 'image':
-            command = data.caption ? 'thumbnail' : 'image';
-            args = data.caption 
-              ? [data.filename, data.caption, data.size]
-              : [data.filename, data.size];
+            if (data.caption || data.size) {
+              command = 'thumbnail';
+              args = [data.filename, data.caption, data.size];
+            } else {
+              command = 'image';
+              args = [data.filename];
+            }
             break;
           case 'video':
             command = 'video';
@@ -391,7 +384,7 @@ export function MediaWikiEditor({
             break;
           case 'code':
             command = 'codeBlock';
-            args = [selection || data.code, data.language];
+            args = [selection || data.code || '// code here', data.language];
             break;
           case 'math':
             command = 'math';
@@ -401,8 +394,8 @@ export function MediaWikiEditor({
             command = 'table';
             const rows = parseInt(data.rows || '3');
             const cols = parseInt(data.cols || '3');
-            const headers = Array(cols).fill('').map((_, i) => `শিরোনাম ${i + 1}`);
-            const tableRows = Array(rows).fill('').map(() => Array(cols).fill('তথ্য'));
+            const headers = Array(cols).fill('').map((_, i) => `Header ${i + 1}`);
+            const tableRows = Array(rows).fill('').map(() => Array(cols).fill('Data'));
             args = [headers, tableRows, data.caption];
             break;
           case 'template':
@@ -415,15 +408,17 @@ export function MediaWikiEditor({
             break;
         }
         
-        const result = applyEditorCommand(wikitext, command, start, end, ...args);
-        setWikitext(result.text);
-        lastWikitextRef.current = result.text;
-        addToHistory(result.text);
-        
-        requestAnimationFrame(() => {
-          textarea.focus();
-          textarea.setSelectionRange(result.newSelectionStart, result.newSelectionEnd);
-        });
+        if (command) {
+          const result = applyEditorCommand(wikitext, command, start, end, ...args);
+          setWikitext(result.text);
+          lastWikitextRef.current = result.text;
+          addToHistory(result.text);
+          
+          requestAnimationFrame(() => {
+            textarea.focus();
+            textarea.setSelectionRange(result.newSelectionStart, result.newSelectionEnd);
+          });
+        }
       } else {
         // Visual mode - use execCommand or insert elements
         const el = visualRef.current;
@@ -478,7 +473,7 @@ export function MediaWikiEditor({
             const pre = document.createElement("pre");
             pre.className = `code-block language-${data.language || "text"}`;
             const codeEl = document.createElement("code");
-            codeEl.textContent = selection || data.code || "// কোড এখানে লিখুন";
+            codeEl.textContent = selection || data.code || "// code here";
             pre.appendChild(codeEl);
             range.deleteContents();
             range.insertNode(pre);
@@ -495,26 +490,26 @@ export function MediaWikiEditor({
             break;
             
           case 'table':
-            const rows = parseInt(data.rows || "3");
-            const cols = parseInt(data.cols || "3");
+            const trows = parseInt(data.rows || "3");
+            const tcols = parseInt(data.cols || "3");
             const table = document.createElement("table");
             table.className = "wikitable";
             const thead = document.createElement("thead");
             const tbody = document.createElement("tbody");
             
             const headerRow = document.createElement("tr");
-            for (let i = 0; i < cols; i++) {
+            for (let i = 0; i < tcols; i++) {
               const th = document.createElement("th");
-              th.textContent = `শিরোনাম ${i + 1}`;
+              th.textContent = `Header ${i + 1}`;
               headerRow.appendChild(th);
             }
             thead.appendChild(headerRow);
             
-            for (let i = 0; i < rows; i++) {
+            for (let i = 0; i < trows; i++) {
               const tr = document.createElement("tr");
-              for (let j = 0; j < cols; j++) {
+              for (let j = 0; j < tcols; j++) {
                 const td = document.createElement("td");
-                td.textContent = "তথ্য";
+                td.textContent = "Data";
                 tr.appendChild(td);
               }
               tbody.appendChild(tr);
@@ -551,7 +546,7 @@ export function MediaWikiEditor({
       closeDialog();
     } catch (err) {
       console.error('Dialog submit error:', err);
-      setError("ত্রুটি: " + (err as Error).message);
+      setError("Error: " + (err as Error).message);
     }
   }, [dialog, editorMode, wikitext, addToHistory, closeDialog, handleVisualInput, parseResult]);
   
@@ -594,7 +589,7 @@ export function MediaWikiEditor({
           });
         } catch (err) {
           console.error('Command error:', err);
-          setError("কমান্ড ত্রুটি: " + (err as Error).message);
+          setError("Command error: " + (err as Error).message);
         }
       } else {
         // Visual mode
@@ -677,7 +672,7 @@ export function MediaWikiEditor({
               const refDiv = document.createElement("div");
               refDiv.className = "reflist";
               const refTitle = document.createElement("h3");
-              refTitle.textContent = "তথ্যসূত্র";
+              refTitle.textContent = "References";
               refDiv.appendChild(refTitle);
               range.deleteContents();
               range.insertNode(refDiv);
@@ -688,7 +683,7 @@ export function MediaWikiEditor({
           handleVisualInput();
         } catch (err) {
           console.error('Formatting error:', err);
-          setError("ফরম্যাটিং ত্রুটি: " + (err as Error).message);
+          setError("Formatting error: " + (err as Error).message);
         }
       }
     },
@@ -740,7 +735,7 @@ export function MediaWikiEditor({
   // Save handler
   const handleSave = useCallback(async () => {
     if (!title.trim()) {
-      setError("দয়া করে একটি শিরোনাম লিখুন");
+      setError("Please enter a title");
       return;
     }
     
@@ -750,17 +745,17 @@ export function MediaWikiEditor({
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       
-      console.log("সংরক্ষিত:", {
+      console.log("Saved:", {
         title,
         wikitext,
         metadata: parseResult.metadata,
         wordCount,
       });
       
-      alert("✓ নিবন্ধটি সফলভাবে সংরক্ষিত হয়েছে!");
+      alert("✓ Article saved successfully!");
     } catch (err) {
       console.error('Save error:', err);
-      setError("সংরক্ষণে ত্রুটি: " + (err as Error).message);
+      setError("Save error: " + (err as Error).message);
     } finally {
       setIsSaving(false);
     }
@@ -780,38 +775,6 @@ export function MediaWikiEditor({
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [handleSave]);
   
-  // Toolbar configuration
-  const toolbarBlocks: ToolbarBlock[] = [
-    { icon: Bold, action: "bold", label: "বোল্ড (Ctrl+B)" },
-    { icon: Italic, action: "italic", label: "ইটালিক (Ctrl+I)" },
-    {
-      name: "শিরোনাম",
-      items: [
-        { icon: Heading1, action: "heading", label: "শিরোনাম ২", args: [2] },
-        { icon: Heading2, action: "heading", label: "শিরোনাম ৩", args: [3] },
-        { icon: Heading3, action: "heading", label: "শিরোনাম ৪", args: [4] },
-      ],
-    },
-    { icon: Type, action: "boldItalic", label: "বোল্ড ইটালিক" },
-    { icon: Strikethrough, action: "strikethrough", label: "স্ট্রাইকথ্রু" },
-    { icon: Underline, action: "underline", label: "আন্ডারলাইন (Ctrl+U)" },
-    { icon: Code, action: "inlineCode", label: "ইনলাইন কোড" },
-    { icon: Link, action: "link", label: "লিঙ্ক (Ctrl+K)" },
-    { icon: Image, action: "image", label: "ছবি" },
-    { icon: Video, action: "video", label: "ভিডিও" },
-    { icon: FileCode, action: "codeBlock", label: "কোড ব্লক" },
-    { icon: Sigma, action: "math", label: "গণিত" },
-    { icon: List, action: "unorderedList", label: "বুলেট তালিকা" },
-    { icon: ListOrdered, action: "orderedList", label: "সংখ্যাযুক্ত তালিকা" },
-    { icon: Table, action: "table", label: "টেবিল" },
-    { icon: Puzzle, action: "template", label: "টেমপ্লেট" },
-    { icon: Minus, action: "horizontalRule", label: "অনুভূমিক রেখা" },
-    { icon: Superscript, action: "superscript", label: "সুপারস্ক্রিপ্ট" },
-    { icon: Subscript, action: "subscript", label: "সাবস্ক্রিপ্ট" },
-    { icon: FileText, action: "reference", label: "তথ্যসূত্র" },
-    { icon: ListChecks, action: "refList", label: "তথ্যসূত্র তালিকা" },
-  ];
-  
   // Dialog content renderer
   const renderDialogContent = () => {
     const { type, data } = dialog;
@@ -822,7 +785,7 @@ export function MediaWikiEditor({
           <>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="link-url">লিঙ্ক URL/পাতার নাম</Label>
+                <Label htmlFor="link-url">Link URL/Page Name</Label>
                 <Input
                   id="link-url"
                   value={data.url || ''}
@@ -830,11 +793,11 @@ export function MediaWikiEditor({
                     ...prev,
                     data: { ...prev.data, url: e.target.value }
                   }))}
-                  placeholder="https://example.com অথবা পাতার_নাম"
+                  placeholder="https://example.com or Page_Name"
                 />
               </div>
               <div>
-                <Label htmlFor="link-text">প্রদর্শন টেক্সট (ঐচ্ছিক)</Label>
+                <Label htmlFor="link-text">Display Text (optional)</Label>
                 <Input
                   id="link-text"
                   value={data.text || ''}
@@ -842,7 +805,7 @@ export function MediaWikiEditor({
                     ...prev,
                     data: { ...prev.data, text: e.target.value }
                   }))}
-                  placeholder={dialog.selection || "লিঙ্ক টেক্সট"}
+                  placeholder={dialog.selection || "Link text"}
                 />
               </div>
             </div>
@@ -853,7 +816,7 @@ export function MediaWikiEditor({
         return (
           <div className="space-y-4">
             <div>
-              <Label htmlFor="image-filename">ছবির ফাইল নাম</Label>
+              <Label htmlFor="image-filename">Image Filename</Label>
               <Input
                 id="image-filename"
                 value={data.filename || ''}
@@ -865,7 +828,7 @@ export function MediaWikiEditor({
               />
             </div>
             <div>
-              <Label htmlFor="image-caption">ক্যাপশন (ঐচ্ছিক)</Label>
+              <Label htmlFor="image-caption">Caption (optional)</Label>
               <Input
                 id="image-caption"
                 value={data.caption || ''}
@@ -873,11 +836,11 @@ export function MediaWikiEditor({
                   ...prev,
                   data: { ...prev.data, caption: e.target.value }
                 }))}
-                placeholder="ছবির বিবরণ"
+                placeholder="Image description"
               />
             </div>
             <div>
-              <Label htmlFor="image-size">আকার (ঐচ্ছিক)</Label>
+              <Label htmlFor="image-size">Size (optional)</Label>
               <Input
                 id="image-size"
                 value={data.size || ''}
@@ -895,7 +858,7 @@ export function MediaWikiEditor({
         return (
           <div className="space-y-4">
             <div>
-              <Label htmlFor="video-filename">ভিডিও ফাইল নাম</Label>
+              <Label htmlFor="video-filename">Video Filename</Label>
               <Input
                 id="video-filename"
                 value={data.filename || ''}
@@ -907,7 +870,7 @@ export function MediaWikiEditor({
               />
             </div>
             <div>
-              <Label htmlFor="video-caption">ক্যাপশন (ঐচ্ছিক)</Label>
+              <Label htmlFor="video-caption">Caption (optional)</Label>
               <Input
                 id="video-caption"
                 value={data.caption || ''}
@@ -915,7 +878,7 @@ export function MediaWikiEditor({
                   ...prev,
                   data: { ...prev.data, caption: e.target.value }
                 }))}
-                placeholder="ভিডিওর বিবরণ"
+                placeholder="Video description"
               />
             </div>
           </div>
@@ -925,7 +888,7 @@ export function MediaWikiEditor({
         return (
           <div className="space-y-4">
             <div>
-              <Label htmlFor="code-language">প্রোগ্রামিং ভাষা</Label>
+              <Label htmlFor="code-language">Programming Language</Label>
               <Input
                 id="code-language"
                 value={data.language || ''}
@@ -937,7 +900,7 @@ export function MediaWikiEditor({
               />
             </div>
             <div>
-              <Label htmlFor="code-content">কোড (ঐচ্ছিক - নির্বাচিত টেক্সট ব্যবহার হবে)</Label>
+              <Label htmlFor="code-content">Code (optional - uses selection)</Label>
               <Input
                 id="code-content"
                 value={data.code || ''}
@@ -945,7 +908,7 @@ export function MediaWikiEditor({
                   ...prev,
                   data: { ...prev.data, code: e.target.value }
                 }))}
-                placeholder="// কোড এখানে"
+                placeholder="// code here"
               />
             </div>
           </div>
@@ -955,7 +918,7 @@ export function MediaWikiEditor({
         return (
           <div className="space-y-4">
             <div>
-              <Label htmlFor="math-formula">LaTeX সূত্র</Label>
+              <Label htmlFor="math-formula">LaTeX Formula</Label>
               <Input
                 id="math-formula"
                 value={data.formula || ''}
@@ -973,7 +936,7 @@ export function MediaWikiEditor({
         return (
           <div className="space-y-4">
             <div>
-              <Label htmlFor="table-rows">সারির সংখ্যা</Label>
+              <Label htmlFor="table-rows">Number of Rows</Label>
               <Input
                 id="table-rows"
                 type="number"
@@ -987,7 +950,7 @@ export function MediaWikiEditor({
               />
             </div>
             <div>
-              <Label htmlFor="table-cols">কলামের সংখ্যা</Label>
+              <Label htmlFor="table-cols">Number of Columns</Label>
               <Input
                 id="table-cols"
                 type="number"
@@ -1001,7 +964,7 @@ export function MediaWikiEditor({
               />
             </div>
             <div>
-              <Label htmlFor="table-caption">ক্যাপশন (ঐচ্ছিক)</Label>
+              <Label htmlFor="table-caption">Caption (optional)</Label>
               <Input
                 id="table-caption"
                 value={data.caption || ''}
@@ -1009,7 +972,7 @@ export function MediaWikiEditor({
                   ...prev,
                   data: { ...prev.data, caption: e.target.value }
                 }))}
-                placeholder="টেবিলের শিরোনাম"
+                placeholder="Table title"
               />
             </div>
           </div>
@@ -1019,7 +982,7 @@ export function MediaWikiEditor({
         return (
           <div className="space-y-4">
             <div>
-              <Label htmlFor="template-name">টেমপ্লেটের নাম</Label>
+              <Label htmlFor="template-name">Template Name</Label>
               <Input
                 id="template-name"
                 value={data.name || ''}
@@ -1037,7 +1000,7 @@ export function MediaWikiEditor({
         return (
           <div className="space-y-4">
             <div>
-              <Label htmlFor="ref-text">তথ্যসূত্রের বিষয়বস্তু</Label>
+              <Label htmlFor="ref-text">Reference Content</Label>
               <Input
                 id="ref-text"
                 value={data.text || ''}
@@ -1045,11 +1008,11 @@ export function MediaWikiEditor({
                   ...prev,
                   data: { ...prev.data, text: e.target.value }
                 }))}
-                placeholder="তথ্যসূত্রের টেক্সট"
+                placeholder="Reference text"
               />
             </div>
             <div>
-              <Label htmlFor="ref-name">নাম (ঐচ্ছিক - পুনরায় ব্যবহারের জন্য)</Label>
+              <Label htmlFor="ref-name">Name (optional - for reuse)</Label>
               <Input
                 id="ref-name"
                 value={data.name || ''}
@@ -1070,14 +1033,14 @@ export function MediaWikiEditor({
   
   const getDialogTitle = () => {
     switch (dialog.type) {
-      case 'link': return 'লিঙ্ক যোগ করুন';
-      case 'image': return 'ছবি যোগ করুন';
-      case 'video': return 'ভিডিও যোগ করুন';
-      case 'code': return 'কোড ব্লক যোগ করুন';
-      case 'math': return 'গণিত সূত্র যোগ করুন';
-      case 'table': return 'টেবিল যোগ করুন';
-      case 'template': return 'টেমপ্লেট যোগ করুন';
-      case 'reference': return 'তথ্যসূত্র যোগ করুন';
+      case 'link': return 'Add Link';
+      case 'image': return 'Add Image';
+      case 'video': return 'Add Video';
+      case 'code': return 'Add Code Block';
+      case 'math': return 'Add Math Formula';
+      case 'table': return 'Add Table';
+      case 'template': return 'Add Template';
+      case 'reference': return 'Add Reference';
       default: return '';
     }
   };
@@ -1091,7 +1054,7 @@ export function MediaWikiEditor({
             <div className="flex items-center space-x-3 flex-1 min-w-0">
               <List className="h-5 w-5 text-blue-600 flex-shrink-0" />
               <h1 className="text-lg font-semibold truncate">
-                {recordName || "নতুন নিবন্ধ"}
+                {recordName || "New Article"}
               </h1>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
@@ -1105,7 +1068,7 @@ export function MediaWikiEditor({
                     <Undo className="h-4 w-4" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>পূর্বাবস্থায় ফিরুন (Ctrl+Z)</TooltipContent>
+                <TooltipContent>Undo (Ctrl+Z)</TooltipContent>
               </Tooltip>
               
               <Tooltip>
@@ -1118,13 +1081,13 @@ export function MediaWikiEditor({
                     <Redo className="h-4 w-4" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>পুনরায় করুন (Ctrl+Y)</TooltipContent>
+                <TooltipContent>Redo (Ctrl+Y)</TooltipContent>
               </Tooltip>
               
               <div className="h-6 w-px bg-gray-300 mx-1" />
               
               <span className="text-xs text-gray-500 px-2 hidden sm:inline">
-                {editorMode === "visual" ? "ভিজুয়াল" : "সোর্স"} • {wordCount} শব্দ
+                {editorMode === "visual" ? "Visual" : "Source"} • {wordCount} words
               </span>
               
               <Tooltip>
@@ -1136,7 +1099,7 @@ export function MediaWikiEditor({
                     <Languages className="h-5 w-5" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>এডিটর মোড পরিবর্তন করুন</TooltipContent>
+                <TooltipContent>Switch Editor Mode</TooltipContent>
               </Tooltip>
               
               <Button
@@ -1146,7 +1109,7 @@ export function MediaWikiEditor({
                 size="sm"
               >
                 <Save className="h-4 w-4" />
-                {isSaving ? "সংরক্ষণ হচ্ছে..." : "প্রকাশ করুন"}
+                {isSaving ? "Saving..." : "Publish"}
               </Button>
             </div>
           </div>
@@ -1162,45 +1125,298 @@ export function MediaWikiEditor({
         {/* Toolbar */}
         <div className="bg-white sticky top-0 z-10 border-b">
           <div className="flex items-center gap-1 p-2 overflow-x-auto">
-            {toolbarBlocks.map((block, i) =>
-              !block.name ? (
-                <Tooltip key={i}>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => block.action && handleCommand(block.action)}
-                      className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
-                    >
-                      {block.icon && <block.icon className="h-4 w-4" />}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>{block.label}</TooltipContent>
-                </Tooltip>
-              ) : (
-                <Select
-                  key={i}
-                  onValueChange={(value) => {
-                    if (value && block.items) {
-                      const item = block.items.find((itm) => itm.action === value);
-                      handleCommand(value, ...(item?.args || []));
-                    }
-                  }}
+            {/* Text Formatting */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("bold")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
                 >
-                  <SelectTrigger className="w-[150px] h-9 text-sm flex-shrink-0">
-                    <SelectValue placeholder={block.name} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {block.items?.map((item, idx) => (
-                      <SelectItem key={idx} value={item.action}>
-                        <div className="flex items-center gap-2">
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.label}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )
-            )}
+                  <Bold className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Bold (Ctrl+B)</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("italic")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
+                >
+                  <Italic className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Italic (Ctrl+I)</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("boldItalic")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
+                >
+                  <Type className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Bold Italic</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("underline")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
+                >
+                  <Underline className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Underline (Ctrl+U)</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("strikethrough")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
+                >
+                  <Strikethrough className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Strikethrough</TooltipContent>
+            </Tooltip>
+
+            <div className="h-6 w-px bg-gray-300 mx-1" />
+
+            {/* Headings */}
+            <Select
+              onValueChange={(value) => {
+                const level = parseInt(value);
+                handleCommand("heading", level);
+              }}
+            >
+              <SelectTrigger className="w-[140px] h-9 text-sm flex-shrink-0">
+                <SelectValue placeholder="Heading" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2">
+                  <div className="flex items-center gap-2">
+                    <Heading1 className="h-4 w-4" />
+                    <span>Heading 2</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="3">
+                  <div className="flex items-center gap-2">
+                    <Heading2 className="h-4 w-4" />
+                    <span>Heading 3</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="4">
+                  <div className="flex items-center gap-2">
+                    <Heading3 className="h-4 w-4" />
+                    <span>Heading 4</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="h-6 w-px bg-gray-300 mx-1" />
+
+            {/* Code */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("inlineCode")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
+                >
+                  <Code className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Inline Code</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("codeBlock")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
+                >
+                  <FileCode className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Code Block</TooltipContent>
+            </Tooltip>
+
+            <div className="h-6 w-px bg-gray-300 mx-1" />
+
+            {/* Links & Media */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("link")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
+                >
+                  <Link className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Link (Ctrl+K)</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("image")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
+                >
+                  <Image className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Image</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("video")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
+                >
+                  <Video className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Video</TooltipContent>
+            </Tooltip>
+
+            <div className="h-6 w-px bg-gray-300 mx-1" />
+
+            {/* Lists */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("unorderedList")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
+                >
+                  <List className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Bullet List</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("orderedList")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
+                >
+                  <ListOrdered className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Numbered List</TooltipContent>
+            </Tooltip>
+
+            <div className="h-6 w-px bg-gray-300 mx-1" />
+
+            {/* Advanced */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("table")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
+                >
+                  <Table className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Table</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("math")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
+                >
+                  <Sigma className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Math Formula</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("template")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
+                >
+                  <Puzzle className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Template</TooltipContent>
+            </Tooltip>
+
+            <div className="h-6 w-px bg-gray-300 mx-1" />
+
+            {/* Special */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("horizontalRule")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
+                >
+                  <Minus className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Horizontal Line</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("superscript")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
+                >
+                  <Superscript className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Superscript</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("subscript")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
+                >
+                  <Subscript className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Subscript</TooltipContent>
+            </Tooltip>
+
+            <div className="h-6 w-px bg-gray-300 mx-1" />
+
+            {/* References */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("reference")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
+                >
+                  <FileText className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Reference</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleCommand("refList")}
+                  className="p-2 hover:bg-blue-50 rounded transition active:bg-blue-100 flex-shrink-0"
+                >
+                  <ListChecks className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Reference List</TooltipContent>
+            </Tooltip>
           </div>
         </div>
 
@@ -1222,7 +1438,7 @@ export function MediaWikiEditor({
                     }}
                     onKeyDown={handleKeyDown}
                     className="w-full min-h-[70vh] p-4 outline-none text-sm font-mono resize-none"
-                    placeholder="উইকিটেক্সট এখানে লিখুন..."
+                    placeholder="Write wikitext here..."
                   />
                 </div>
 
@@ -1230,7 +1446,7 @@ export function MediaWikiEditor({
                 <div className="bg-white border rounded-lg overflow-auto">
                   <div className="p-4">
                     <h3 className="text-sm font-semibold text-gray-600 mb-3 pb-2 border-b">
-                      প্রিভিউ
+                      Preview
                     </h3>
                     <style dangerouslySetInnerHTML={{ __html: DEFAULT_STYLES }} />
                     <div
@@ -1238,7 +1454,7 @@ export function MediaWikiEditor({
                       dangerouslySetInnerHTML={{
                         __html:
                           parseResult.html ||
-                          '<p class="text-gray-400">প্রিভিউ এখানে দেখা যাবে...</p>',
+                          '<p class="text-gray-400">Preview will appear here...</p>',
                       }}
                     />
                   </div>
@@ -1254,7 +1470,7 @@ export function MediaWikiEditor({
                   onInput={handleVisualInput}
                   onKeyDown={handleKeyDown}
                   className="min-h-[70vh] p-4 outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
-                  data-placeholder="এখানে লেখা শুরু করুন..."
+                  data-placeholder="Start writing here..."
                   contentEditable
                   suppressContentEditableWarning
                   spellCheck={true}
@@ -1264,24 +1480,22 @@ export function MediaWikiEditor({
           </div>
         </div>
 
-        {/* Status Bar */}
-
         {/* Dialog */}
         <Dialog open={dialog.open} onOpenChange={(open) => !open && closeDialog()}>
           <DialogContent className="sm:max-w-[425px] bg-white border-none">
             <DialogHeader>
               <DialogTitle>{getDialogTitle()}</DialogTitle>
               <DialogDescription>
-                প্রয়োজনীয় তথ্য পূরণ করুন
+                Fill in the required information
               </DialogDescription>
             </DialogHeader>
             {renderDialogContent()}
             <DialogFooter>
               <Button variant="outline" onClick={closeDialog}>
-                বাতিল
+                Cancel
               </Button>
               <Button onClick={handleDialogSubmit}>
-                যোগ করুন
+                Add
               </Button>
             </DialogFooter>
           </DialogContent>
