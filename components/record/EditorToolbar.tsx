@@ -21,7 +21,7 @@ export function EditorToolbar({ onCommand , handleSave}) {
   return (
     <div className="bg-white sticky top-0 z-10 border-b flex items-center justify-between">
       <TooltipProvider>
-        <div className="flex items-center gap-1 p-2 overflow-x-auto">
+        <div className="flex items-center gap-1 overflow-x-auto">
           {toolbarBlocks.flat().map((block, i) =>
             block.name ? (
               <Select
@@ -67,7 +67,7 @@ export function EditorToolbar({ onCommand , handleSave}) {
         </div>
       </TooltipProvider>
       <div className='flex items-center justify-end'>
-         <button className='border-l px-4 bg-gray-800 text-white text-sm' onClick={handleSave}>
+         <button className='border-l px-4 bg-gray-800 p-2 text-white text-sm' onClick={handleSave}>
             Publish
           </button>
       </div>
