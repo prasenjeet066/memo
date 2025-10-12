@@ -58,12 +58,18 @@ const FontAwesomeIcon = ({
     className
   ].filter(Boolean).join(' ');
   
-  const styles = color ? { color } : {};
+  const styles = color ? { color } : {
+    cursor: onClick ? 'pointer' : 'default',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    verticalAlign: 'middle',
+    lineHeight: '1'
+  }
   
-  return <i className={classes} style={styles} {...props} />;
+  return <i className={classes} style={styles} {...props}  />;
 };
 
-// Demo component showcasing the FontAwesomeIcon
-
-
-export { Fai };
+// Export with the alias used in other components
+export const Fai = FontAwesomeIcon;
+export default FontAwesomeIcon;
