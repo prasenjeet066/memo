@@ -148,7 +148,7 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName ? : st
         canRedo={historyIndex < history.length - 1}
         onModeSwitch={handleModeSwitch}
       />
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto bg-white">
         {editorMode === "source" ? (
           <textarea
             ref={textareaRef}
