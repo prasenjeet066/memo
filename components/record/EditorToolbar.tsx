@@ -94,11 +94,7 @@ export function EditorToolbar({ mode, onCommand, onUndo, onRedo, canUndo, canRed
               <TooltipContent>{block.label}</TooltipContent>
             </Tooltip>
           ))}
-          <button onClick={onUndo} disabled={!canUndo} className="px-2">Undo</button>
-          <button onClick={onRedo} disabled={!canRedo} className="px-2">Redo</button>
-          <button onClick={onModeSwitch} className="px-2">
-            {mode === "visual" ? "Source" : "Visual"}
-          </button>
+          
         </div>
       </TooltipProvider>
     </div>

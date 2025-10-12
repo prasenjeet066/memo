@@ -22,7 +22,7 @@ export function EditorDialog({ open, type, data, selection, onClose, onSubmit, e
   
   return (
     <Dialog open={open} onOpenChange={open => !open && onClose()}>
-      <DialogContent>
+      <DialogContent className ='bg-white rounded'>
         <DialogHeader>
           <DialogTitle>{type?.toUpperCase()}</DialogTitle>
         </DialogHeader>
