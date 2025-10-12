@@ -131,7 +131,7 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName ? : st
   
   return (
     <div className="w-full min-h-screen bg-gray-50">
-      <div className="border-b bg-white flex items-center justify-between py-4">
+      <div className="border-b bg-white flex items-center justify-between py-4 px-4">
         <h1 className = 'text-lg font-semibold text-gray-800'>{recordName}</h1>
         <div className='bg-white flex items-center justify-end gap-2'>
          
