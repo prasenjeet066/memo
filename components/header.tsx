@@ -29,7 +29,7 @@ export default function Header({ navlist }: HeaderProps) {
     <>
       {/* Header Bar */}
       <header
-        className={`w-full px-4 py-3 flex items-center justify-between bg-gray-50 border-b border-gray-200 ${
+        className={`w-full px-4 py-3 flex items-center justify-between bg-gray-50 border-gray-200 ${
           isMobile ? 'sticky top-0 z-40' : ''
         }`}
       >

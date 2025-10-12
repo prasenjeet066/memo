@@ -36,7 +36,7 @@ export function EditorToolbar({ onCommand , handleSave}) {
                   }
                 }}
               >
-                <SelectTrigger className="w-[140px] h-9 text-sm flex-shrink-0 border-none border-l border-r border-gray-500 z-10">
+                <SelectTrigger className="max-w-[140px] w-auto h-full text-sm flex-shrink-0 border-none border-l border-r border-gray-500 z-10">
                   <SelectValue placeholder={block.name} />
                 </SelectTrigger>
                 <SelectContent className='divide-y'>
