@@ -500,17 +500,7 @@ export function MediaWikiEditor({
           placeholder="নিবন্ধের শিরোনাম লিখুন..."
           className="text-lg font-semibold text-gray-800 bg-transparent border-none outline-none w-full"
         />
-        <div className="bg-white flex items-center justify-end gap-2">
-          {parseResult && (
-            <div className="text-sm text-gray-600 flex items-center gap-4">
-              <span>{wordCount} words</span>
-              <span>{parseResult.metadata.readingTime} min read</span>
-              {parseResult.errors.length > 0 && (
-                <span className="text-red-600">{parseResult.errors.length} errors</span>
-              )}
-            </div>
-          )}
-        </div>
+       
       </div>
       {error && (
         <div className="max-w-7xl mx-auto mt-4 p-4 bg-red-50 border border-red-200 rounded text-red-700">
