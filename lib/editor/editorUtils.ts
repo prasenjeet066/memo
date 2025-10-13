@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 export const saveCursorPosition = (el: HTMLElement) => {
   const sel = window.getSelection();

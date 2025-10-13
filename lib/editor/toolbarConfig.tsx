@@ -1,30 +1,3 @@
-import {
-  Bold,
-  Italic,
-  Strikethrough,
-  Underline,
-  Code,
-  Heading1,
-  Heading2,
-  Heading3,
-  Link,
-  Image,
-  Video,
-  FileCode,
-  Sigma,
-  List,
-  ListOrdered,
-  Table,
-  Minus,
-  Superscript,
-  Subscript,
-  Type,
-  FileText,
-  ListChecks,
-  Puzzle
-} from "lucide-react";
-import { Fai } from '@/components/Fontawesome'
-
 export const toolbarBlocks = [
   [
     // === Text formatting ===
@@ -46,8 +19,8 @@ export const toolbarBlocks = [
         { icon: "list-ul", action: "unorderedList", label: "Bullet List" },
         { icon: "list-ol", action: "orderedList", label: "Numbered List" },
         { icon: "list-check", action: "refList", label: "Task/Reference List" },
-        { icon: "minus", action: "horizontalRule", label: "Horizontal Line" },
-      ],
+        { icon: "minus", action: "horizontalRule", label: "Horizontal Line" }
+      ]
     },
     
     // === Links ===
@@ -63,8 +36,8 @@ export const toolbarBlocks = [
         { icon: "square-root-variable", action: "math", label: "Math Formula" },
         { icon: "table", action: "table", label: "Table" },
         { icon: "puzzle-piece", action: "template", label: "Template" },
-        { icon: "file-alt", action: "reference", label: "Reference / Citation" },
-      ],
-    },
+        { icon: "file-alt", action: "reference", label: "Reference / Citation" }
+      ]
+    }
   ]
 ];

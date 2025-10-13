@@ -1,21 +1,26 @@
 import { useState, useEffect } from "react";
-import { Fai } from '@/components/Fontawesome';
+import { Fai } from "@/components/Fontawesome";
 import { toolbarBlocks } from "@/lib/editor/toolbarConfig";
 import {
   TooltipProvider,
   Tooltip,
   TooltipTrigger,
-  TooltipContent,
+  TooltipContent
 } from "@/components/ui/tooltip";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
-  SelectItem,
+  SelectItem
 } from "@/components/ui/select";
 
-export function EditorToolbar({ onCommand, onModeSwitch, handleSave, editorMode }) {
+export function EditorToolbar({
+  onCommand,
+  onModeSwitch,
+  handleSave,
+  editorMode
+}) {
   const [selected, setSelected] = useState({});
   
   useEffect(() => {
@@ -33,17 +38,16 @@ export function EditorToolbar({ onCommand, onModeSwitch, handleSave, editorMode 
               <Select
                 key={i}
                 value={selected[i] || ""}
-                onValueChange={(value) => {
-                  setSelected((prev) => ({ ...prev, [i]: value }));
+                onValueChange={value => {
+                  setSelected(prev => ({ ...prev, [i]: value }));
                   if (value && block.items) {
-                    const item = block.items.find((itm) => itm.action === value);
+                    const item = block.items.find(itm => itm.action === value);
                     if (item) {
                       onCommand(value, ...(item?.args || []));
                     }
                   }
-                  // Reset after selection
                   setTimeout(() => {
-                    setSelected((prev) => ({ ...prev, [i]: "" }));
+                    setSelected(prev => ({ ...prev, [i]: "" }));
                   }, 100);
                 }}
               >
@@ -80,11 +84,10 @@ export function EditorToolbar({ onCommand, onModeSwitch, handleSave, editorMode 
           )}
         </div>
       </TooltipProvider>
-
       <div className="flex items-center gap-2 ml-4 flex-shrink-0">
         <Select
           value={editorMode || "visual"}
-          onValueChange={(value) => onModeSwitch?.(value)}
+          onValueChange={value => onModeSwitch?.(value)}
         >
           <SelectTrigger className="min-w-[120px] w-auto h-9 bg-gray-50 text-sm border-none">
             <SelectValue placeholder="Editor Mode" />
@@ -104,9 +107,8 @@ export function EditorToolbar({ onCommand, onModeSwitch, handleSave, editorMode 
             </SelectItem>
           </SelectContent>
         </Select>
-
         <button
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition font-medium"
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm  transition font-medium"
           onClick={handleSave}
         >
           Publish

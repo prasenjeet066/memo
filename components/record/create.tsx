@@ -1,71 +1,71 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { EditorToolbar } from "./EditorToolbar";
 import { EditorDialog } from "./EditorDialog";
-import { saveCursorPosition, restoreCursorPosition, useEditorHistory } from "@/lib/editor/editorUtils";
-import { parseRecordMX, convertHtmlToRecordMX, RECORDMX_ADVANCED_STYLES } from "@/lib/recordmx/parser";
+import {
+  saveCursorPosition,
+  restoreCursorPosition,
+  useEditorHistory
+} from "@/lib/editor/editorUtils";
+import {
+  parseRecordMX,
+  convertHtmlToRecordMX,
+  RECORDMX_ADVANCED_STYLES
+} from "@/lib/recordmx/parser";
 import type { RecordMXParseResult } from "@/lib/recordmx/parser";
 
-// Helper function to get caret position
+// Helper functions for caret management
 function getCaretCharacterOffset(element: HTMLElement | null): number {
   if (!element) return 0;
-  
-  let caretOffset = 0;
   const sel = window.getSelection();
-  
   if (sel && sel.rangeCount > 0) {
     const range = sel.getRangeAt(0);
     const preCaretRange = range.cloneRange();
     preCaretRange.selectNodeContents(element);
     preCaretRange.setEnd(range.endContainer, range.endOffset);
-    caretOffset = preCaretRange.toString().length;
+    return preCaretRange.toString().length;
   }
-  
-  return caretOffset;
+  return 0;
 }
 
-// Helper function to restore caret position
 function setCaretPosition(element: HTMLElement | null, offset: number) {
   if (!element) return;
-  
   const range = document.createRange();
   const sel = window.getSelection();
-  
   if (!sel) return;
-  
   let charCount = 0;
   let nodeStack: Node[] = [element];
   let foundStart = false;
-  
   while (!foundStart && nodeStack.length > 0) {
     const node = nodeStack.pop();
     if (!node) continue;
-    
     if (node.nodeType === Node.TEXT_NODE) {
       const textNode = node as Text;
       const nextCharCount = charCount + (textNode.length || 0);
-      
       if (offset >= charCount && offset <= nextCharCount) {
         range.setStart(textNode, offset - charCount);
         range.collapse(true);
         foundStart = true;
       }
-      
       charCount = nextCharCount;
     } else {
-      // Add child nodes in reverse order to maintain proper traversal
       for (let i = node.childNodes.length - 1; i >= 0; i--) {
         nodeStack.push(node.childNodes[i]);
       }
     }
   }
-  
   if (foundStart) {
     sel.removeAllRanges();
     sel.addRange(range);
   }
 }
 
-export function MediaWikiEditor({ recordName, editingMode }: { recordName?: string, editingMode?: "visual" | "recordmx" }) {
+export function MediaWikiEditor({
+  recordName,
+  editingMode
+}: {
+  recordName?: string;
+  editingMode?: "visual" | "recordmx";
+}) {
   const [markup, setMarkup] = useState("");
   const [title, setTitle] = useState(recordName ?? "");
   const [editorMode, setEditorMode] = useState<"visual" | "recordmx">(editingMode ?? "visual");
@@ -73,33 +73,47 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [wordCount, setWordCount] = useState(0);
-  const [dialog, setDialog] = useState<{ open: boolean; type: string | null; data: any; selection: string }>({ 
-    open: false, 
-    type: null, 
-    data: {}, 
-    selection: "" 
+  const [dialog, setDialog] = useState({
+    open: false,
+    type: null,
+    data: {},
+    selection: ""
   });
-  
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const visualRef = useRef<HTMLDivElement>(null);
   const isUpdatingRef = useRef(false);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Undo/redo stack with custom hook
-  const { history, historyIndex, addToHistory, handleUndo, handleRedo } = useEditorHistory(markup, setMarkup);
 
-  // Initialize visual editor content
+  // Undo/redo stack
+  const {
+    history,
+    historyIndex,
+    addToHistory,
+    handleUndo,
+    handleRedo
+  } = useEditorHistory(markup, setMarkup);
+
+  // Initial visual content
   useEffect(() => {
-    if (editorMode === "visual" && visualRef.current && !visualRef.current.innerHTML.trim()) {
-      visualRef.current.innerHTML = "<p>Welcome to the Rich Text Editor!</p><p>You can start typing here and use the toolbar above to format your text.</p><p>Try <strong>bold</strong>, <em>italic</em>, or <u>underlined</u> text. Change fonts, adjust alignment, or add lists.</p><p>When you're done, you can save your document or clear the editor.</p>";
+    if (
+      editorMode === "visual" &&
+      visualRef.current &&
+      !visualRef.current.innerHTML.trim()
+    ) {
+      visualRef.current.innerHTML =
+        "<p>Welcome to the Rich Text Editor!</p><p>You can start typing here and use the toolbar above to format your text.</p><p>Try <strong>bold</strong>, <em>italic</em>, and more!</p>";
     }
   }, [editorMode]);
-  
-  useEffect(()=>{
-    let parserhtml = convertHtmlToRecordMX(visualRef.current.innerHTML)
-    setMarkup(parserhtml);
-  },[visualRef.current,editingMode])
-  // Parse RecordMX markup whenever it changes
+
+  // Sync HTML to markup
+  useEffect(() => {
+    if (visualRef.current) {
+      let parserhtml = convertHtmlToRecordMX(visualRef.current.innerHTML);
+      setMarkup(parserhtml);
+    }
+  }, [visualRef.current, editingMode]);
+
+  // Parse RecordMX markup
   useEffect(() => {
     try {
       const result = parseRecordMX(markup, {
@@ -115,12 +129,9 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
         syntaxHighlight: true,
         maxNestingLevel: 10
       });
-      
       setParseResult(result);
       setWordCount(result.metadata.wordCount);
     } catch (err) {
-      console.error("Parse error:", err);
-      // Set default parse result on error
       setParseResult({
         html: markup,
         metadata: {
@@ -135,22 +146,21 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       });
     }
   }, [markup]);
-  
-  // Update visual editor content when parse result changes (only in visual mode)
+
+  // Sync parseResult to visual editor
   useEffect(() => {
-    if (editorMode === "visual" && visualRef.current && parseResult && !isUpdatingRef.current) {
+    if (
+      editorMode === "visual" &&
+      visualRef.current &&
+      parseResult &&
+      !isUpdatingRef.current
+    ) {
       isUpdatingRef.current = true;
       const currentHtml = visualRef.current.innerHTML;
-      
-      // Only update if the HTML is different to avoid cursor jumping
       if (currentHtml !== parseResult.html) {
-        // Save current cursor position
+        // Save/restore caret
         const caretOffset = getCaretCharacterOffset(visualRef.current);
-        
-        // Update content
         visualRef.current.innerHTML = parseResult.html;
-        
-        // Restore cursor position
         requestAnimationFrame(() => {
           setCaretPosition(visualRef.current, caretOffset);
           isUpdatingRef.current = false;
@@ -160,54 +170,41 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       }
     }
   }, [editorMode, parseResult]);
-  
-  // Inject styles for RecordMX
+
+  // Inject RecordMX styles
   useEffect(() => {
-    const styleId = 'recordmx-styles';
+    const styleId = "recordmx-styles";
     let styleEl = document.getElementById(styleId) as HTMLStyleElement;
-    
     if (!styleEl) {
-      styleEl = document.createElement('style');
+      styleEl = document.createElement("style");
       styleEl.id = styleId;
       document.head.appendChild(styleEl);
     }
-    
     styleEl.textContent = RECORDMX_ADVANCED_STYLES;
-    
     return () => {
-      // Cleanup on unmount
       const el = document.getElementById(styleId);
       if (el) el.remove();
     };
   }, []);
-  
-  // Handle visual editor input with debounce
+
+  // Handle visual input (debounced)
   const handleVisualInput = useCallback(() => {
     if (!visualRef.current || isUpdatingRef.current) return;
-    
-    // Clear previous timeout
     if (updateTimeoutRef.current) {
       clearTimeout(updateTimeoutRef.current);
     }
-    
-    // Save current caret position
     const caretOffset = getCaretCharacterOffset(visualRef.current);
-    
-    // Debounce the conversion
     updateTimeoutRef.current = setTimeout(() => {
       if (visualRef.current) {
         isUpdatingRef.current = true;
-        
         try {
           const html = visualRef.current.innerHTML;
           const newMarkup = convertHtmlToRecordMX(html);
-          
           setMarkup(newMarkup);
           addToHistory(newMarkup);
         } catch (err) {
-          console.error("Conversion error:", err);
+          // ignore
         } finally {
-          // Restore caret position
           requestAnimationFrame(() => {
             setCaretPosition(visualRef.current, caretOffset);
             isUpdatingRef.current = false;
@@ -216,265 +213,267 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       }
     }, 300);
   }, [addToHistory]);
-  
-  const handleModeSwitch = useCallback((mode?: string) => {
-    const newMode = mode || (editorMode === "visual" ? "recordmx" : "visual");
-    
-    if (editorMode === "visual" && visualRef.current && newMode === "recordmx") {
-      isUpdatingRef.current = true;
-      const html = visualRef.current.innerHTML;
-      const newMarkup = convertHtmlToRecordMX(html);
-      setMarkup(newMarkup);
-      addToHistory(newMarkup);
-      setTimeout(() => {
-        isUpdatingRef.current = false;
-      }, 100);
-    } else if (editorMode === "recordmx" && newMode === "visual") {
-      // Trigger a re-parse to update visual editor
-      setMarkup(prev => prev + " ");
-      setTimeout(() => {
-        setMarkup(prev => prev.trim());
-      }, 10);
-    }
-    
-    setEditorMode(newMode as "visual" | "recordmx");
-  }, [editorMode, addToHistory]);
-  
-  const handleCommand = useCallback((command: string, ...args: any[]) => {
-    if (editorMode === "visual") {
-      handleVisualCommand(command, ...args);
-    } else {
-      handleRecordMXCommand(command, ...args);
-    }
-  }, [editorMode]);
 
-  const handleVisualCommand = useCallback((command: string, ...args: any[]) => {
-    const el = visualRef.current;
-    
-    if (!el) return;
-    
-    el.focus();
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return;
-    
-    const text = sel.toString();
-    
-    // Commands that need dialog
-    if (["link", "image", "video", "codeBlock", "math", "table", "template", "reference"].includes(command)) {
-      setDialog({ open: true, type: command, data: {}, selection: text });
-      return;
-    }
-    
-    // Direct formatting commands
-    const commandMap: Record<string, () => void> = {
-      bold: () => {
-        document.execCommand('bold', false, null);
-      },
-      italic: () => {
-        document.execCommand('italic', false, null);
-      },
-      underline: () => {
-        document.execCommand('underline', false, null);
-      },
-      strikethrough: () => {
-        document.execCommand('strikeThrough', false, null);
-      },
-      superscript: () => {
-        document.execCommand('superscript', false, null);
-      },
-      subscript: () => {
-        document.execCommand('subscript', false, null);
-      },
-      inlineCode: () => {
-        // Create a span with code styling
-        const span = document.createElement('span');
-        span.style.fontFamily = 'monospace';
-        span.style.backgroundColor = '#f1f3f4';
-        span.style.padding = '2px 4px';
-        span.style.borderRadius = '3px';
-        span.textContent = text;
-        
-        const range = sel.getRangeAt(0);
-        range.deleteContents();
-        range.insertNode(span);
-      },
-      heading: () => {
-        const level = args[0] || 2;
-        const heading = document.createElement(`h${level}`);
-        heading.textContent = text || 'Heading';
-        
-        const range = sel.getRangeAt(0);
-        range.deleteContents();
-        range.insertNode(heading);
-      },
-      horizontalRule: () => {
-        const hr = document.createElement('hr');
-        const range = sel.getRangeAt(0);
-        range.insertNode(hr);
-      },
-      unorderedList: () => {
-        document.execCommand('insertUnorderedList', false, null);
-      },
-      orderedList: () => {
-        document.execCommand('insertOrderedList', false, null);
-      },
-      indent: () => {
-        document.execCommand('indent', false, null);
-      },
-      outdent: () => {
-        document.execCommand('outdent', false, null);
-      },
-      undo: () => {
-        handleUndo();
-      },
-      redo: () => {
-        handleRedo();
+  // Mode switch
+  const handleModeSwitch = useCallback(
+    (mode?: string) => {
+      const newMode = mode || (editorMode === "visual" ? "recordmx" : "visual");
+      if (
+        editorMode === "visual" &&
+        visualRef.current &&
+        newMode === "recordmx"
+      ) {
+        isUpdatingRef.current = true;
+        const html = visualRef.current.innerHTML;
+        const newMarkup = convertHtmlToRecordMX(html);
+        setMarkup(newMarkup);
+        addToHistory(newMarkup);
+        setTimeout(() => {
+          isUpdatingRef.current = false;
+        }, 100);
+      } else if (editorMode === "recordmx" && newMode === "visual") {
+        setMarkup(prev => prev + " ");
+        setTimeout(() => {
+          setMarkup(prev => prev.trim());
+        }, 10);
       }
-    };
-    
-    if (commandMap[command]) {
-      commandMap[command]();
-      handleVisualInput();
-    }
-  }, [handleVisualInput, handleUndo, handleRedo]);
+      setEditorMode(newMode as "visual" | "recordmx");
+    },
+    [editorMode, addToHistory]
+  );
 
-  const handleRecordMXCommand = useCallback((command: string, ...args: any[]) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
+  // Command handler
+  const handleCommand = useCallback(
+    (command: string, ...args: any[]) => {
+      if (editorMode === "visual") {
+        handleVisualCommand(command, ...args);
+      } else {
+        handleRecordMXCommand(command, ...args);
+      }
+    },
+    [editorMode]
+  );
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = markup.substring(start, end);
-
-    const commandMap: Record<string, string> = {
-      bold: `**${selectedText}**`,
-      italic: `*${selectedText}*`,
-      underline: `__${selectedText}__`,
-      strikethrough: `~~${selectedText}~~`,
-      superscript: `^${selectedText}^`,
-      subscript: `~${selectedText}~`,
-      inlineCode: `\`${selectedText}\``,
-      heading: `${'#'.repeat(args[0] || 2)} ${selectedText}`,
-      horizontalRule: '\n\n---\n\n',
-      unorderedList: `- ${selectedText}`,
-      orderedList: `1. ${selectedText}`,
-    };
-
-    let insertText = commandMap[command];
-    
-    if (["link", "image", "video", "codeBlock", "math", "table", "template", "reference"].includes(command)) {
-      setDialog({ open: true, type: command, data: {}, selection: selectedText });
-      return;
-    }
-
-    if (insertText) {
-      const newMarkup = markup.substring(0, start) + insertText + markup.substring(end);
-      setMarkup(newMarkup);
-      addToHistory(newMarkup);
-      
-      // Set cursor position after inserted text
-      setTimeout(() => {
-        if (textarea) {
-          const newPosition = start + insertText.length;
-          textarea.setSelectionRange(newPosition, newPosition);
-          textarea.focus();
-        }
-      }, 0);
-    }
-  }, [markup, addToHistory]);
-  
-  const handleDialogSubmit = useCallback((data: any) => {
-    const type = dialog.type;
-    const selection = dialog.selection;
-    
-    let insertText = '';
-    
-    switch (type) {
-      case 'link':
-        insertText = `[${selection || data.text || 'Link'}](${data.url || 'https://example.com'})`;
-        break;
-      case 'image':
-        insertText = `![${data.alt || 'Image'}](${data.src || ''})${data.width || data.height ? `{${data.width || ''}${data.height ? 'x' + data.height : ''}}` : ''}`;
-        break;
-      case 'video':
-        insertText = `@[video](${data.src || ''})`;
-        break;
-      case 'codeBlock':
-        insertText = `\`\`\`${data.language || 'javascript'}${data.filename ? ` file:${data.filename}` : ''}\n${selection || data.code || ''}\n\`\`\``;
-        break;
-      case 'math':
-        insertText = data.display ? `$$${data.formula || ''}$$` : `$${data.formula || ''}$`;
-        break;
-      case 'table':
-        const rows = parseInt(data.rows || '3');
-        const cols = parseInt(data.cols || '3');
-        insertText = Array(rows).fill(0).map((_, i) =>
-          '|' + Array(cols).fill('Cell').join('|') + '|' + (i === 0 ? '\n|' + Array(cols).fill('---').join('|') + '|' : '')
-        ).join('\n');
-        break;
-      case 'template':
-        insertText = `{% ${data.name || 'template'} ${Object.entries(data.params || {}).map(([k, v]) => `${k}=${v}`).join(' ')} %}`;
-        break;
-      case 'reference':
-        insertText = `[@${data.id || 'ref1'}]`;
-        break;
-      default:
-        return;
-    }
-    
-    if (editorMode === "visual" && visualRef.current) {
+  // Visual commands
+  const handleVisualCommand = useCallback(
+    (command: string, ...args: any[]) => {
+      const el = visualRef.current;
+      if (!el) return;
+      el.focus();
       const sel = window.getSelection();
-      if (sel && sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0);
-        range.deleteContents();
-        const textNode = document.createTextNode(insertText);
-        range.insertNode(textNode);
-        
-        range.setStartAfter(textNode);
-        range.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(range);
+      if (!sel || sel.rangeCount === 0) return;
+      const text = sel.toString();
+      if (
+        [
+          "link",
+          "image",
+          "video",
+          "codeBlock",
+          "math",
+          "table",
+          "template",
+          "reference"
+        ].includes(command)
+      ) {
+        setDialog({ open: true, type: command, data: {}, selection: text });
+        return;
       }
-      handleVisualInput();
-    } else if (editorMode === "recordmx" && textareaRef.current) {
-      const start = textareaRef.current.selectionStart;
-      const end = textareaRef.current.selectionEnd;
-      const newMarkup = markup.slice(0, start) + insertText + markup.slice(end);
-      setMarkup(newMarkup);
-      addToHistory(newMarkup);
-      
-      // Focus back to textarea
-      setTimeout(() => {
-        if (textareaRef.current) {
-          const newPosition = start + insertText.length;
-          textareaRef.current.setSelectionRange(newPosition, newPosition);
-          textareaRef.current.focus();
+      const commandMap: Record<string, () => void> = {
+        bold: () => document.execCommand("bold", false, null),
+        italic: () => document.execCommand("italic", false, null),
+        underline: () => document.execCommand("underline", false, null),
+        strikethrough: () => document.execCommand("strikeThrough", false, null),
+        superscript: () => document.execCommand("superscript", false, null),
+        subscript: () => document.execCommand("subscript", false, null),
+        inlineCode: () => {
+          const span = document.createElement("span");
+          span.style.fontFamily = "monospace";
+          span.style.backgroundColor = "#f1f3f4";
+          span.style.padding = "2px 4px";
+          span.style.borderRadius = "3px";
+          span.textContent = text;
+          const range = sel.getRangeAt(0);
+          range.deleteContents();
+          range.insertNode(span);
+        },
+        heading: () => {
+          const level = args[0] || 2;
+          const heading = document.createElement(`h${level}`);
+          heading.textContent = text || "Heading";
+          const range = sel.getRangeAt(0);
+          range.deleteContents();
+          range.insertNode(heading);
+        },
+        horizontalRule: () => {
+          const hr = document.createElement("hr");
+          const range = sel.getRangeAt(0);
+          range.insertNode(hr);
+        },
+        unorderedList: () => document.execCommand("insertUnorderedList", false, null),
+        orderedList: () => document.execCommand("insertOrderedList", false, null),
+        indent: () => document.execCommand("indent", false, null),
+        outdent: () => document.execCommand("outdent", false, null),
+        undo: () => handleUndo(),
+        redo: () => handleRedo()
+      };
+      if (commandMap[command]) {
+        commandMap[command]();
+        handleVisualInput();
+      }
+    },
+    [handleVisualInput, handleUndo, handleRedo]
+  );
+
+  // RecordMX commands
+  const handleRecordMXCommand = useCallback(
+    (command: string, ...args: any[]) => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = markup.substring(start, end);
+      const commandMap: Record<string, string> = {
+        bold: `**${selectedText}**`,
+        italic: `*${selectedText}*`,
+        underline: `__${selectedText}__`,
+        strikethrough: `~~${selectedText}~~`,
+        superscript: `^${selectedText}^`,
+        subscript: `~${selectedText}~`,
+        inlineCode: `\`${selectedText}\``,
+        heading: `${"#".repeat(args[0] || 2)} ${selectedText}`,
+        horizontalRule: "\n\n---\n\n",
+        unorderedList: `- ${selectedText}`,
+        orderedList: `1. ${selectedText}`
+      };
+      let insertText = commandMap[command];
+      if (
+        [
+          "link",
+          "image",
+          "video",
+          "codeBlock",
+          "math",
+          "table",
+          "template",
+          "reference"
+        ].includes(command)
+      ) {
+        setDialog({ open: true, type: command, data: {}, selection: selectedText });
+        return;
+      }
+      if (insertText) {
+        const newMarkup = markup.substring(0, start) + insertText + markup.substring(end);
+        setMarkup(newMarkup);
+        addToHistory(newMarkup);
+        setTimeout(() => {
+          if (textarea) {
+            const newPosition = start + insertText.length;
+            textarea.setSelectionRange(newPosition, newPosition);
+            textarea.focus();
+          }
+        }, 0);
+      }
+    },
+    [markup, addToHistory]
+  );
+
+  // Dialog submit handler
+  const handleDialogSubmit = useCallback(
+    (data: any) => {
+      const type = dialog.type;
+      const selection = dialog.selection;
+      let insertText = "";
+      switch (type) {
+        case "link":
+          insertText = `[${selection || data.text || "Link"}](${data.url || "https://example.com"})`;
+          break;
+        case "image":
+          insertText = `![${data.alt || "Image"}](${data.src || ""})${
+            data.width || data.height ? `{${data.width || ""}${data.height ? "x" + data.height : ""}}` : ""
+          }`;
+          break;
+        case "video":
+          insertText = `@[video](${data.src || ""})`;
+          break;
+        case "codeBlock":
+          insertText = `\`\`\`${data.language || "javascript"}${data.filename ? ` file:${data.filename}` : ""}\n${selection || data.code || ""}\n\`\`\``;
+          break;
+        case "math":
+          insertText = data.display ? `$$${data.formula || ""}$$` : `$${data.formula || ""}$`;
+          break;
+        case "table":
+          const rows = parseInt(data.rows || "3");
+          const cols = parseInt(data.cols || "3");
+          insertText = Array(rows)
+            .fill(0)
+            .map(
+              (_, i) =>
+                "|" +
+                Array(cols)
+                  .fill("Cell")
+                  .join("|") +
+                "|" +
+                (i === 0 ? "\n|" + Array(cols).fill("---").join("|") + "|" : "")
+            )
+            .join("\n");
+          break;
+        case "template":
+          insertText = `{% ${data.name || "template"} ${Object.entries(data.params || {})
+            .map(([k, v]) => `${k}=${v}`)
+            .join(" ")} %}`;
+          break;
+        case "reference":
+          insertText = `[@${data.id || "ref1"}]`;
+          break;
+        default:
+          return;
+      }
+      if (editorMode === "visual" && visualRef.current) {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+          const range = sel.getRangeAt(0);
+          range.deleteContents();
+          const textNode = document.createTextNode(insertText);
+          range.insertNode(textNode);
+          range.setStartAfter(textNode);
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
         }
-      }, 0);
-    }
-    
-    setDialog({ open: false, type: null, data: {}, selection: "" });
-  }, [dialog, editorMode, markup, handleVisualInput, addToHistory]);
-  
+        handleVisualInput();
+      } else if (editorMode === "recordmx" && textareaRef.current) {
+        const start = textareaRef.current.selectionStart;
+        const end = textareaRef.current.selectionEnd;
+        const newMarkup = markup.slice(0, start) + insertText + markup.slice(end);
+        setMarkup(newMarkup);
+        addToHistory(newMarkup);
+        setTimeout(() => {
+          if (textareaRef.current) {
+            const newPosition = start + insertText.length;
+            textareaRef.current.setSelectionRange(newPosition, newPosition);
+            textareaRef.current.focus();
+          }
+        }, 0);
+      }
+      setDialog({ open: false, type: null, data: {}, selection: "" });
+    },
+    [dialog, editorMode, markup, handleVisualInput, addToHistory]
+  );
+
+  // Save handler
   const handleSave = useCallback(async () => {
     if (!title.trim()) {
       setError("দয়া করে একটি শিরোনাম লিখুন");
       return;
     }
-    
     setIsSaving(true);
     setError("");
-    
     try {
-      // Convert visual editor content to markup if in visual mode
       let finalMarkup = markup;
       if (editorMode === "visual" && visualRef.current) {
         finalMarkup = convertHtmlToRecordMX(visualRef.current.innerHTML);
       }
-      
-      // Here you would save to your backend
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log('Saving:', { title, markup: finalMarkup, metadata: parseResult?.metadata });
+      await new Promise(resolve => setTimeout(resolve, 1000));
       alert("✓ নিবন্ধটি সফলভাবে সংরক্ষিত হয়েছে!");
     } catch (err: any) {
       setError(err?.message || "সংরক্ষণে ত্রুটি হয়েছে");
@@ -482,8 +481,7 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       setIsSaving(false);
     }
   }, [title, markup, editorMode, parseResult]);
-  
-  // Cleanup timeout on unmount
+
   useEffect(() => {
     return () => {
       if (updateTimeoutRef.current) {
@@ -491,14 +489,14 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       }
     };
   }, []);
-  
+
   return (
     <div className="w-full min-h-screen bg-gray-50">
       <div className="border-b bg-white flex items-center justify-between py-4 px-4">
         <input
           type="text"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={e => setTitle(e.target.value)}
           placeholder="নিবন্ধের শিরোনাম লিখুন..."
           className="text-lg font-semibold text-gray-800 bg-transparent border-none outline-none w-full"
         />
@@ -514,25 +512,17 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
           )}
         </div>
       </div>
-      
       {error && (
         <div className="max-w-7xl mx-auto mt-4 p-4 bg-red-50 border border-red-200 rounded text-red-700">
           {error}
         </div>
       )}
-      
       <EditorToolbar
         editorMode={editorMode}
         onCommand={handleCommand}
         onModeSwitch={handleModeSwitch}
-        onSave={handleSave}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        canUndo={historyIndex > 0}
-        canRedo={historyIndex < history.length - 1}
-        isSaving={isSaving}
+        handleSave={handleSave}
       />
-      
       <div className="max-w-7xl mx-auto bg-white min-h-[70vh] border rounded-lg shadow-sm">
         {editorMode === "recordmx" ? (
           <textarea
@@ -558,15 +548,16 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
           />
         )}
       </div>
-      
-      {/* Show errors/warnings */}
-      {parseResult && (parseResult.errors.length > 0 || parseResult.warnings.length > 0) && (
+      {(parseResult &&
+        (parseResult.errors.length > 0 || parseResult.warnings.length > 0)) && (
         <div className="max-w-7xl mx-auto mt-4 p-4">
           {parseResult.errors.length > 0 && (
             <div className="bg-red-50 border border-red-200 rounded p-3 mb-2">
               <h3 className="font-semibold text-red-800 mb-2">Errors:</h3>
               {parseResult.errors.map((error, index) => (
-                <div key={index} className="text-red-700 text-sm">{error}</div>
+                <div key={index} className="text-red-700 text-sm">
+                  {error}
+                </div>
               ))}
             </div>
           )}
@@ -574,13 +565,14 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
             <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
               <h3 className="font-semibold text-yellow-800 mb-2">Warnings:</h3>
               {parseResult.warnings.map((warning, index) => (
-                <div key={index} className="text-yellow-700 text-sm">{warning}</div>
+                <div key={index} className="text-yellow-700 text-sm">
+                  {warning}
+                </div>
               ))}
             </div>
           )}
         </div>
       )}
-      
       <EditorDialog
         open={dialog.open}
         type={dialog.type}
