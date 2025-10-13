@@ -91,7 +91,7 @@ export default function RecordPage() {
       <div className='p-4 border-b border-gray-200'>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className='text-xs text-gray-500 hover:text-gray-700 transition-colors'
+          className='text-xs rounded-full text-gray-500 hover:text-gray-700 transition-colors'
         >
           {isExpanded ? 'Collapse' : 'Expand'}
         </button>
@@ -103,7 +103,7 @@ export default function RecordPage() {
             <a
               key={nav.name}
               href={nav.href}
-              className='flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors group'
+              className='flex items-center gap-3 p-3 rounded-full cursor-pointer hover:bg-gray-100 transition-colors group'
             >
               <nav.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-800 flex-shrink-0' />
               {isExpanded && (
@@ -122,7 +122,7 @@ export default function RecordPage() {
               <a
                 key={settings.name}
                 href={settings.href}
-                className='flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors group'
+                className='flex items-center gap-3 p-3 rounded-full cursor-pointer hover:bg-gray-100 transition-colors group'
               >
                 <settings.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-800 flex-shrink-0' />
                 {isExpanded && (
@@ -210,7 +210,7 @@ export default function RecordPage() {
                 </div>
                 <button
                   onClick={handleCreateRecord}
-                  className='flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
+                  className='flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-full hover:bg-blue-700 transition-colors'
                 >
                   <Plus className='w-5 h-5' />
                   Create Record
