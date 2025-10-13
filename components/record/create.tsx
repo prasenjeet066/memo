@@ -247,6 +247,8 @@ export function MediaWikiEditor({
     (command: string, ...args: any[]) => {
       if (editorMode === "visual") {
         handleVisualCommand(command, ...args);
+      } else {
+        handleRecordMXCommand(command, ...args);
       }
     },
     [editorMode]
@@ -261,14 +263,21 @@ export function MediaWikiEditor({
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0) return;
       const text = sel.toString();
-
-      // Clear formatting
-      if (command === "clearFormatting") {
-        document.execCommand("removeFormat", false, null);
-        handleVisualInput();
+      if (
+        [
+          "link",
+          "image",
+          "video",
+          "codeBlock",
+          "math",
+          "table",
+          "template",
+          "reference"
+        ].includes(command)
+      ) {
+        setDialog({ open: true, type: command, data: {}, selection: text });
         return;
       }
-
       const commandMap: Record<string, () => void> = {
         bold: () => document.execCommand("bold", false, null),
         italic: () => document.execCommand("italic", false, null),
@@ -302,10 +311,41 @@ export function MediaWikiEditor({
         },
         unorderedList: () => document.execCommand("insertUnorderedList", false, null),
         orderedList: () => document.execCommand("insertOrderedList", false, null),
+        indent: () => document.execCommand("indent", false, null),
+        outdent: () => document.execCommand("outdent", false, null),
         undo: () => handleUndo(),
         redo: () => handleRedo()
       };
+      if (commandMap[command]) {
+        commandMap[command]();
+        handleVisualInput();
+      }
+    },
+    [handleVisualInput, handleUndo, handleRedo]
+  );
 
+  // RecordMX commands
+  const handleRecordMXCommand = useCallback(
+    (command: string, ...args: any[]) => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = markup.substring(start, end);
+      const commandMap: Record<string, string> = {
+        bold: `**${selectedText}**`,
+        italic: `*${selectedText}*`,
+        underline: `__${selectedText}__`,
+        strikethrough: `~~${selectedText}~~`,
+        superscript: `^${selectedText}^`,
+        subscript: `~${selectedText}~`,
+        inlineCode: `\`${selectedText}\``,
+        heading: `${"#".repeat(args[0] || 2)} ${selectedText}`,
+        horizontalRule: "\n\n---\n\n",
+        unorderedList: `- ${selectedText}`,
+        orderedList: `1. ${selectedText}`
+      };
+      let insertText = commandMap[command];
       if (
         [
           "link",
@@ -318,18 +358,24 @@ export function MediaWikiEditor({
           "reference"
         ].includes(command)
       ) {
-        setDialog({ open: true, type: command, data: {}, selection: text });
+        setDialog({ open: true, type: command, data: {}, selection: selectedText });
         return;
       }
-      if (commandMap[command]) {
-        commandMap[command]();
-        handleVisualInput();
+      if (insertText) {
+        const newMarkup = markup.substring(0, start) + insertText + markup.substring(end);
+        setMarkup(newMarkup);
+        addToHistory(newMarkup);
+        setTimeout(() => {
+          if (textarea) {
+            const newPosition = start + insertText.length;
+            textarea.setSelectionRange(newPosition, newPosition);
+            textarea.focus();
+          }
+        }, 0);
       }
     },
-    [handleVisualInput, handleUndo, handleRedo]
+    [markup, addToHistory]
   );
-
-  // RecordMX commands (no toolbar, so not needed here)
 
   // Dialog submit handler
   const handleDialogSubmit = useCallback(
@@ -454,6 +500,17 @@ export function MediaWikiEditor({
           placeholder="নিবন্ধের শিরোনাম লিখুন..."
           className="text-lg font-semibold text-gray-800 bg-transparent border-none outline-none w-full"
         />
+        <div className="bg-white flex items-center justify-end gap-2">
+          {parseResult && (
+            <div className="text-sm text-gray-600 flex items-center gap-4">
+              <span>{wordCount} words</span>
+              <span>{parseResult.metadata.readingTime} min read</span>
+              {parseResult.errors.length > 0 && (
+                <span className="text-red-600">{parseResult.errors.length} errors</span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
       {error && (
         <div className="max-w-7xl mx-auto mt-4 p-4 bg-red-50 border border-red-200 rounded text-red-700">
