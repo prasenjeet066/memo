@@ -94,7 +94,11 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       visualRef.current.innerHTML = "<p>Welcome to the Rich Text Editor!</p><p>You can start typing here and use the toolbar above to format your text.</p><p>Try <strong>bold</strong>, <em>italic</em>, or <u>underlined</u> text. Change fonts, adjust alignment, or add lists.</p><p>When you're done, you can save your document or clear the editor.</p>";
     }
   }, [editorMode]);
-
+  
+  useEffect(()=>{
+    let parserhtml = convertHtmlToRecordMX(visualRef.current.innerHTML)
+    setMarkup(parserhtml);
+  },[visualRef.current,editingMode])
   // Parse RecordMX markup whenever it changes
   useEffect(() => {
     try {
