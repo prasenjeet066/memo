@@ -52,6 +52,7 @@ function setCaretPosition(element: HTMLElement | null, offset: number) {
       
       charCount = nextCharCount;
     } else {
+      // Add child nodes in reverse order to maintain proper traversal
       for (let i = node.childNodes.length - 1; i >= 0; i--) {
         nodeStack.push(node.childNodes[i]);
       }
@@ -84,14 +85,17 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
   const isUpdatingRef = useRef(false);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
+  // Undo/redo stack with custom hook
   const { history, historyIndex, addToHistory, handleUndo, handleRedo } = useEditorHistory(markup, setMarkup);
 
+  // Initialize visual editor content
   useEffect(() => {
     if (editorMode === "visual" && visualRef.current && !visualRef.current.innerHTML.trim()) {
-      visualRef.current.innerHTML = "<p>Welcome to the Rich Text Editor!</p><p>You can start typing here and use the toolbar above to format your text.</p>";
+      visualRef.current.innerHTML = "<p>Welcome to the Rich Text Editor!</p><p>You can start typing here and use the toolbar above to format your text.</p><p>Try <strong>bold</strong>, <em>italic</em>, or <u>underlined</u> text. Change fonts, adjust alignment, or add lists.</p><p>When you're done, you can save your document or clear the editor.</p>";
     }
   }, [editorMode]);
 
+  // Parse RecordMX markup whenever it changes
   useEffect(() => {
     try {
       const result = parseRecordMX(markup, {
@@ -112,6 +116,7 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       setWordCount(result.metadata.wordCount);
     } catch (err) {
       console.error("Parse error:", err);
+      // Set default parse result on error
       setParseResult({
         html: markup,
         metadata: {
@@ -126,16 +131,22 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       });
     }
   }, [markup]);
-
+  
+  // Update visual editor content when parse result changes (only in visual mode)
   useEffect(() => {
     if (editorMode === "visual" && visualRef.current && parseResult && !isUpdatingRef.current) {
       isUpdatingRef.current = true;
       const currentHtml = visualRef.current.innerHTML;
       
+      // Only update if the HTML is different to avoid cursor jumping
       if (currentHtml !== parseResult.html) {
+        // Save current cursor position
         const caretOffset = getCaretCharacterOffset(visualRef.current);
+        
+        // Update content
         visualRef.current.innerHTML = parseResult.html;
         
+        // Restore cursor position
         requestAnimationFrame(() => {
           setCaretPosition(visualRef.current, caretOffset);
           isUpdatingRef.current = false;
@@ -145,7 +156,8 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       }
     }
   }, [editorMode, parseResult]);
-
+  
+  // Inject styles for RecordMX
   useEffect(() => {
     const styleId = 'recordmx-styles';
     let styleEl = document.getElementById(styleId) as HTMLStyleElement;
@@ -159,20 +171,25 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
     styleEl.textContent = RECORDMX_ADVANCED_STYLES;
     
     return () => {
+      // Cleanup on unmount
       const el = document.getElementById(styleId);
       if (el) el.remove();
     };
   }, []);
-
+  
+  // Handle visual editor input with debounce
   const handleVisualInput = useCallback(() => {
     if (!visualRef.current || isUpdatingRef.current) return;
     
+    // Clear previous timeout
     if (updateTimeoutRef.current) {
       clearTimeout(updateTimeoutRef.current);
     }
     
+    // Save current caret position
     const caretOffset = getCaretCharacterOffset(visualRef.current);
     
+    // Debounce the conversion
     updateTimeoutRef.current = setTimeout(() => {
       if (visualRef.current) {
         isUpdatingRef.current = true;
@@ -186,6 +203,7 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
         } catch (err) {
           console.error("Conversion error:", err);
         } finally {
+          // Restore caret position
           requestAnimationFrame(() => {
             setCaretPosition(visualRef.current, caretOffset);
             isUpdatingRef.current = false;
@@ -194,7 +212,7 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       }
     }, 300);
   }, [addToHistory]);
-
+  
   const handleModeSwitch = useCallback((mode?: string) => {
     const newMode = mode || (editorMode === "visual" ? "recordmx" : "visual");
     
@@ -208,6 +226,7 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
         isUpdatingRef.current = false;
       }, 100);
     } else if (editorMode === "recordmx" && newMode === "visual") {
+      // Trigger a re-parse to update visual editor
       setMarkup(prev => prev + " ");
       setTimeout(() => {
         setMarkup(prev => prev.trim());
@@ -216,7 +235,7 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
     
     setEditorMode(newMode as "visual" | "recordmx");
   }, [editorMode, addToHistory]);
-
+  
   const handleCommand = useCallback((command: string, ...args: any[]) => {
     if (editorMode === "visual") {
       handleVisualCommand(command, ...args);
@@ -237,46 +256,34 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
     const text = sel.toString();
     
     // Commands that need dialog
-    if (["link", "image", "video", "audio", "gallery", "codeBlock", "math", "table", "template", "reference", "infoBox", "warningBox", "tipBox", "errorBox", "questionBox", "quoteBox", "spoiler", "columns", "collapsible"].includes(command)) {
+    if (["link", "image", "video", "codeBlock", "math", "table", "template", "reference"].includes(command)) {
       setDialog({ open: true, type: command, data: {}, selection: text });
       return;
     }
     
     // Direct formatting commands
     const commandMap: Record<string, () => void> = {
-      bold: () => document.execCommand('bold', false, null),
-      italic: () => document.execCommand('italic', false, null),
-      underline: () => document.execCommand('underline', false, null),
-      strikethrough: () => document.execCommand('strikeThrough', false, null),
-      superscript: () => document.execCommand('superscript', false, null),
-      subscript: () => document.execCommand('subscript', false, null),
-      
-      highlight: () => {
-        document.execCommand('hiliteColor', false, '#ffff00');
+      bold: () => {
+        document.execCommand('bold', false, null);
       },
-      
-      textColor: () => {
-        const color = prompt('Enter color (hex or name):', '#000000');
-        if (color) document.execCommand('foreColor', false, color);
+      italic: () => {
+        document.execCommand('italic', false, null);
       },
-      
-      backgroundColor: () => {
-        const color = prompt('Enter background color:', '#ffffff');
-        if (color) document.execCommand('hiliteColor', false, color);
+      underline: () => {
+        document.execCommand('underline', false, null);
       },
-      
-      fontSize: () => {
-        const size = prompt('Enter font size (1-7):', '3');
-        if (size) document.execCommand('fontSize', false, size);
+      strikethrough: () => {
+        document.execCommand('strikeThrough', false, null);
       },
-      
-      fontFamily: () => {
-        const font = prompt('Enter font family:', 'Arial');
-        if (font) document.execCommand('fontName', false, font);
+      superscript: () => {
+        document.execCommand('superscript', false, null);
       },
-      
+      subscript: () => {
+        document.execCommand('subscript', false, null);
+      },
       inlineCode: () => {
-        const span = document.createElement('code');
+        // Create a span with code styling
+        const span = document.createElement('span');
         span.style.fontFamily = 'monospace';
         span.style.backgroundColor = '#f1f3f4';
         span.style.padding = '2px 4px';
@@ -287,80 +294,38 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
         range.deleteContents();
         range.insertNode(span);
       },
-      
       heading: () => {
         const level = args[0] || 2;
-        document.execCommand('formatBlock', false, `h${level}`);
+        const heading = document.createElement(`h${level}`);
+        heading.textContent = text || 'Heading';
+        
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        range.insertNode(heading);
       },
-      
-      paragraph: () => {
-        document.execCommand('formatBlock', false, 'p');
-      },
-      
-      blockquote: () => {
-        document.execCommand('formatBlock', false, 'blockquote');
-      },
-      
       horizontalRule: () => {
         const hr = document.createElement('hr');
         const range = sel.getRangeAt(0);
         range.insertNode(hr);
       },
-      
-      unorderedList: () => document.execCommand('insertUnorderedList', false, null),
-      orderedList: () => document.execCommand('insertOrderedList', false, null),
-      
-      taskList: () => {
-        const ul = document.createElement('ul');
-        ul.style.listStyleType = 'none';
-        const li = document.createElement('li');
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.style.marginRight = '8px';
-        li.appendChild(checkbox);
-        li.appendChild(document.createTextNode(text || 'Task item'));
-        ul.appendChild(li);
-        
-        const range = sel.getRangeAt(0);
-        range.deleteContents();
-        range.insertNode(ul);
+      unorderedList: () => {
+        document.execCommand('insertUnorderedList', false, null);
       },
-      
-      indent: () => document.execCommand('indent', false, null),
-      outdent: () => document.execCommand('outdent', false, null),
-      
-      alignLeft: () => document.execCommand('justifyLeft', false, null),
-      alignCenter: () => document.execCommand('justifyCenter', false, null),
-      alignRight: () => document.execCommand('justifyRight', false, null),
-      alignJustify: () => document.execCommand('justifyFull', false, null),
-      
-      unlink: () => document.execCommand('unlink', false, null),
-      
-      date: () => {
-        const today = new Date().toLocaleDateString();
-        document.execCommand('insertText', false, today);
+      orderedList: () => {
+        document.execCommand('insertOrderedList', false, null);
       },
-      
-      timestamp: () => {
-        const now = new Date().toLocaleString();
-        document.execCommand('insertText', false, now);
+      indent: () => {
+        document.execCommand('indent', false, null);
       },
-      
-      clearFormatting: () => {
-        document.execCommand('removeFormat', false, null);
-        document.execCommand('unlink', false, null);
+      outdent: () => {
+        document.execCommand('outdent', false, null);
       },
-      
-      clearAll: () => {
-        if (confirm('Are you sure you want to clear all content?')) {
-          if (visualRef.current) {
-            visualRef.current.innerHTML = '<p><br></p>';
-          }
-        }
+      undo: () => {
+        handleUndo();
       },
-      
-      undo: () => handleUndo(),
-      redo: () => handleRedo()
+      redo: () => {
+        handleRedo();
+      }
     };
     
     if (commandMap[command]) {
@@ -372,11 +337,11 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
   const handleRecordMXCommand = useCallback((command: string, ...args: any[]) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
-    
+
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = markup.substring(start, end);
-    
+
     const commandMap: Record<string, string> = {
       bold: `**${selectedText}**`,
       italic: `*${selectedText}*`,
@@ -385,29 +350,25 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       superscript: `^${selectedText}^`,
       subscript: `~${selectedText}~`,
       inlineCode: `\`${selectedText}\``,
-      highlight: `==${selectedText}==`,
       heading: `${'#'.repeat(args[0] || 2)} ${selectedText}`,
-      blockquote: `> ${selectedText}`,
       horizontalRule: '\n\n---\n\n',
       unorderedList: `- ${selectedText}`,
       orderedList: `1. ${selectedText}`,
-      taskList: `- [ ] ${selectedText}`,
-      date: new Date().toLocaleDateString(),
-      timestamp: new Date().toLocaleString(),
     };
-    
+
     let insertText = commandMap[command];
     
-    if (["link", "image", "video", "audio", "gallery", "codeBlock", "math", "table", "template", "reference", "infoBox", "warningBox", "tipBox", "errorBox", "questionBox", "quoteBox", "spoiler", "columns", "collapsible"].includes(command)) {
+    if (["link", "image", "video", "codeBlock", "math", "table", "template", "reference"].includes(command)) {
       setDialog({ open: true, type: command, data: {}, selection: selectedText });
       return;
     }
-    
+
     if (insertText) {
       const newMarkup = markup.substring(0, start) + insertText + markup.substring(end);
       setMarkup(newMarkup);
       addToHistory(newMarkup);
       
+      // Set cursor position after inserted text
       setTimeout(() => {
         if (textarea) {
           const newPosition = start + insertText.length;
@@ -417,7 +378,7 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       }, 0);
     }
   }, [markup, addToHistory]);
-
+  
   const handleDialogSubmit = useCallback((data: any) => {
     const type = dialog.type;
     const selection = dialog.selection;
@@ -426,111 +387,33 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
     
     switch (type) {
       case 'link':
-        insertText = `[${selection || data.text || 'Link'}](${data.url || 'https://example.com'}${data.title ? ` "${data.title}"` : ''})`;
+        insertText = `[${selection || data.text || 'Link'}](${data.url || 'https://example.com'})`;
         break;
-        
       case 'image':
-        insertText = `![${data.alt || 'Image'}](${data.src || ''})${data.width || data.height ? `{${data.width || ''}${data.height ? 'x' + data.height : ''}}` : ''}${data.caption ? `\n*${data.caption}*` : ''}`;
+        insertText = `![${data.alt || 'Image'}](${data.src || ''})${data.width || data.height ? `{${data.width || ''}${data.height ? 'x' + data.height : ''}}` : ''}`;
         break;
-        
       case 'video':
-        const provider = data.provider || 'youtube';
-        if (provider === 'custom') {
-          insertText = `@[video](${data.src || ''})`;
-        } else {
-          insertText = `@[${provider}](${data.src || ''})`;
-        }
-        if (data.width || data.height) {
-          insertText += `{${data.width || ''}${data.height ? 'x' + data.height : ''}}`;
-        }
+        insertText = `@[video](${data.src || ''})`;
         break;
-        
-      case 'audio':
-        insertText = `@[audio](${data.src || ''})`;
-        break;
-        
-      case 'gallery':
-        const images = data.images || [];
-        insertText = `@[gallery]\n${images.map(img => `  - ${img.url} | ${img.caption || ''}`).join('\n')}\n@[/gallery]`;
-        break;
-        
       case 'codeBlock':
-        insertText = `\`\`\`${data.language || 'javascript'}${data.filename ? ` file:${data.filename}` : ''}${data.lineNumbers ? ' line-numbers' : ''}\n${selection || data.code || ''}\n\`\`\``;
+        insertText = `\`\`\`${data.language || 'javascript'}${data.filename ? ` file:${data.filename}` : ''}\n${selection || data.code || ''}\n\`\`\``;
         break;
-        
       case 'math':
-        insertText = data.display ? `$${data.formula || ''}$` : `$${data.formula || ''}$`;
+        insertText = data.display ? `$$${data.formula || ''}$$` : `$${data.formula || ''}$`;
         break;
-        
       case 'table':
         const rows = parseInt(data.rows || '3');
         const cols = parseInt(data.cols || '3');
-        const headers = Array(cols).fill('Header').map((h, i) => `${h} ${i + 1}`);
-        const separator = Array(cols).fill('---');
-        const bodyRows = Array(rows - (data.hasHeader !== false ? 1 : 0)).fill(0).map((_, i) =>
-          Array(cols).fill('Cell').map((c, j) => `${c} ${i + 1}-${j + 1}`)
-        );
-        
-        insertText = data.hasHeader !== false
-          ? `| ${headers.join(' | ')} |\n| ${separator.join(' | ')} |\n${bodyRows.map(row => `| ${row.join(' | ')} |`).join('\n')}`
-          : `${bodyRows.map(row => `| ${row.join(' | ')} |`).join('\n')}\n| ${separator.join(' | ')} |`;
-          
-        if (data.caption) {
-          insertText = `${insertText}\n*Table: ${data.caption}*`;
-        }
+        insertText = Array(rows).fill(0).map((_, i) =>
+          '|' + Array(cols).fill('Cell').join('|') + '|' + (i === 0 ? '\n|' + Array(cols).fill('---').join('|') + '|' : '')
+        ).join('\n');
         break;
-        
       case 'template':
-        const params = data.params || {};
-        const paramStr = Object.entries(params).map(([k, v]) => `${k} = ${v}`).join(' | ');
-        insertText = `{{${data.name || 'template'}${paramStr ? ' | ' + paramStr : ''}}}`;
+        insertText = `{% ${data.name || 'template'} ${Object.entries(data.params || {}).map(([k, v]) => `${k}=${v}`).join(' ')} %}`;
         break;
-        
       case 'reference':
-        if (data.citeType) {
-          insertText = `[@${data.id || 'ref'}: ${data.author || ''}, "${data.citationTitle || ''}", ${data.citationUrl || ''}, ${data.date || ''}]`;
-        } else {
-          insertText = `[@${data.id || 'ref1'}${data.text ? ': ' + data.text : ''}]`;
-        }
+        insertText = `[@${data.id || 'ref1'}]`;
         break;
-        
-      case 'infoBox':
-        insertText = `::: info\n${selection || 'Information content here'}\n:::`;
-        break;
-        
-      case 'warningBox':
-        insertText = `::: warning\n${selection || 'Warning content here'}\n:::`;
-        break;
-        
-      case 'tipBox':
-        insertText = `::: tip\n${selection || 'Tip content here'}\n:::`;
-        break;
-        
-      case 'errorBox':
-        insertText = `::: error\n${selection || 'Error content here'}\n:::`;
-        break;
-        
-      case 'questionBox':
-        insertText = `::: question\n${selection || 'Question content here'}\n:::`;
-        break;
-        
-      case 'quoteBox':
-        insertText = `> ${selection || 'Quote text here'}\n> \n> — *Author Name*`;
-        break;
-        
-      case 'spoiler':
-        insertText = `::spoiler[${data.title || 'Click to reveal'}]\n${selection || 'Hidden content'}\n::`;
-        break;
-        
-      case 'columns':
-        const numCols = data.columns || 2;
-        insertText = `::: columns {${numCols}}\n${Array(numCols).fill(0).map((_, i) => `Column ${i + 1} content`).join('\n\n---\n\n')}\n:::`;
-        break;
-        
-      case 'collapsible':
-        insertText = `<details>\n<summary>${data.title || 'Click to expand'}</summary>\n\n${selection || 'Collapsible content here'}\n\n</details>`;
-        break;
-        
       default:
         return;
     }
@@ -556,6 +439,7 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       setMarkup(newMarkup);
       addToHistory(newMarkup);
       
+      // Focus back to textarea
       setTimeout(() => {
         if (textareaRef.current) {
           const newPosition = start + insertText.length;
@@ -570,7 +454,7 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
   
   const handleSave = useCallback(async () => {
     if (!title.trim()) {
-      setError("Please enter a title");
+      setError("দয়া করে একটি শিরোনাম লিখুন");
       return;
     }
     
@@ -578,21 +462,24 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
     setError("");
     
     try {
+      // Convert visual editor content to markup if in visual mode
       let finalMarkup = markup;
       if (editorMode === "visual" && visualRef.current) {
         finalMarkup = convertHtmlToRecordMX(visualRef.current.innerHTML);
       }
       
+      // Here you would save to your backend
       await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log('Saving:', { title, markup: finalMarkup, metadata: parseResult?.metadata });
-      alert("✓ Article saved successfully!");
+      alert("✓ নিবন্ধটি সফলভাবে সংরক্ষিত হয়েছে!");
     } catch (err: any) {
-      setError(err?.message || "Save error occurred");
+      setError(err?.message || "সংরক্ষণে ত্রুটি হয়েছে");
     } finally {
       setIsSaving(false);
     }
   }, [title, markup, editorMode, parseResult]);
   
+  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (updateTimeoutRef.current) {
@@ -608,7 +495,7 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Enter article title..."
+          placeholder="নিবন্ধের শিরোনাম লিখুন..."
           className="text-lg font-semibold text-gray-800 bg-transparent border-none outline-none w-full"
         />
         <div className="bg-white flex items-center justify-end gap-2">
@@ -634,10 +521,15 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
         editorMode={editorMode}
         onCommand={handleCommand}
         onModeSwitch={handleModeSwitch}
-        handleSave={handleSave}
+        onSave={handleSave}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        canUndo={historyIndex > 0}
+        canRedo={historyIndex < history.length - 1}
+        isSaving={isSaving}
       />
       
-      <div className="max-w-7xl mx-auto bg-white min-h-[70vh] border rounded-lg shadow-sm mt-4">
+      <div className="max-w-7xl mx-auto bg-white min-h-[70vh] border rounded-lg shadow-sm">
         {editorMode === "recordmx" ? (
           <textarea
             ref={textareaRef}
@@ -647,7 +539,7 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
               addToHistory(e.target.value);
             }}
             className="w-full min-h-[70vh] p-4 outline-none text-sm font-mono resize-none border-none"
-            placeholder="Write RecordMX markup here..."
+            placeholder="RecordMX মার্কআপ এখানে লিখুন..."
           />
         ) : (
           <div
@@ -658,11 +550,12 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
             contentEditable
             suppressContentEditableWarning
             spellCheck
-            data-placeholder="Start writing here..."
+            data-placeholder="এখানে লেখা শুরু করুন..."
           />
         )}
       </div>
       
+      {/* Show errors/warnings */}
       {parseResult && (parseResult.errors.length > 0 || parseResult.warnings.length > 0) && (
         <div className="max-w-7xl mx-auto mt-4 p-4">
           {parseResult.errors.length > 0 && (
@@ -691,7 +584,6 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
         selection={dialog.selection}
         onClose={() => setDialog({ open: false, type: null, data: {}, selection: "" })}
         onSubmit={handleDialogSubmit}
-        editorMode={editorMode}
       />
     </div>
   );
