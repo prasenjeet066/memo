@@ -33,11 +33,13 @@ function setCaretPosition(element: HTMLElement | null, offset: number) {
   if (!sel) return;
   
   let charCount = 0;
-  let nodeStack = [element];
-  let node: Node | undefined;
+  let nodeStack: Node[] = [element];
   let foundStart = false;
   
-  while (!foundStart && (node = nodeStack.pop())) {
+  while (!foundStart && nodeStack.length > 0) {
+    const node = nodeStack.pop();
+    if (!node) continue;
+    
     if (node.nodeType === Node.TEXT_NODE) {
       const textNode = node as Text;
       const nextCharCount = charCount + (textNode.length || 0);
@@ -50,8 +52,8 @@ function setCaretPosition(element: HTMLElement | null, offset: number) {
       
       charCount = nextCharCount;
     } else {
-      let i = node.childNodes.length;
-      while (i--) {
+      // Add child nodes in reverse order to maintain proper traversal
+      for (let i = node.childNodes.length - 1; i >= 0; i--) {
         nodeStack.push(node.childNodes[i]);
       }
     }
@@ -71,7 +73,12 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [wordCount, setWordCount] = useState(0);
-  const [dialog, setDialog] = useState<any>({ open: false, type: null, data: {}, selection: "" });
+  const [dialog, setDialog] = useState<{ open: boolean; type: string | null; data: any; selection: string }>({ 
+    open: false, 
+    type: null, 
+    data: {}, 
+    selection: "" 
+  });
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const visualRef = useRef<HTMLDivElement>(null);
@@ -80,6 +87,13 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
   
   // Undo/redo stack with custom hook
   const { history, historyIndex, addToHistory, handleUndo, handleRedo } = useEditorHistory(markup, setMarkup);
+
+  // Initialize visual editor content
+  useEffect(() => {
+    if (editorMode === "visual" && visualRef.current && !visualRef.current.innerHTML.trim()) {
+      visualRef.current.innerHTML = "<p>Welcome to the Rich Text Editor!</p><p>You can start typing here and use the toolbar above to format your text.</p><p>Try <strong>bold</strong>, <em>italic</em>, or <u>underlined</u> text. Change fonts, adjust alignment, or add lists.</p><p>When you're done, you can save your document or clear the editor.</p>";
+    }
+  }, [editorMode]);
 
   // Parse RecordMX markup whenever it changes
   useEffect(() => {
@@ -102,23 +116,43 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       setWordCount(result.metadata.wordCount);
     } catch (err) {
       console.error("Parse error:", err);
+      // Set default parse result on error
+      setParseResult({
+        html: markup,
+        metadata: {
+          wordCount: markup.split(/\s+/).filter(word => word.length > 0).length,
+          readingTime: Math.ceil(markup.split(/\s+/).length / 200),
+          headings: [],
+          links: [],
+          images: []
+        },
+        errors: [],
+        warnings: []
+      });
     }
   }, [markup]);
   
   // Update visual editor content when parse result changes (only in visual mode)
   useEffect(() => {
     if (editorMode === "visual" && visualRef.current && parseResult && !isUpdatingRef.current) {
-      const content = parseResult.html || "<p><br></p>";
+      isUpdatingRef.current = true;
+      const currentHtml = visualRef.current.innerHTML;
       
-      // Only update if content has changed
-      if (visualRef.current.innerHTML !== content) {
+      // Only update if the HTML is different to avoid cursor jumping
+      if (currentHtml !== parseResult.html) {
+        // Save current cursor position
         const caretOffset = getCaretCharacterOffset(visualRef.current);
-        visualRef.current.innerHTML = content;
         
-        // Restore caret position after render
+        // Update content
+        visualRef.current.innerHTML = parseResult.html;
+        
+        // Restore cursor position
         requestAnimationFrame(() => {
           setCaretPosition(visualRef.current, caretOffset);
+          isUpdatingRef.current = false;
         });
+      } else {
+        isUpdatingRef.current = false;
       }
     }
   }, [editorMode, parseResult]);
@@ -142,7 +176,7 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       if (el) el.remove();
     };
   }, []);
-
+  
   // Handle visual editor input with debounce
   const handleVisualInput = useCallback(() => {
     if (!visualRef.current || isUpdatingRef.current) return;
@@ -191,12 +225,26 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       setTimeout(() => {
         isUpdatingRef.current = false;
       }, 100);
+    } else if (editorMode === "recordmx" && newMode === "visual") {
+      // Trigger a re-parse to update visual editor
+      setMarkup(prev => prev + " ");
+      setTimeout(() => {
+        setMarkup(prev => prev.trim());
+      }, 10);
     }
     
     setEditorMode(newMode as "visual" | "recordmx");
   }, [editorMode, addToHistory]);
   
   const handleCommand = useCallback((command: string, ...args: any[]) => {
+    if (editorMode === "visual") {
+      handleVisualCommand(command, ...args);
+    } else {
+      handleRecordMXCommand(command, ...args);
+    }
+  }, [editorMode]);
+
+  const handleVisualCommand = useCallback((command: string, ...args: any[]) => {
     const el = visualRef.current;
     
     if (!el) return;
@@ -216,146 +264,67 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
     // Direct formatting commands
     const commandMap: Record<string, () => void> = {
       bold: () => {
-        if (text) {
-          const range = sel.getRangeAt(0);
-          range.deleteContents();
-          const textNode = document.createTextNode(`**${text}**`);
-          range.insertNode(textNode);
-          
-          // Move cursor after inserted text
-          range.setStartAfter(textNode);
-          range.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range);
-        }
+        document.execCommand('bold', false, null);
       },
       italic: () => {
-        if (text) {
-          const range = sel.getRangeAt(0);
-          range.deleteContents();
-          const textNode = document.createTextNode(`*${text}*`);
-          range.insertNode(textNode);
-          
-          range.setStartAfter(textNode);
-          range.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range);
-        }
+        document.execCommand('italic', false, null);
       },
       underline: () => {
-        if (text) {
-          const range = sel.getRangeAt(0);
-          range.deleteContents();
-          const textNode = document.createTextNode(`__${text}__`);
-          range.insertNode(textNode);
-          
-          range.setStartAfter(textNode);
-          range.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range);
-        }
+        document.execCommand('underline', false, null);
       },
       strikethrough: () => {
-        if (text) {
-          const range = sel.getRangeAt(0);
-          range.deleteContents();
-          const textNode = document.createTextNode(`~~${text}~~`);
-          range.insertNode(textNode);
-          
-          range.setStartAfter(textNode);
-          range.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range);
-        }
+        document.execCommand('strikeThrough', false, null);
       },
       superscript: () => {
-        if (text) {
-          const range = sel.getRangeAt(0);
-          range.deleteContents();
-          const textNode = document.createTextNode(`^${text}^`);
-          range.insertNode(textNode);
-          
-          range.setStartAfter(textNode);
-          range.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range);
-        }
+        document.execCommand('superscript', false, null);
       },
       subscript: () => {
-        if (text) {
-          const range = sel.getRangeAt(0);
-          range.deleteContents();
-          const textNode = document.createTextNode(`~${text}~`);
-          range.insertNode(textNode);
-          
-          range.setStartAfter(textNode);
-          range.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range);
-        }
+        document.execCommand('subscript', false, null);
       },
       inlineCode: () => {
-        if (text) {
-          const range = sel.getRangeAt(0);
-          range.deleteContents();
-          const textNode = document.createTextNode(`\`${text}\``);
-          range.insertNode(textNode);
-          
-          range.setStartAfter(textNode);
-          range.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range);
-        }
+        // Create a span with code styling
+        const span = document.createElement('span');
+        span.style.fontFamily = 'monospace';
+        span.style.backgroundColor = '#f1f3f4';
+        span.style.padding = '2px 4px';
+        span.style.borderRadius = '3px';
+        span.textContent = text;
+        
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        range.insertNode(span);
       },
       heading: () => {
         const level = args[0] || 2;
-        if (text) {
-          const range = sel.getRangeAt(0);
-          range.deleteContents();
-          const textNode = document.createTextNode(`${'#'.repeat(level)} ${text}\n\n`);
-          range.insertNode(textNode);
-          
-          range.setStartAfter(textNode);
-          range.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range);
-        }
+        const heading = document.createElement(`h${level}`);
+        heading.textContent = text || 'Heading';
+        
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        range.insertNode(heading);
       },
       horizontalRule: () => {
+        const hr = document.createElement('hr');
         const range = sel.getRangeAt(0);
-        const textNode = document.createTextNode('\n\n---\n\n');
-        range.insertNode(textNode);
-        
-        range.setStartAfter(textNode);
-        range.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(range);
+        range.insertNode(hr);
       },
       unorderedList: () => {
-        if (text) {
-          const range = sel.getRangeAt(0);
-          range.deleteContents();
-          const textNode = document.createTextNode(`- ${text}\n`);
-          range.insertNode(textNode);
-          
-          range.setStartAfter(textNode);
-          range.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range);
-        }
+        document.execCommand('insertUnorderedList', false, null);
       },
       orderedList: () => {
-        if (text) {
-          const range = sel.getRangeAt(0);
-          range.deleteContents();
-          const textNode = document.createTextNode(`1. ${text}\n`);
-          range.insertNode(textNode);
-          
-          range.setStartAfter(textNode);
-          range.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range);
-        }
+        document.execCommand('insertOrderedList', false, null);
+      },
+      indent: () => {
+        document.execCommand('indent', false, null);
+      },
+      outdent: () => {
+        document.execCommand('outdent', false, null);
+      },
+      undo: () => {
+        handleUndo();
+      },
+      redo: () => {
+        handleRedo();
       }
     };
     
@@ -363,14 +332,56 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       commandMap[command]();
       handleVisualInput();
     }
-  }, [handleVisualInput]);
+  }, [handleVisualInput, handleUndo, handleRedo]);
+
+  const handleRecordMXCommand = useCallback((command: string, ...args: any[]) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = markup.substring(start, end);
+
+    const commandMap: Record<string, string> = {
+      bold: `**${selectedText}**`,
+      italic: `*${selectedText}*`,
+      underline: `__${selectedText}__`,
+      strikethrough: `~~${selectedText}~~`,
+      superscript: `^${selectedText}^`,
+      subscript: `~${selectedText}~`,
+      inlineCode: `\`${selectedText}\``,
+      heading: `${'#'.repeat(args[0] || 2)} ${selectedText}`,
+      horizontalRule: '\n\n---\n\n',
+      unorderedList: `- ${selectedText}`,
+      orderedList: `1. ${selectedText}`,
+    };
+
+    let insertText = commandMap[command];
+    
+    if (["link", "image", "video", "codeBlock", "math", "table", "template", "reference"].includes(command)) {
+      setDialog({ open: true, type: command, data: {}, selection: selectedText });
+      return;
+    }
+
+    if (insertText) {
+      const newMarkup = markup.substring(0, start) + insertText + markup.substring(end);
+      setMarkup(newMarkup);
+      addToHistory(newMarkup);
+      
+      // Set cursor position after inserted text
+      setTimeout(() => {
+        if (textarea) {
+          const newPosition = start + insertText.length;
+          textarea.setSelectionRange(newPosition, newPosition);
+          textarea.focus();
+        }
+      }, 0);
+    }
+  }, [markup, addToHistory]);
   
   const handleDialogSubmit = useCallback((data: any) => {
     const type = dialog.type;
     const selection = dialog.selection;
-    const el = editorMode === "visual" ? visualRef.current : textareaRef.current;
-    
-    if (!el) return;
     
     let insertText = '';
     
@@ -403,6 +414,8 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       case 'reference':
         insertText = `[@${data.id || 'ref1'}]`;
         break;
+      default:
+        return;
     }
     
     if (editorMode === "visual" && visualRef.current) {
@@ -425,6 +438,15 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       const newMarkup = markup.slice(0, start) + insertText + markup.slice(end);
       setMarkup(newMarkup);
       addToHistory(newMarkup);
+      
+      // Focus back to textarea
+      setTimeout(() => {
+        if (textareaRef.current) {
+          const newPosition = start + insertText.length;
+          textareaRef.current.setSelectionRange(newPosition, newPosition);
+          textareaRef.current.focus();
+        }
+      }, 0);
     }
     
     setDialog({ open: false, type: null, data: {}, selection: "" });
@@ -440,16 +462,22 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
     setError("");
     
     try {
+      // Convert visual editor content to markup if in visual mode
+      let finalMarkup = markup;
+      if (editorMode === "visual" && visualRef.current) {
+        finalMarkup = convertHtmlToRecordMX(visualRef.current.innerHTML);
+      }
+      
       // Here you would save to your backend
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log('Saving:', { title, markup, metadata: parseResult?.metadata });
+      console.log('Saving:', { title, markup: finalMarkup, metadata: parseResult?.metadata });
       alert("✓ নিবন্ধটি সফলভাবে সংরক্ষিত হয়েছে!");
     } catch (err: any) {
       setError(err?.message || "সংরক্ষণে ত্রুটি হয়েছে");
     } finally {
       setIsSaving(false);
     }
-  }, [title, markup, parseResult]);
+  }, [title, markup, editorMode, parseResult]);
   
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -463,8 +491,14 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
   return (
     <div className="w-full min-h-screen bg-gray-50">
       <div className="border-b bg-white flex items-center justify-between py-4 px-4">
-        <h1 className='text-lg font-semibold text-gray-800'>{recordName || "নতুন নিবন্ধ"}</h1>
-        <div className='bg-white flex items-center justify-end gap-2'>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="নিবন্ধের শিরোনাম লিখুন..."
+          className="text-lg font-semibold text-gray-800 bg-transparent border-none outline-none w-full"
+        />
+        <div className="bg-white flex items-center justify-end gap-2">
           {parseResult && (
             <div className="text-sm text-gray-600 flex items-center gap-4">
               <span>{wordCount} words</span>
@@ -484,12 +518,18 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       )}
       
       <EditorToolbar
+        editorMode={editorMode}
         onCommand={handleCommand}
         onModeSwitch={handleModeSwitch}
-        handleSave={handleSave}
+        onSave={handleSave}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        canUndo={historyIndex > 0}
+        canRedo={historyIndex < history.length - 1}
+        isSaving={isSaving}
       />
       
-      <div className="max-w-7xl mx-auto bg-white min-h-[70vh]">
+      <div className="max-w-7xl mx-auto bg-white min-h-[70vh] border rounded-lg shadow-sm">
         {editorMode === "recordmx" ? (
           <textarea
             ref={textareaRef}
@@ -498,7 +538,7 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
               setMarkup(e.target.value);
               addToHistory(e.target.value);
             }}
-            className="w-full min-h-[70vh] p-4 outline-none text-sm font-mono resize-none"
+            className="w-full min-h-[70vh] p-4 outline-none text-sm font-mono resize-none border-none"
             placeholder="RecordMX মার্কআপ এখানে লিখুন..."
           />
         ) : (
@@ -516,14 +556,24 @@ export function MediaWikiEditor({ recordName, editingMode }: { recordName?: stri
       </div>
       
       {/* Show errors/warnings */}
-      {parseResult && parseResult.errors.length > 0 && (
-        <div className="max-w-7xl mx-auto mt-4 p-4 bg-red-50 border border-red-200 rounded">
-          <h3 className="font-semibold text-red-800 mb-2">Parsing Errors:</h3>
-          <ul className="list-disc list-inside text-sm text-red-700">
-            {parseResult.errors.map((err, i) => (
-              <li key={i}>Line {err.line}: {err.message}</li>
-            ))}
-          </ul>
+      {parseResult && (parseResult.errors.length > 0 || parseResult.warnings.length > 0) && (
+        <div className="max-w-7xl mx-auto mt-4 p-4">
+          {parseResult.errors.length > 0 && (
+            <div className="bg-red-50 border border-red-200 rounded p-3 mb-2">
+              <h3 className="font-semibold text-red-800 mb-2">Errors:</h3>
+              {parseResult.errors.map((error, index) => (
+                <div key={index} className="text-red-700 text-sm">{error}</div>
+              ))}
+            </div>
+          )}
+          {parseResult.warnings.length > 0 && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+              <h3 className="font-semibold text-yellow-800 mb-2">Warnings:</h3>
+              {parseResult.warnings.map((warning, index) => (
+                <div key={index} className="text-yellow-700 text-sm">{warning}</div>
+              ))}
+            </div>
+          )}
         </div>
       )}
       
