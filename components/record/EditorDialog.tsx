@@ -509,7 +509,7 @@ export function EditorDialog({ open, type, data, selection, onClose, onSubmit, e
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="bg-white border-none max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-white border-none max-w-xl rounded max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="capitalize">
             {type === "codeBlock" ? "Code Block" : 
