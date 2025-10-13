@@ -68,7 +68,7 @@ export function MediaWikiEditor({
 }) {
   const [markup, setMarkup] = useState("");
   const [title, setTitle] = useState(recordName ?? "");
-  const [editorMode, setEditorMode] = useState<"visual" | "recordmx">(editingMode ?? "visual");
+  const [editorMode, setEditorMode] = useState<"visual" | "recordmx">("visual");
   const [parseResult, setParseResult] = useState<RecordMXParseResult | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
