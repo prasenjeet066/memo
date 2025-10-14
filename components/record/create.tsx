@@ -131,8 +131,8 @@ export default function CreateNew({
       </div>
 
       {/* Toolbar */}
-      <div className="flex items-center justify-between border-b bg-gray-50 w-full">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between border-b bg-gray-50 w-full rounded-full px-4">
+        <div className="flex items-center gap-2 overflow-x-auto">
           {toolbarBlocks.map((block, index) => {
             if (block.items && Array.isArray(block.items)) {
               return renderToolbarSelect(block, index);
