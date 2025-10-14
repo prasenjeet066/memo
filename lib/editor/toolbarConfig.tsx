@@ -31,7 +31,6 @@ export const toolbarBlocks = [
     { icon: "bold", action: "bold", label: "Bold (Ctrl+B)" },
     { icon: "italic", action: "italic", label: "Italic (Ctrl+I)" },
     { icon: "underline", action: "underline", label: "Underline (Ctrl+U)" },
-    { icon: "strikethrough", action: "strikethrough", label: "Strikethrough" },
     { icon: "code", action: "inlineCode", label: "Inline Code" },
     
     // === HEADINGS & PARAGRAPH ===
@@ -61,21 +60,18 @@ export const toolbarBlocks = [
     
     // === BLOCKS & STRUCTURE ===
     {
-      name: "Blocks",
+      name: "Insert",
       items: [
         { icon: "file-code", action: "codeBlock", label: "Code Block" },
         { icon: "square-root-variable", action: "math", label: "Math Formula" },
         { icon: "table", action: "table", label: "Table" },
         { icon: "minus", action: "horizontalRule", label: "Horizontal Line" },
+        
+        { icon: "puzzle-piece", action: "template", label: "Template" },
+        { icon: "file-alt", action: "reference", label: "Reference / Citation" },
+      
       ],
     },
     
     // === ADVANCED ===
-    {
-      name: "Advanced",
-      items: [
-        { icon: "puzzle-piece", action: "template", label: "Template" },
-        { icon: "file-alt", action: "reference", label: "Reference / Citation" },
-      ],
-    },
   ];
