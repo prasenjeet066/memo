@@ -32,8 +32,6 @@ export const toolbarBlocks = [
     { icon: "italic", action: "italic", label: "Italic (Ctrl+I)" },
     { icon: "underline", action: "underline", label: "Underline (Ctrl+U)" },
     { icon: "strikethrough", action: "strikethrough", label: "Strikethrough" },
-    { icon: "superscript", action: "superscript", label: "Superscript" },
-    { icon: "subscript", action: "subscript", label: "Subscript" },
     { icon: "code", action: "inlineCode", label: "Inline Code" },
     
     // === HEADINGS & PARAGRAPH ===

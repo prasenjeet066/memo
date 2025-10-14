@@ -122,7 +122,7 @@ export default function CreateNew({
   }, [handleToolbarAction]);
   
   return (
-    <div className="w-full h-full bg-white flex flex-col">
+    <div className="w-full h-full flex flex-col">
       {/* Header */}
       <div className="px-4 py-3 border-b">
         <h1 className="text-xl font-bold text-gray-900">
@@ -131,7 +131,7 @@ export default function CreateNew({
       </div>
 
       {/* Toolbar */}
-      <div className="flex items-center justify-between border-b bg-gray-50">
+      <div className="flex items-center justify-between border-b bg-gray-50 w-full">
         <div className="flex items-center">
           {toolbarBlocks.map((block, index) => {
             if (block.items && Array.isArray(block.items)) {
@@ -144,7 +144,7 @@ export default function CreateNew({
         {/* Actions */}
         <div className="flex items-center border-l">
           <button
-            className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded"
+            className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
             onClick={handlePublish}
             aria-label="Publish document"
             type="button"
@@ -157,7 +157,7 @@ export default function CreateNew({
       {/* Editor Content */}
       <div
         ref={editorRef}
-        className="flex-1 p-4 overflow-auto w-full bg-white h-full"
+        className="flex-1 p-4 overflow-auto w-full bg-white h-full border-none outline-none"
         contentEditable
         suppressContentEditableWarning
         aria-label="Editor content area"
