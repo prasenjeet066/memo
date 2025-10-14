@@ -84,7 +84,7 @@ export default function CreateNew({
     return (
       <button
         key={`toolbar-btn-${index}`}
-        className={`px-3 py-2 border-0 border-l hover:bg-gray-100 transition-colors ${
+        className={`px-4 border-0 border-l hover:bg-gray-100 transition-colors ${
           block.action === activeAction ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
         }`}
         onClick={() => handleToolbarAction(block.action)}
@@ -132,7 +132,7 @@ export default function CreateNew({
 
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b bg-gray-50 w-full">
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
           {toolbarBlocks.map((block, index) => {
             if (block.items && Array.isArray(block.items)) {
               return renderToolbarSelect(block, index);
