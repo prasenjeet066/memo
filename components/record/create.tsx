@@ -11,7 +11,8 @@ interface EditorProps {
   onPublish ? : () => void;
 }
 
-export default function Editor({
+// Rename export for clarity, but keep compatibility with previous usage
+export default function CreateNew({
   editor_mode = 'visual',
   record_name = '',
   onPublish
@@ -20,21 +21,18 @@ export default function Editor({
   const [activeAction, setActiveAction] = useState < string | null > (null);
   const editorRef = useRef < HTMLDivElement > (null);
   
-  // Validate record_name on mount
   useEffect(() => {
     if (!record_name?.trim()) {
       console.warn('Record name is empty or undefined');
     }
   }, [record_name]);
   
-  // Update editor mode when prop changes
   useEffect(() => {
     if (editor_mode !== editorMode) {
       setEditorMode(editor_mode);
     }
   }, [editor_mode, editorMode]);
   
-  // Execute command when activeAction changes
   useEffect(() => {
     if (activeAction) {
       executeCommand(activeAction);
@@ -58,7 +56,6 @@ export default function Editor({
         case 'strikethrough':
           document.execCommand('strikeThrough', false);
           break;
-          // Add more commands as needed
         default:
           console.log(`Executing command: ${action}`);
       }
@@ -93,6 +90,7 @@ export default function Editor({
         onClick={() => handleToolbarAction(block.action)}
         title={block.label}
         aria-label={block.label}
+        type="button"
       >
         <Fai icon={block.icon} style="fas" />
       </button>
@@ -145,11 +143,11 @@ export default function Editor({
 
         {/* Actions */}
         <div className="flex items-center border-l">
-          
           <button
             className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded"
             onClick={handlePublish}
             aria-label="Publish document"
+            type="button"
           >
             Publish
           </button>

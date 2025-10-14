@@ -1,12 +1,15 @@
 import ErrorBoundary from '@/components/ErrorBoundary'
-import { Home, Compass, HandHeart, Settings, FileText, TrendingUp, Clock, Star } from 'lucide-react'
+import { Home, Compass, HandHeart, Settings } from 'lucide-react'
 import Header from '@/components/header'
 import { useMobile } from "@/lib/units/use-mobile"
 import CreateNew from '@/components/record/create'
+import React, { useState } from 'react'
 
 export default function RecordWithSlug({ params }) {
   const slug = params.slug;
   const isMobile = useMobile()
+  const [isExpanded, setIsExpanded] = useState(true);
+  
   const NavList = [
     { name: 'Home', icon: Home, href: '/' },
     { name: 'Explore', icon: Compass, href: '/explore' },
