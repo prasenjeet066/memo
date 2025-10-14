@@ -1,86 +1,64 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   MDXEditor,
-  useEditor,
+  MDXEditorMethods,
   codeBlockPlugin,
   tablePlugin,
   linkPlugin,
+  linkDialogPlugin,
   imagePlugin,
   frontmatterPlugin,
   headingsPlugin,
   listsPlugin,
   quotePlugin,
   markdownShortcutPlugin,
+  toolbarPlugin,
+  UndoRedo,
+  BoldItalicUnderlineToggles,
+  BlockTypeSelect,
+  CodeToggle,
+  CreateLink,
+  InsertImage,
+  InsertTable,
+  ListsToggle,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
-import { EditorToolbar } from "./EditorToolbar";
+
+// Custom Toolbar Component
+function CustomToolbar({ onSave, isSaving }) {
+  return (
+    <div className="flex items-center justify-between border-b p-2 bg-white sticky top-0 z-10">
+      <div className="flex items-center gap-2 flex-wrap">
+        <UndoRedo />
+        <BoldItalicUnderlineToggles />
+        <BlockTypeSelect />
+        <CodeToggle />
+        <CreateLink />
+        <InsertImage />
+        <InsertTable />
+        <ListsToggle />
+      </div>
+      <button
+        className="px-4 py-2 bg-gray-800 text-white text-sm rounded hover:bg-gray-700 disabled:opacity-50"
+        onClick={onSave}
+        disabled={isSaving}
+      >
+        {isSaving ? "Saving..." : "Publish"}
+      </button>
+    </div>
+  );
+}
 
 export function MediaWikiEditor({
   recordName,
   editingMode = "visual",
-}: {
-  recordName ? : string;
-  editingMode ? : "visual" | "recordmx";
 }) {
   const [title, setTitle] = useState(recordName ?? "");
-  const [markdown, setMarkdown] = useState("");
+  const [markdown, setMarkdown] = useState("# Welcome\n\nStart editing your content here...");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   
-  // This will allow you to dispatch commands to mdxeditor
-  const editor = useEditor();
-  
-  // Map your custom commands to mdxeditor's command API
-  const handleCommand = (command: string, ...args: any[]) => {
-    if (!editor) return;
-    switch (command) {
-      case "bold":
-        editor?.chain().focus().toggleBold().run();
-        break;
-      case "italic":
-        editor?.chain().focus().toggleItalic().run();
-        break;
-      case "underline":
-        editor?.chain().focus().toggleUnderline().run();
-        break;
-      case "strikethrough":
-        editor?.chain().focus().toggleStrike().run();
-        break;
-      case "heading":
-        const level = args[0] || 2;
-        editor?.chain().focus().toggleHeading({ level }).run();
-        break;
-      case "codeBlock":
-        editor?.chain().focus().toggleCodeBlock().run();
-        break;
-      case "blockquote":
-        editor?.chain().focus().toggleBlockquote().run();
-        break;
-      case "orderedList":
-        editor?.chain().focus().toggleOrderedList().run();
-        break;
-      case "unorderedList":
-        editor?.chain().focus().toggleBulletList().run();
-        break;
-      case "table":
-        editor?.chain().focus().insertTable({ rows: 3, cols: 3 }).run();
-        break;
-      case "link":
-        editor?.chain().focus().toggleLink({ href: args[0] || "#" }).run();
-        break;
-      case "image":
-        editor?.chain().focus().insertImage({ src: args[0] || "", alt: args[1] || "" }).run();
-        break;
-      case "undo":
-        editor?.chain().focus().undo().run();
-        break;
-      case "redo":
-        editor?.chain().focus().redo().run();
-        break;
-      default:
-        break;
-    }
-  };
+  const editorRef = useRef(null);
   
   const handleSave = async () => {
     if (!title.trim()) {
@@ -91,8 +69,10 @@ export function MediaWikiEditor({
     setError("");
     try {
       await new Promise((resolve) => setTimeout(resolve, 800));
+      console.log("Saved content:", { title, markdown });
       alert("✓ নিবন্ধটি সফলভাবে সংরক্ষিত হয়েছে!");
-    } catch (err: any) {
+      setError("");
+    } catch (err) {
       setError(err?.message || "সংরক্ষণে ত্রুটি হয়েছে");
     } finally {
       setIsSaving(false);
@@ -100,55 +80,45 @@ export function MediaWikiEditor({
   };
   
   return (
-    <div className="w-full min-h-screen bg-gray-50 py-2">
-      <div className="max-w-7xl mx-auto bg-white min-h-[70vh] border rounded-lg shadow-sm p-4">
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="নিবন্ধের শিরোনাম লিখুন..."
-          className="text-lg font-semibold text-gray-800 bg-transparent border-none outline-none w-full mb-4"
-        />
+    <div className="w-full min-h-screen bg-gray-50 py-4">
+      <div className="max-w-5xl mx-auto bg-white min-h-[70vh] border rounded-lg shadow-sm overflow-hidden">
+        <div className="p-4 border-b">
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="নিবন্ধের শিরোনাম লিখুন..."
+            className="text-2xl font-semibold text-gray-800 bg-transparent border-none outline-none w-full focus:ring-0"
+          />
+        </div>
 
         {error && (
-          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-700">
+          <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
             {error}
           </div>
         )}
 
-        <EditorToolbar
-          onCommand={handleCommand}
-          handleSave={handleSave}
-          editorMode={"visual"}
-          isMobile={false}
-          // Add any necessary props for your toolbar
-        />
-
         <MDXEditor
-          value={markdown}
+          ref={editorRef}
+          markdown={markdown}
           onChange={setMarkdown}
           plugins={[
-            codeBlockPlugin(),
-            tablePlugin(),
-            linkPlugin(),
-            imagePlugin(),
-            frontmatterPlugin(),
             headingsPlugin(),
             listsPlugin(),
             quotePlugin(),
+            linkPlugin(),
+            linkDialogPlugin(),
+            imagePlugin(),
+            tablePlugin(),
+            codeBlockPlugin({ defaultCodeBlockLanguage: 'javascript' }),
+            frontmatterPlugin(),
             markdownShortcutPlugin(),
+            toolbarPlugin({
+              toolbarContents: () => <CustomToolbar onSave={handleSave} isSaving={isSaving} />
+            })
           ]}
-          className="min-h-[500px] bg-white"
-          editorRef={editor} // Connects to useEditor (may depend on mdxeditor version)
+          contentEditableClassName="prose max-w-none p-4 min-h-[500px] focus:outline-none"
         />
-
-        <button
-          className="mt-4 px-4 py-2 bg-gray-800 text-white rounded"
-          onClick={handleSave}
-          disabled={isSaving}
-        >
-          {isSaving ? "Saving..." : "Publish"}
-        </button>
       </div>
     </div>
   );
