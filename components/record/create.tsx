@@ -9,46 +9,72 @@ import TableRow from "@tiptap/extension-table-row";
 import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import { lowlight } from "lowlight/lib/core";
+import { common, createLowlight } from "lowlight";
 import Placeholder from "@tiptap/extension-placeholder";
-import MathBlock from "@tiptap-pro/extension-math-block";
-import MathInline from "@tiptap-pro/extension-math-inline";
-// You'll need to install `@tiptap-pro` for math support, or use a custom extension
+import Underline from "@tiptap/extension-underline";
+import Superscript from "@tiptap/extension-superscript";
+import Subscript from "@tiptap/extension-subscript";
+// import MathBlock from "@tiptap-pro/extension-math-block";
+// import MathInline from "@tiptap-pro/extension-math-inline";
+// Uncomment above if you have @tiptap-pro license
 
 import { Toolbar } from "./TiptapToolbar";
 import { EditorDialog } from "./EditorDialog";
 
-export function TiptapEditor({ initialContent = "", recordName, editingMode = "visual" }) {
+// Create lowlight instance with common languages
+const lowlight = createLowlight(common);
+
+interface TiptapEditorProps {
+  initialContent ? : string;
+  recordName ? : string;
+  editingMode ? : "visual" | "markdown";
+}
+
+export function TiptapEditor({
+  initialContent = "",
+  recordName,
+  editingMode = "visual"
+}: TiptapEditorProps) {
   const [dialog, setDialog] = useState({
     open: false,
-    type: null,
-    data: {},
+    type: null as string | null,
+    data: {} as any,
     selection: "",
   });
-
+  
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        codeBlock: false, // Disable default code block to use CodeBlockLowlight
+      }),
       Heading.configure({ levels: [2, 3, 4] }),
-      Link,
+      Link.configure({
+        openOnClick: false,
+      }),
       Image,
+      Underline,
+      Superscript,
+      Subscript,
       Table.configure({ resizable: true }),
       TableRow,
       TableCell,
       TableHeader,
-      CodeBlockLowlight.configure({ lowlight }),
+      CodeBlockLowlight.configure({
+        lowlight,
+        defaultLanguage: "javascript",
+      }),
       Placeholder.configure({
         placeholder: "এখানে লেখা শুরু করুন...",
       }),
-      MathBlock,
-      MathInline,
-      // Add more extensions for template/reference as needed
+      // MathBlock,
+      // MathInline,
+      // Uncomment above if you have @tiptap-pro license
     ],
     content: initialContent,
   });
-
+  
   // Dialog command handlers
-  const handleCommand = (command, ...args) => {
+  const handleCommand = (command: string, ...args: any[]) => {
     if (!editor) return;
     // Dialog-based tools
     if (
@@ -90,10 +116,10 @@ export function TiptapEditor({ initialContent = "", recordName, editingMode = "v
         editor.chain().focus().toggleStrike().run();
         break;
       case "superscript":
-        editor.chain().focus().setSuperscript().run();
+        editor.chain().focus().toggleSuperscript().run();
         break;
       case "subscript":
-        editor.chain().focus().setSubscript().run();
+        editor.chain().focus().toggleSubscript().run();
         break;
       case "inlineCode":
         editor.chain().focus().toggleCode().run();
@@ -120,9 +146,9 @@ export function TiptapEditor({ initialContent = "", recordName, editingMode = "v
         break;
     }
   };
-
+  
   // Dialog submit handler
-  const handleDialogSubmit = (data) => {
+  const handleDialogSubmit = (data: any) => {
     if (!editor) return;
     switch (dialog.type) {
       case "link":
@@ -140,42 +166,60 @@ export function TiptapEditor({ initialContent = "", recordName, editingMode = "v
         break;
       case "video":
         // Tiptap does not have a built-in video extension; you can make a custom extension for video
-        if (editor.commands.insertContent) {
-          editor.commands.insertContent(`<video src="${data.src}" controls width="${data.width || 400}"></video>`);
-        }
+        editor.commands.insertContent(`<video src="${data.src}" controls width="${data.width || 400}"></video>`);
         break;
       case "codeBlock":
-        editor.chain().focus().setCodeBlock({ language: data.language || "javascript" }).insertContent(data.code || "").run();
+        editor.chain().focus().setCodeBlock({
+          language: data.language || "javascript"
+        }).run();
+        if (data.code) {
+          editor.commands.insertContent(data.code);
+        }
         break;
       case "math":
+        // If you have @tiptap-pro math extensions enabled:
+        // if (data.display) {
+        //   editor.chain().focus().insertContent({ type: 'mathBlock', attrs: { content: data.formula } }).run();
+        // } else {
+        //   editor.chain().focus().insertContent({ type: 'mathInline', attrs: { content: data.formula } }).run();
+        // }
+        
+        // Fallback without pro extensions:
         if (data.display) {
-          editor.chain().focus().insertContent(`<math-block>${data.formula}</math-block>`).run();
+          editor.commands.insertContent(`$$${data.formula}$$`);
         } else {
-          editor.chain().focus().insertContent(`<math-inline>${data.formula}</math-inline>`).run();
+          editor.commands.insertContent(`$${data.formula}$`);
         }
         break;
       case "table":
-        editor.chain().focus().insertTable({ rows: data.rows || 3, cols: data.cols || 3, withHeaderRow: true }).run();
+        editor.chain().focus().insertTable({
+          rows: data.rows || 3,
+          cols: data.cols || 3,
+          withHeaderRow: true
+        }).run();
         break;
       case "template":
         // You can implement a custom extension for templates
-        editor.chain().focus().insertContent(`{% ${data.name || "template"} ${Object.entries(data.params || {}).map(([k, v]) => `${k}=${v}`).join(" ")} %}`).run();
+        const params = Object.entries(data.params || {})
+          .map(([k, v]) => `${k}=${v}`)
+          .join(" ");
+        editor.commands.insertContent(`{% ${data.name || "template"} ${params} %}`);
         break;
       case "reference":
         // Custom extension needed for references; here we insert as plain text
-        editor.chain().focus().insertContent(`[@${data.id || "ref1"}]`).run();
+        editor.commands.insertContent(`[@${data.id || "ref1"}]`);
         break;
       default:
         break;
     }
     setDialog({ open: false, type: null, data: {}, selection: "" });
   };
-
+  
   // Save handler (simulate backend save)
   const [title, setTitle] = useState(recordName ?? "");
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-
+  
   const handleSave = async () => {
     if (!title.trim()) {
       setError("দয়া করে একটি শিরোনাম লিখুন");
@@ -192,7 +236,9 @@ export function TiptapEditor({ initialContent = "", recordName, editingMode = "v
       setIsSaving(false);
     }
   };
-
+  
+  const characterCount = editor?.storage?.characterCount?.characters?.() || 0;
+  
   return (
     <div className="w-full min-h-screen bg-gray-50">
       <div className="border-b bg-white flex items-center justify-between py-4 px-4">
@@ -206,7 +252,7 @@ export function TiptapEditor({ initialContent = "", recordName, editingMode = "v
         <div className="bg-white flex items-center justify-end gap-2">
           {editor && (
             <div className="text-sm text-gray-600 flex items-center gap-4">
-              <span>{editor.storage.characterCount.characters()} words</span>
+              <span>{characterCount} characters</span>
               {/* Reading time logic if needed */}
             </div>
           )}
@@ -217,8 +263,8 @@ export function TiptapEditor({ initialContent = "", recordName, editingMode = "v
           {error}
         </div>
       )}
-      <Toolbar editor={editor} onCommand={handleCommand} handleSave={handleSave} />
-      <div className="max-w-7xl mx-auto bg-white min-h-[70vh] border rounded-lg shadow-sm">
+      <Toolbar editor={editor} onCommand={handleCommand} handleSave={handleSave} isSaving={isSaving} />
+      <div className="max-w-7xl mx-auto bg-white min-h-[70vh] border rounded-lg shadow-sm mt-4">
         <EditorContent editor={editor} className="min-h-[70vh] p-4 outline-none prose max-w-none" />
       </div>
       <EditorDialog
@@ -232,4 +278,5 @@ export function TiptapEditor({ initialContent = "", recordName, editingMode = "v
     </div>
   );
 }
+
 export default TiptapEditor;

@@ -67,9 +67,7 @@
     "@tiptap/extension-placeholder": "^2.2.2",
     "@tiptap/extension-code-block-lowlight": "^2.2.2",
     "lowlight": "^2.6.0",
-    "@tiptap-pro/extension-math-block": "^2.2.2",
-    "@tiptap-pro/extension-math-inline": "^2.2.2",
-    
+
     "input-otp": "latest",
     "lodash": "latest",
     "lucide-react": "^0.454.0",
