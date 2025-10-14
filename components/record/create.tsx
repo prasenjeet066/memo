@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Fai } from '@/components/Fontawesome';
-import toolbarBlocks from '@/lib/editor/toolbarConfig';
+import {toolbarBlocks} from '@/lib/editor/toolbarConfig';
 
 interface EditorProps {
   editor_mode ? : 'visual' | 'markdown';
@@ -133,7 +133,7 @@ export default function CreateNew({
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b bg-gray-50">
         <div className="flex items-center">
-          {toolbarBlocks[0].map((block, index) => {
+          {toolbarBlocks.map((block, index) => {
             if (block.items && Array.isArray(block.items)) {
               return renderToolbarSelect(block, index);
             }

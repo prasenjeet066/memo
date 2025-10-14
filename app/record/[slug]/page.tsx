@@ -19,7 +19,7 @@ export default function RecordWithSlug({ params }) {
   ]
   
   const Sidebar = !isMobile && (
-    <div className='w-auto max-w-64 min-h-screen bg-white mr-2 flex flex-col justify-between'>
+    <div className='w-auto max-w-64 max-h-screen bg-white mr-2 flex flex-col justify-between bg-gray-50 rounded-lg'>
       <div className='p-4 border-b border-gray-200'>
         <button
           onClick={() => setIsExpanded(!isExpanded)}

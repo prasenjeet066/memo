@@ -26,7 +26,7 @@ import {
 import { Fai } from '@/components/Fontawesome'
 
 export const toolbarBlocks = [
-  [
+  
     // === TEXT FORMATTING ===
     { icon: "bold", action: "bold", label: "Bold (Ctrl+B)" },
     { icon: "italic", action: "italic", label: "Italic (Ctrl+I)" },
@@ -80,5 +80,4 @@ export const toolbarBlocks = [
         { icon: "file-alt", action: "reference", label: "Reference / Citation" },
       ],
     },
-  ]
-];
+  ];
