@@ -1,8 +1,5 @@
-'use client'
 
-import { useState, useEffect } from 'react'
-import {ErrorBoundary} from '@/components/ErrorBoundary'
-import { useRouter } from 'next/navigation'
+import ErrorBoundary from '@/components/ErrorBoundary'
 import { Home, Compass, HandHeart, Settings, FileText, TrendingUp, Clock, Star } from 'lucide-react'
 import Header from '@/components/header'
 import { useMobile } from "@/lib/units/use-mobile"
