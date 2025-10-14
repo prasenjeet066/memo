@@ -1,3 +1,4 @@
+'use client'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import { Home, Compass, HandHeart, Settings } from 'lucide-react'
 import Header from '@/components/header'
