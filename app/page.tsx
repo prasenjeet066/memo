@@ -18,7 +18,7 @@ export default function MainPage() {
   ]
   
   const Sidebar = !isMobile && (
-    <div className='w-auto max-w-64 max-h-screen bg-white mr-2 flex flex-col justify-between rounded-2xl'>
+    <div className='w-auto max-w-64 min-h-screen bg-white ml-2 flex flex-col justify-between rounded-2xl'>
       <div className='p-4 border-b border-gray-200'>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
