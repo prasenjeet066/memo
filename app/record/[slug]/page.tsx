@@ -74,7 +74,7 @@ export default function RecordWithSlug({ params }) {
     return (
       <main className='min-h-screen w-full max-w-screen bg-gray-50'>
         <Header navList={NavList}/>
-        <div className='p-4 w-full bg-white flex items-start justify-between'>
+        <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
           <ErrorBoundary>
             <CreateNew/>
           </ErrorBoundary>

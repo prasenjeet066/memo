@@ -124,14 +124,14 @@ export default function CreateNew({
   return (
     <div className="w-full h-full flex flex-col">
       {/* Header */}
-      <div className="px-4 py-3 border-b">
+      <div className="px-4 py-3">
         <h1 className="text-xl font-bold text-gray-900">
           {record_name?.trim() || 'Untitled Document'}
         </h1>
       </div>
 
       {/* Toolbar */}
-      <div className="flex items-center justify-between border-b bg-gray-50 w-full rounded-full px-4">
+      <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2">
         <div className="flex items-center gap-2 overflow-x-auto">
           {toolbarBlocks.map((block, index) => {
             if (block.items && Array.isArray(block.items)) {
