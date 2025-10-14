@@ -1,10 +1,8 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { EditorToolbar } from "./EditorToolbar";
 import { EditorDialog } from "./EditorDialog";
 import {
-  saveCursorPosition,
-  restoreCursorPosition,
-  useEditorHistory
+  useEditorHistory,
 } from "@/lib/editor/editorUtils";
 import {
   parseRecordMX,
@@ -13,7 +11,9 @@ import {
 } from "@/lib/recordmx/parser";
 import type { RecordMXParseResult } from "@/lib/recordmx/parser";
 
-// Helper functions for caret management
+/**
+ * Utility: Get caret offset in contenteditable.
+ */
 function getCaretCharacterOffset(element: HTMLElement | null): number {
   if (!element) return 0;
   const sel = window.getSelection();
@@ -27,6 +27,9 @@ function getCaretCharacterOffset(element: HTMLElement | null): number {
   return 0;
 }
 
+/**
+ * Utility: Set caret position in contenteditable.
+ */
 function setCaretPosition(element: HTMLElement | null, offset: number) {
   if (!element) return;
   const range = document.createRange();
@@ -34,17 +37,16 @@ function setCaretPosition(element: HTMLElement | null, offset: number) {
   if (!sel) return;
   let charCount = 0;
   let nodeStack: Node[] = [element];
-  let foundStart = false;
-  while (!foundStart && nodeStack.length > 0) {
+  let found = false;
+  while (!found && nodeStack.length) {
     const node = nodeStack.pop();
     if (!node) continue;
     if (node.nodeType === Node.TEXT_NODE) {
-      const textNode = node as Text;
-      const nextCharCount = charCount + (textNode.length || 0);
+      const nextCharCount = charCount + (node.textContent?.length || 0);
       if (offset >= charCount && offset <= nextCharCount) {
-        range.setStart(textNode, offset - charCount);
+        range.setStart(node, offset - charCount);
         range.collapse(true);
-        foundStart = true;
+        found = true;
       }
       charCount = nextCharCount;
     } else {
@@ -53,7 +55,7 @@ function setCaretPosition(element: HTMLElement | null, offset: number) {
       }
     }
   }
-  if (foundStart) {
+  if (found) {
     sel.removeAllRanges();
     sel.addRange(range);
   }
@@ -61,28 +63,28 @@ function setCaretPosition(element: HTMLElement | null, offset: number) {
 
 export function MediaWikiEditor({
   recordName,
-  editingMode
+  editingMode = "visual"
 }: {
   recordName?: string;
   editingMode?: "visual" | "recordmx";
 }) {
   const [markup, setMarkup] = useState("");
   const [title, setTitle] = useState(recordName ?? "");
-  const [editorMode, setEditorMode] = useState<"visual" | "recordmx">("visual");
+  const [editorMode, setEditorMode] = useState<"visual" | "recordmx">(editingMode);
   const [parseResult, setParseResult] = useState<RecordMXParseResult | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [wordCount, setWordCount] = useState(0);
   const [dialog, setDialog] = useState({
     open: false,
-    type: null,
+    type: null as string | null,
     data: {},
     selection: ""
   });
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const visualRef = useRef<HTMLDivElement>(null);
-  const isUpdatingRef = useRef(false);
-  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const ignoreNextInput = useRef(false);
 
   // Undo/redo stack
   const {
@@ -93,7 +95,7 @@ export function MediaWikiEditor({
     handleRedo
   } = useEditorHistory(markup, setMarkup);
 
-  // Initial visual content
+  // Initial content for visual mode (only once)
   useEffect(() => {
     if (
       editorMode === "visual" &&
@@ -101,19 +103,19 @@ export function MediaWikiEditor({
       !visualRef.current.innerHTML.trim()
     ) {
       visualRef.current.innerHTML =
-        "<p>Welcome to the Rich Text Editor!</p><p>You can start typing here and use the toolbar above to format your text.</p><p>Try <strong>bold</strong>, <em>italic</em>, and more!</p>";
+        "<p>Welcome! Start typing here. Use toolbar for formatting.</p>";
     }
   }, [editorMode]);
 
-  // Sync HTML to markup
+  // Sync HTML to markup when switching to recordmx
   useEffect(() => {
-    if (visualRef.current) {
-      let parserhtml = convertHtmlToRecordMX(visualRef.current.innerHTML);
+    if (editorMode === "visual" && visualRef.current) {
+      const parserhtml = convertHtmlToRecordMX(visualRef.current.innerHTML);
       setMarkup(parserhtml);
     }
   }, [visualRef.current, editingMode]);
 
-  // Parse RecordMX markup
+  // Parse markup to HTML (for preview/word count)
   useEffect(() => {
     try {
       const result = parseRecordMX(markup, {
@@ -147,31 +149,27 @@ export function MediaWikiEditor({
     }
   }, [markup]);
 
-  // Sync parseResult to visual editor
+  // Sync parseResult to visual editor on mode switch
   useEffect(() => {
     if (
       editorMode === "visual" &&
       visualRef.current &&
-      parseResult &&
-      !isUpdatingRef.current
+      parseResult
     ) {
-      isUpdatingRef.current = true;
       const currentHtml = visualRef.current.innerHTML;
       if (currentHtml !== parseResult.html) {
-        // Save/restore caret
         const caretOffset = getCaretCharacterOffset(visualRef.current);
+        ignoreNextInput.current = true;
         visualRef.current.innerHTML = parseResult.html;
         requestAnimationFrame(() => {
           setCaretPosition(visualRef.current, caretOffset);
-          isUpdatingRef.current = false;
+          ignoreNextInput.current = false;
         });
-      } else {
-        isUpdatingRef.current = false;
       }
     }
   }, [editorMode, parseResult]);
 
-  // Inject RecordMX styles
+  // Inject styles
   useEffect(() => {
     const styleId = "recordmx-styles";
     let styleEl = document.getElementById(styleId) as HTMLStyleElement;
@@ -187,34 +185,20 @@ export function MediaWikiEditor({
     };
   }, []);
 
-  // Handle visual input (debounced)
+  // Handle input (debounced, for visual mode)
   const handleVisualInput = useCallback(() => {
-    if (!visualRef.current || isUpdatingRef.current) return;
-    if (updateTimeoutRef.current) {
-      clearTimeout(updateTimeoutRef.current);
-    }
+    if (!visualRef.current || ignoreNextInput.current) return;
     const caretOffset = getCaretCharacterOffset(visualRef.current);
-    updateTimeoutRef.current = setTimeout(() => {
-      if (visualRef.current) {
-        isUpdatingRef.current = true;
-        try {
-          const html = visualRef.current.innerHTML;
-          const newMarkup = convertHtmlToRecordMX(html);
-          setMarkup(newMarkup);
-          addToHistory(newMarkup);
-        } catch (err) {
-          // ignore
-        } finally {
-          requestAnimationFrame(() => {
-            setCaretPosition(visualRef.current, caretOffset);
-            isUpdatingRef.current = false;
-          });
-        }
-      }
-    }, 300);
+    const html = visualRef.current.innerHTML;
+    const newMarkup = convertHtmlToRecordMX(html);
+    setMarkup(newMarkup);
+    addToHistory(newMarkup);
+    requestAnimationFrame(() => {
+      setCaretPosition(visualRef.current, caretOffset);
+    });
   }, [addToHistory]);
 
-  // Mode switch
+  // Mode switch handler
   const handleModeSwitch = useCallback(
     (mode?: string) => {
       const newMode = mode || (editorMode === "visual" ? "recordmx" : "visual");
@@ -223,26 +207,18 @@ export function MediaWikiEditor({
         visualRef.current &&
         newMode === "recordmx"
       ) {
-        isUpdatingRef.current = true;
+        // Sync current visual HTML to markup
         const html = visualRef.current.innerHTML;
         const newMarkup = convertHtmlToRecordMX(html);
         setMarkup(newMarkup);
         addToHistory(newMarkup);
-        setTimeout(() => {
-          isUpdatingRef.current = false;
-        }, 100);
-      } else if (editorMode === "recordmx" && newMode === "visual") {
-        setMarkup(prev => prev + " ");
-        setTimeout(() => {
-          setMarkup(prev => prev.trim());
-        }, 10);
       }
       setEditorMode(newMode as "visual" | "recordmx");
     },
     [editorMode, addToHistory]
   );
 
-  // Command handler
+  // Tool command handler
   const handleCommand = useCallback(
     (command: string, ...args: any[]) => {
       if (editorMode === "visual") {
@@ -263,6 +239,7 @@ export function MediaWikiEditor({
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0) return;
       const text = sel.toString();
+      // Dialog-based tools
       if (
         [
           "link",
@@ -278,17 +255,18 @@ export function MediaWikiEditor({
         setDialog({ open: true, type: command, data: {}, selection: text });
         return;
       }
+      // Inline formatting
       const commandMap: Record<string, () => void> = {
-        bold: () => document.execCommand("bold", false, null),
-        italic: () => document.execCommand("italic", false, null),
-        underline: () => document.execCommand("underline", false, null),
-        strikethrough: () => document.execCommand("strikeThrough", false, null),
-        superscript: () => document.execCommand("superscript", false, null),
-        subscript: () => document.execCommand("subscript", false, null),
+        bold: () => document.execCommand("bold"),
+        italic: () => document.execCommand("italic"),
+        underline: () => document.execCommand("underline"),
+        strikethrough: () => document.execCommand("strikeThrough"),
+        superscript: () => document.execCommand("superscript"),
+        subscript: () => document.execCommand("subscript"),
         inlineCode: () => {
           const span = document.createElement("span");
           span.style.fontFamily = "monospace";
-          span.style.backgroundColor = "#f1f3f4";
+          span.style.background = "#f1f3f4";
           span.style.padding = "2px 4px";
           span.style.borderRadius = "3px";
           span.textContent = text;
@@ -309,10 +287,10 @@ export function MediaWikiEditor({
           const range = sel.getRangeAt(0);
           range.insertNode(hr);
         },
-        unorderedList: () => document.execCommand("insertUnorderedList", false, null),
-        orderedList: () => document.execCommand("insertOrderedList", false, null),
-        indent: () => document.execCommand("indent", false, null),
-        outdent: () => document.execCommand("outdent", false, null),
+        unorderedList: () => document.execCommand("insertUnorderedList"),
+        orderedList: () => document.execCommand("insertOrderedList"),
+        indent: () => document.execCommand("indent"),
+        outdent: () => document.execCommand("outdent"),
         undo: () => handleUndo(),
         redo: () => handleRedo()
       };
@@ -324,7 +302,7 @@ export function MediaWikiEditor({
     [handleVisualInput, handleUndo, handleRedo]
   );
 
-  // RecordMX commands
+  // RecordMX (markdown-like) commands
   const handleRecordMXCommand = useCallback(
     (command: string, ...args: any[]) => {
       const textarea = textareaRef.current;
@@ -332,20 +310,7 @@ export function MediaWikiEditor({
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
       const selectedText = markup.substring(start, end);
-      const commandMap: Record<string, string> = {
-        bold: `**${selectedText}**`,
-        italic: `*${selectedText}*`,
-        underline: `__${selectedText}__`,
-        strikethrough: `~~${selectedText}~~`,
-        superscript: `^${selectedText}^`,
-        subscript: `~${selectedText}~`,
-        inlineCode: `\`${selectedText}\``,
-        heading: `${"#".repeat(args[0] || 2)} ${selectedText}`,
-        horizontalRule: "\n\n---\n\n",
-        unorderedList: `- ${selectedText}`,
-        orderedList: `1. ${selectedText}`
-      };
-      let insertText = commandMap[command];
+      // Dialog-based tools
       if (
         [
           "link",
@@ -361,6 +326,21 @@ export function MediaWikiEditor({
         setDialog({ open: true, type: command, data: {}, selection: selectedText });
         return;
       }
+      // Inline formatting
+      const commandMap: Record<string, string> = {
+        bold: `**${selectedText}**`,
+        italic: `*${selectedText}*`,
+        underline: `__${selectedText}__`,
+        strikethrough: `~~${selectedText}~~`,
+        superscript: `^${selectedText}^`,
+        subscript: `~${selectedText}~`,
+        inlineCode: `\`${selectedText}\``,
+        heading: `${"#".repeat(args[0] || 2)} ${selectedText}`,
+        horizontalRule: "\n\n---\n\n",
+        unorderedList: `- ${selectedText}`,
+        orderedList: `1. ${selectedText}`
+      };
+      let insertText = commandMap[command];
       if (insertText) {
         const newMarkup = markup.substring(0, start) + insertText + markup.substring(end);
         setMarkup(newMarkup);
@@ -388,9 +368,7 @@ export function MediaWikiEditor({
           insertText = `[${selection || data.text || "Link"}](${data.url || "https://example.com"})`;
           break;
         case "image":
-          insertText = `![${data.alt || "Image"}](${data.src || ""})${
-            data.width || data.height ? `{${data.width || ""}${data.height ? "x" + data.height : ""}}` : ""
-          }`;
+          insertText = `![${data.alt || "Image"}](${data.src || ""})${data.width || data.height ? `{${data.width || ""}${data.height ? "x" + data.height : ""}}` : ""}`;
           break;
         case "video":
           insertText = `@[video](${data.src || ""})`;
@@ -460,7 +438,7 @@ export function MediaWikiEditor({
     [dialog, editorMode, markup, handleVisualInput, addToHistory]
   );
 
-  // Save handler
+  // Save handler (simulate backend save)
   const handleSave = useCallback(async () => {
     if (!title.trim()) {
       setError("দয়া করে একটি শিরোনাম লিখুন");
@@ -473,22 +451,14 @@ export function MediaWikiEditor({
       if (editorMode === "visual" && visualRef.current) {
         finalMarkup = convertHtmlToRecordMX(visualRef.current.innerHTML);
       }
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 800));
       alert("✓ নিবন্ধটি সফলভাবে সংরক্ষিত হয়েছে!");
     } catch (err: any) {
       setError(err?.message || "সংরক্ষণে ত্রুটি হয়েছে");
     } finally {
       setIsSaving(false);
     }
-  }, [title, markup, editorMode, parseResult]);
-
-  useEffect(() => {
-    return () => {
-      if (updateTimeoutRef.current) {
-        clearTimeout(updateTimeoutRef.current);
-      }
-    };
-  }, []);
+  }, [title, markup, editorMode]);
 
   return (
     <div className="w-full min-h-screen bg-gray-50">
