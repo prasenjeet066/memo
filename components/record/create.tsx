@@ -1,41 +1,36 @@
 //imports 
-import { useState, useEffect, useCallback } from 'react';
+import { useState , useEffect , useCallback} from 'react';
 import toolbarBlocks from '@/lib/editor/toolbarConfig'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Fai } from '@/components/Fontawesome'
-export default function Editor(
-{
-  editor_mode = 'visual',
-  record_name = ''
-}) {
+
+export default function Editor (
+  {
+    editor_mode = 'visual',
+    record_name = ''
+  }
+) {
   // state management 
-  const [editorMode, setEditorMode] = useState('visual')
-  const [ActiveAction, setActiveAction] = useState(null)
-  
+  const [editorMode , setEditorMode] = useState('visual')
   
   // Validate record_name
-  useEffect(() => {
-    callCommand(ActiveAction);
-  }, [ActiveAction])
-  //
-  useEffect(() => {
+  useEffect (()=>{
     if (!record_name || record_name.trim() === '') {
       console.error('Record name is required');
     }
-  }, [record_name])
-  
+  },[record_name])
+
   // Update editor mode when prop changes
-  useEffect(() => {
+  useEffect (()=>{
     if (editor_mode.toLowerCase() !== editorMode.toLowerCase()) {
       setEditorMode(editor_mode)
     }
-  }, [editorMode, editor_mode])
-  
+  },[editorMode , editor_mode])
+
   const handlePublish = useCallback(() => {
     // Add publish logic here
     console.log('Publishing...');
   }, []);
-  
+
   return (
     <div className = 'w-full h-full bg-white'>
       <div className = 'flex items-center justify-between'>
@@ -54,7 +49,6 @@ export default function Editor(
                   <SelectContent>
                     {subItems.map((item, j) => (
                       <SelectItem key={`item-${i}-${j}`} value={item.value || item.label}>
-                        <Fai icon = {item.icon} style  = 'fas'/>
                         {item.label}
                       </SelectItem>
                     ))}
@@ -62,17 +56,7 @@ export default function Editor(
                 </Select>
               )
             }
-            return (
-              <>
-                <button className = {` bg-none border-y-none border-x ${blocks.action === ActiveAction ? 'text-blue-600' : 'text-gray-800'} `} onClick = {()=>{
-                  if (blocks.action &&  blocks.action!==ActiveAction) {
-                    setActiveAction(blocks.action)
-                  }
-                }}>
-                  <Fai icon = {blocks.icon} style = {'fas'}/>
-                </button>
-              </>
-            );
+            return null;
           })}
         </div>
         <div className ='flex items-center justify-end border-l'>
