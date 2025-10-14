@@ -1,4 +1,3 @@
-
 import ErrorBoundary from '@/components/ErrorBoundary'
 import { Home, Compass, HandHeart, Settings, FileText, TrendingUp, Clock, Star } from 'lucide-react'
 import Header from '@/components/header'
@@ -15,12 +14,6 @@ export default function RecordWithSlug({ params }) {
     { name: 'Settings', icon: Settings, href: '/settings' },
   ]
   
-  const Filters = [
-    { id: 'all', label: 'All Records', icon: FileText },
-    { id: 'trending', label: 'Trending', icon: TrendingUp },
-    { id: 'recent', label: 'Recent', icon: Clock },
-    { id: 'featured', label: 'Featured', icon: Star },
-  ]
   const Sidebar = !isMobile && (
     <div className='w-auto max-w-64 min-h-screen bg-white mr-2 flex flex-col justify-between'>
       <div className='p-4 border-b border-gray-200'>
