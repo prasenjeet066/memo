@@ -36,6 +36,9 @@ export default function Editor(
     console.log('Publishing...');
   }, []);
   
+  const callCommand = useCallback(()=>{
+    
+  },[ActiveAction])
   return (
     <div className = 'w-full h-full bg-white'>
       <div className = 'flex items-center justify-between'>
