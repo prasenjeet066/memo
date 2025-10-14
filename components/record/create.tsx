@@ -100,7 +100,7 @@ export default function CreateNew({
   const renderToolbarSelect = useCallback((block: any, index: number) => {
     return (
       <Select key={`toolbar-select-${index}`}>
-        <SelectTrigger className="w-[180px] h-10">
+        <SelectTrigger className="max-w-[180px] w-auto  h-10 border-none">
           <SelectValue placeholder={block.name || 'Select...'} />
         </SelectTrigger>
         <SelectContent>
