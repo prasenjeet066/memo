@@ -25,7 +25,7 @@ export function EditorToolbar({ onCommand,onModeSwitch, handleSave  }) {
     }
   },[editorMode])
   return (
-    <div className="bg-white sticky top-0 z-10 border-b flex items-center justify-between px-2">
+    <div className="bg-white sticky top-0 z-10 border-b flex items-center justify-between">
       <TooltipProvider>
         <div className="flex items-center gap-1 overflow-x-auto">
           {toolbarBlocks.flat().map((block, i) =>
