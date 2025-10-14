@@ -144,6 +144,7 @@ export default function Editor({
 
         {/* Actions */}
         <div className="flex items-center border-l">
+          
           <button
             className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded"
             onClick={handlePublish}
@@ -157,7 +158,7 @@ export default function Editor({
       {/* Editor Content */}
       <div
         ref={editorRef}
-        className="flex-1 p-4 overflow-auto"
+        className="flex-1 p-4 overflow-auto w-full bg-white h-full"
         contentEditable
         suppressContentEditableWarning
         aria-label="Editor content area"
