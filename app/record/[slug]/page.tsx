@@ -88,7 +88,7 @@ export default function RecordWithSlug({ params }) {
   return (
     <div className='min-h-screen w-full bg-gray-50'>
       <Header navList={NavList}/>
-      <div className='w-full bg-white p-4 flex items-start justify-start'>
+      <div className='w-full  p-4 flex items-start justify-start'>
         {Sidebar}
         <p>Record ID: {slug}</p>
         {/* Add your record display component here */}
