@@ -2,6 +2,7 @@
 import React from 'react'
 import './globals.css'
 import { Providers } from '@/components/utils/provider/auth'
+import ErrorBoundary from '@/components/ErrorBoundary'
 import { Metadata } from 'next'
 import { Inter } from "next/font/google";
 
@@ -21,7 +22,7 @@ type Props = {
 
 export default function LocaleLayout({ children }: Props) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en">
       <head>
         {/* Keep only fonts you actually need from link tags */}
         <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -43,9 +44,11 @@ export default function LocaleLayout({ children }: Props) {
         }
       </style>
       <body>
-        <Providers>
-          {children}
-        </Providers>
+        <ErrorBoundary>
+          <Providers>
+            {children}
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   )

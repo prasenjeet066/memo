@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/header'
+
 import { useMobile } from "@/lib/units/use-mobile"
 import CreateNew from '@/components/record/create'
 

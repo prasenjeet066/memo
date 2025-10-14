@@ -6,7 +6,7 @@ export class ErrorBoundary extends React.Component {
   }
   render() {
     if (this.state.hasError) {
-      return <div>অনাকাঙ্ক্ষিত সমস্যা হয়েছে: {this.state.error?.message}</div>;
+      return <div>Error: {this.state.error?.message}</div>;
     }
     return this.props.children;
   }
