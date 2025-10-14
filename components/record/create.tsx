@@ -10,6 +10,7 @@ import {
   RECORDMX_ADVANCED_STYLES
 } from "@/lib/recordmx/parser";
 import type { RecordMXParseResult } from "@/lib/recordmx/parser";
+import { useIsMobile } from "@/lib/units/use-mobile";
 
 /**
  * Utility: Get caret offset in contenteditable.
@@ -85,6 +86,8 @@ export function MediaWikiEditor({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const visualRef = useRef<HTMLDivElement>(null);
   const ignoreNextInput = useRef(false);
+
+  const isMobile = useIsMobile();
 
   // Undo/redo stack
   const {
@@ -460,19 +463,37 @@ export function MediaWikiEditor({
     }
   }, [title, markup, editorMode]);
 
+  // Responsive styles
+  const containerClass = isMobile
+    ? "w-full min-h-screen bg-gray-50 py-2"
+    : "w-full min-h-screen bg-gray-50";
+  const editorWrapperClass = isMobile
+    ? "max-w-full mx-auto bg-white min-h-[60vh] border rounded-lg shadow-sm px-1 py-1"
+    : "max-w-7xl mx-auto bg-white min-h-[70vh] border rounded-lg shadow-sm";
+  const toolbarContainerClass = isMobile
+    ? "border-b bg-white flex flex-col gap-2 items-stretch justify-between py-2 px-2"
+    : "border-b bg-white flex items-center justify-between py-4 px-4";
+  const statsClass = isMobile
+    ? "text-xs text-gray-600 flex items-center gap-2"
+    : "text-sm text-gray-600 flex items-center gap-4";
+
   return (
-    <div className="w-full min-h-screen bg-gray-50">
-      <div className="border-b bg-white flex items-center justify-between py-4 px-4">
+    <div className={containerClass}>
+      <div className={toolbarContainerClass}>
         <input
           type="text"
           value={title}
           onChange={e => setTitle(e.target.value)}
           placeholder="নিবন্ধের শিরোনাম লিখুন..."
-          className="text-lg font-semibold text-gray-800 bg-transparent border-none outline-none w-full"
+          className={
+            isMobile
+              ? "text-base font-semibold text-gray-800 bg-transparent border-none outline-none w-full mb-2"
+              : "text-lg font-semibold text-gray-800 bg-transparent border-none outline-none w-full"
+          }
         />
         <div className="bg-white flex items-center justify-end gap-2">
           {parseResult && (
-            <div className="text-sm text-gray-600 flex items-center gap-4">
+            <div className={statsClass}>
               <span>{wordCount} words</span>
               <span>{parseResult.metadata.readingTime} min read</span>
               {parseResult.errors.length > 0 && (
@@ -492,8 +513,9 @@ export function MediaWikiEditor({
         onCommand={handleCommand}
         onModeSwitch={handleModeSwitch}
         handleSave={handleSave}
+        isMobile={isMobile}
       />
-      <div className="max-w-7xl mx-auto bg-white min-h-[70vh] border rounded-lg shadow-sm">
+      <div className={editorWrapperClass}>
         {editorMode === "recordmx" ? (
           <textarea
             ref={textareaRef}
@@ -502,7 +524,11 @@ export function MediaWikiEditor({
               setMarkup(e.target.value);
               addToHistory(e.target.value);
             }}
-            className="w-full min-h-[70vh] p-4 outline-none text-sm font-mono resize-none border-none"
+            className={
+              isMobile
+                ? "w-full min-h-[60vh] p-2 outline-none text-sm font-mono resize-none border-none"
+                : "w-full min-h-[70vh] p-4 outline-none text-sm font-mono resize-none border-none"
+            }
             placeholder="RecordMX মার্কআপ এখানে লিখুন..."
           />
         ) : (
@@ -510,17 +536,25 @@ export function MediaWikiEditor({
             ref={visualRef}
             onInput={handleVisualInput}
             onBlur={handleVisualInput}
-            className="min-h-[70vh] p-4 outline-none prose max-w-none"
+            className={
+              isMobile
+                ? "min-h-[60vh] p-2 outline-none prose max-w-none text-base"
+                : "min-h-[70vh] p-4 outline-none prose max-w-none"
+            }
             contentEditable
             suppressContentEditableWarning
             spellCheck
             data-placeholder="এখানে লেখা শুরু করুন..."
+            style={{
+              overflowY: "auto",
+              fontSize: isMobile ? "1rem" : undefined,
+            }}
           />
         )}
       </div>
       {(parseResult &&
         (parseResult.errors.length > 0 || parseResult.warnings.length > 0)) && (
-        <div className="max-w-7xl mx-auto mt-4 p-4">
+        <div className={isMobile ? "max-w-full mx-auto mt-2 p-2" : "max-w-7xl mx-auto mt-4 p-4"}>
           {parseResult.errors.length > 0 && (
             <div className="bg-red-50 border border-red-200 rounded p-3 mb-2">
               <h3 className="font-semibold text-red-800 mb-2">Errors:</h3>
@@ -550,6 +584,7 @@ export function MediaWikiEditor({
         selection={dialog.selection}
         onClose={() => setDialog({ open: false, type: null, data: {}, selection: "" })}
         onSubmit={handleDialogSubmit}
+        isMobile={isMobile}
       />
     </div>
   );
