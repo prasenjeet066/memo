@@ -72,15 +72,15 @@ export default function RecordWithSlug({ params }) {
   )
   if (slug === 'new') {
     return (
-      <div className='min-h-screen w-full bg-gray-50'>
+      <main className='min-h-screen w-full bg-gray-50'>
         <Header navList={NavList}/>
-        <div className=' p-4 w-full bg-white flex items-start justify-between'>
+        <div className='p-4 w-full bg-white flex items-start justify-between'>
           <ErrorBoundary>
             <CreateNew/>
           </ErrorBoundary>
           {Sidebar}
         </div>
-      </div>
+      </main>
     )
   }
   
@@ -88,7 +88,7 @@ export default function RecordWithSlug({ params }) {
   return (
     <div className='min-h-screen w-full bg-gray-50'>
       <Header navList={NavList}/>
-      <div className='w-full bg-white p-4 flex items-start justify-between'>
+      <div className='w-full bg-white p-4 flex items-start justify-start'>
         {Sidebar}
         <p>Record ID: {slug}</p>
         {/* Add your record display component here */}
