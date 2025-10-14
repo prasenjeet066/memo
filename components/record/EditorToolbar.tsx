@@ -21,7 +21,7 @@ import { Pen, Code } from "lucide-react";
  * - Scrollable horizontally on mobile.
  * - Smaller icons/text on mobile.
  */
-export function EditorToolbar({ onCommand, onModeSwitch, handleSave, editorMode, isMobile }) {
+export function EditorToolbar({ onCommand, onModeSwitch, handleSave, editorMode, isMobile=false }) {
   const [selected, setSelected] = useState({});
   const [mode, setMode] = useState(editorMode ?? "visual");
   
