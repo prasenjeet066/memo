@@ -1,0 +1,105 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import {ErrorBoundary} from '@/components/ErrorBoundary'
+import { useRouter } from 'next/navigation'
+import { Home, Compass, HandHeart, Settings, FileText, TrendingUp, Clock, Star } from 'lucide-react'
+import Header from '@/components/header'
+import { useMobile } from "@/lib/units/use-mobile"
+import CreateNew from '@/components/record/create'
+
+export default function RecordWithSlug({ params }) {
+  const slug = params.slug;
+  const isMobile = useMobile()
+  const NavList = [
+    { name: 'Home', icon: Home, href: '/' },
+    { name: 'Explore', icon: Compass, href: '/explore' },
+    { name: 'Contribute', icon: HandHeart, href: '/contribute' },
+    { name: 'Settings', icon: Settings, href: '/settings' },
+  ]
+  
+  const Filters = [
+    { id: 'all', label: 'All Records', icon: FileText },
+    { id: 'trending', label: 'Trending', icon: TrendingUp },
+    { id: 'recent', label: 'Recent', icon: Clock },
+    { id: 'featured', label: 'Featured', icon: Star },
+  ]
+  const Sidebar = !isMobile && (
+    <div className='w-auto max-w-64 min-h-screen bg-white mr-2 flex flex-col justify-between'>
+      <div className='p-4 border-b border-gray-200'>
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className='text-xs text-gray-500 hover:text-gray-700 transition-colors'
+        >
+          {isExpanded ? 'Collapse' : 'Expand'}
+        </button>
+      </div>
+
+      <nav className='flex-1 p-4 flex flex-col justify-between'>
+        <div className='space-y-2 flex-1'>
+          {NavList.slice(0, -1).map((nav) => (
+            <a
+              key={nav.name}
+              href={nav.href}
+              className='flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors group'
+            >
+              <nav.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-800 flex-shrink-0' />
+              {isExpanded && (
+                <span className='text-sm font-medium text-gray-700 group-hover:text-gray-900 capitalize'>
+                  {nav.name}
+                </span>
+              )}
+            </a>
+          ))}
+        </div>
+
+        {/* Bottom nav item (Settings) */}
+        <div>
+          {(() => {
+            const settings = NavList[NavList.length - 1]
+            return (
+              <a
+                key={settings.name}
+                href={settings.href}
+                className='flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors group'
+              >
+                <settings.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-800 flex-shrink-0' />
+                {isExpanded && (
+                  <span className='text-sm font-medium text-gray-700 group-hover:text-gray-900 capitalize'>
+                    {settings.name}
+                  </span>
+                )}
+              </a>
+            )
+          })()}
+        </div>
+      </nav>
+    </div>
+  )
+  if (slug === 'new') {
+    return (
+      <div className='min-h-screen w-full bg-gray-50'>
+        <Header navList={NavList}/>
+        <div className=' p-4 w-full bg-white flex items-start justify-between'>
+          <ErrorBoundary>
+            <CreateNew/>
+          </ErrorBoundary>
+          {Sidebar}
+        </div>
+      </div>
+    )
+  }
+  
+  // Handle other slug cases
+  return (
+    <div className='min-h-screen w-full bg-gray-50'>
+      <Header navList={NavList}/>
+      <div className='w-full bg-white p-4 flex items-start justify-between'>
+        {Sidebar}
+        <p>Record ID: {slug}</p>
+        {/* Add your record display component here */}
+      </div>
+      
+    </div>
+  )
+}
