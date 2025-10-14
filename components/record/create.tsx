@@ -157,7 +157,7 @@ export default function CreateNew({
       {/* Editor Content */}
       <div
         ref={editorRef}
-        className="flex-1 p-4 overflow-auto w-full bg-white h-full border-none outline-none"
+        className="flex-1 p-4 overflow-auto w-full bg-white h-[300px] border-none outline-none"
         contentEditable
         suppressContentEditableWarning
         aria-label="Editor content area"
