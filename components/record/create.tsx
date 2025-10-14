@@ -1,448 +1,88 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState } from "react";
+import {
+  MDXEditor,
+  useEditor,
+  codeBlockPlugin,
+  tablePlugin,
+  linkPlugin,
+  imagePlugin,
+  frontmatterPlugin,
+  headingsPlugin,
+  listsPlugin,
+  quotePlugin,
+  markdownShortcutPlugin,
+} from "@mdxeditor/editor";
+import "@mdxeditor/editor/style.css";
 import { EditorToolbar } from "./EditorToolbar";
-import { EditorDialog } from "./EditorDialog";
-import {
-  useEditorHistory,
-} from "@/lib/editor/editorUtils";
-import {
-  parseRecordMX,
-  convertHtmlToRecordMX,
-  RECORDMX_ADVANCED_STYLES
-} from "@/lib/recordmx/parser";
-import type { RecordMXParseResult } from "@/lib/recordmx/parser";
-import { useIsMobile } from "@/lib/units/use-mobile";
-
-/**
- * Utility: Get caret offset in contenteditable.
- */
-function getCaretCharacterOffset(element: HTMLElement | null): number {
-  if (!element) return 0;
-  const sel = window.getSelection();
-  if (sel && sel.rangeCount > 0) {
-    const range = sel.getRangeAt(0);
-    const preCaretRange = range.cloneRange();
-    preCaretRange.selectNodeContents(element);
-    preCaretRange.setEnd(range.endContainer, range.endOffset);
-    return preCaretRange.toString().length;
-  }
-  return 0;
-}
-
-/**
- * Utility: Set caret position in contenteditable.
- */
-function setCaretPosition(element: HTMLElement | null, offset: number) {
-  if (!element) return;
-  const range = document.createRange();
-  const sel = window.getSelection();
-  if (!sel) return;
-  let charCount = 0;
-  let nodeStack: Node[] = [element];
-  let found = false;
-  while (!found && nodeStack.length) {
-    const node = nodeStack.pop();
-    if (!node) continue;
-    if (node.nodeType === Node.TEXT_NODE) {
-      const nextCharCount = charCount + (node.textContent?.length || 0);
-      if (offset >= charCount && offset <= nextCharCount) {
-        range.setStart(node, offset - charCount);
-        range.collapse(true);
-        found = true;
-      }
-      charCount = nextCharCount;
-    } else {
-      for (let i = node.childNodes.length - 1; i >= 0; i--) {
-        nodeStack.push(node.childNodes[i]);
-      }
-    }
-  }
-  if (found) {
-    sel.removeAllRanges();
-    sel.addRange(range);
-  }
-}
 
 export function MediaWikiEditor({
   recordName,
-  editingMode = "visual"
+  editingMode = "visual",
 }: {
-  recordName?: string;
-  editingMode?: "visual" | "recordmx";
+  recordName ? : string;
+  editingMode ? : "visual" | "recordmx";
 }) {
-  const [markup, setMarkup] = useState("");
   const [title, setTitle] = useState(recordName ?? "");
-  const [editorMode, setEditorMode] = useState<"visual" | "recordmx">(editingMode);
-  const [parseResult, setParseResult] = useState<RecordMXParseResult | null>(null);
+  const [markdown, setMarkdown] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
-  const [wordCount, setWordCount] = useState(0);
-  const [dialog, setDialog] = useState({
-    open: false,
-    type: null as string | null,
-    data: {},
-    selection: ""
-  });
-
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const visualRef = useRef<HTMLDivElement>(null);
-  const ignoreNextInput = useRef(false);
-
-  const isMobile = useIsMobile();
-
-  // Undo/redo stack
-  const {
-    history,
-    historyIndex,
-    addToHistory,
-    handleUndo,
-    handleRedo
-  } = useEditorHistory(markup, setMarkup);
-
-  // Initial content for visual mode (only once)
-  useEffect(() => {
-    if (
-      editorMode === "visual" &&
-      visualRef.current &&
-      !visualRef.current.innerHTML.trim()
-    ) {
-      visualRef.current.innerHTML =
-        "<p>Welcome! Start typing here. Use toolbar for formatting.</p>";
+  
+  // This will allow you to dispatch commands to mdxeditor
+  const editor = useEditor();
+  
+  // Map your custom commands to mdxeditor's command API
+  const handleCommand = (command: string, ...args: any[]) => {
+    if (!editor) return;
+    switch (command) {
+      case "bold":
+        editor?.chain().focus().toggleBold().run();
+        break;
+      case "italic":
+        editor?.chain().focus().toggleItalic().run();
+        break;
+      case "underline":
+        editor?.chain().focus().toggleUnderline().run();
+        break;
+      case "strikethrough":
+        editor?.chain().focus().toggleStrike().run();
+        break;
+      case "heading":
+        const level = args[0] || 2;
+        editor?.chain().focus().toggleHeading({ level }).run();
+        break;
+      case "codeBlock":
+        editor?.chain().focus().toggleCodeBlock().run();
+        break;
+      case "blockquote":
+        editor?.chain().focus().toggleBlockquote().run();
+        break;
+      case "orderedList":
+        editor?.chain().focus().toggleOrderedList().run();
+        break;
+      case "unorderedList":
+        editor?.chain().focus().toggleBulletList().run();
+        break;
+      case "table":
+        editor?.chain().focus().insertTable({ rows: 3, cols: 3 }).run();
+        break;
+      case "link":
+        editor?.chain().focus().toggleLink({ href: args[0] || "#" }).run();
+        break;
+      case "image":
+        editor?.chain().focus().insertImage({ src: args[0] || "", alt: args[1] || "" }).run();
+        break;
+      case "undo":
+        editor?.chain().focus().undo().run();
+        break;
+      case "redo":
+        editor?.chain().focus().redo().run();
+        break;
+      default:
+        break;
     }
-  }, [editorMode]);
-
-  // Sync HTML to markup when switching to recordmx
-  useEffect(() => {
-    if (editorMode === "visual" && visualRef.current) {
-      const parserhtml = convertHtmlToRecordMX(visualRef.current.innerHTML);
-      setMarkup(parserhtml);
-    }
-  }, [visualRef.current, editingMode]);
-
-  // Parse markup to HTML (for preview/word count)
-  useEffect(() => {
-    try {
-      const result = parseRecordMX(markup, {
-        sanitize: true,
-        allowHtml: false,
-        smartQuotes: true,
-        autoLinks: true,
-        lineBreaks: false,
-        mathSupport: true,
-        diagramSupport: true,
-        emojiSupport: true,
-        tableOfContents: true,
-        syntaxHighlight: true,
-        maxNestingLevel: 10
-      });
-      setParseResult(result);
-      setWordCount(result.metadata.wordCount);
-    } catch (err) {
-      setParseResult({
-        html: markup,
-        metadata: {
-          wordCount: markup.split(/\s+/).filter(word => word.length > 0).length,
-          readingTime: Math.ceil(markup.split(/\s+/).length / 200),
-          headings: [],
-          links: [],
-          images: []
-        },
-        errors: [],
-        warnings: []
-      });
-    }
-  }, [markup]);
-
-  // Sync parseResult to visual editor on mode switch
-  useEffect(() => {
-    if (
-      editorMode === "visual" &&
-      visualRef.current &&
-      parseResult
-    ) {
-      const currentHtml = visualRef.current.innerHTML;
-      if (currentHtml !== parseResult.html) {
-        const caretOffset = getCaretCharacterOffset(visualRef.current);
-        ignoreNextInput.current = true;
-        visualRef.current.innerHTML = parseResult.html;
-        requestAnimationFrame(() => {
-          setCaretPosition(visualRef.current, caretOffset);
-          ignoreNextInput.current = false;
-        });
-      }
-    }
-  }, [editorMode, parseResult]);
-
-  // Inject styles
-  useEffect(() => {
-    const styleId = "recordmx-styles";
-    let styleEl = document.getElementById(styleId) as HTMLStyleElement;
-    if (!styleEl) {
-      styleEl = document.createElement("style");
-      styleEl.id = styleId;
-      document.head.appendChild(styleEl);
-    }
-    styleEl.textContent = RECORDMX_ADVANCED_STYLES;
-    return () => {
-      const el = document.getElementById(styleId);
-      if (el) el.remove();
-    };
-  }, []);
-
-  // Handle input (debounced, for visual mode)
-  const handleVisualInput = useCallback(() => {
-    if (!visualRef.current || ignoreNextInput.current) return;
-    const caretOffset = getCaretCharacterOffset(visualRef.current);
-    const html = visualRef.current.innerHTML;
-    const newMarkup = convertHtmlToRecordMX(html);
-    setMarkup(newMarkup);
-    addToHistory(newMarkup);
-    requestAnimationFrame(() => {
-      setCaretPosition(visualRef.current, caretOffset);
-    });
-  }, [addToHistory]);
-
-  // Mode switch handler
-  const handleModeSwitch = useCallback(
-    (mode?: string) => {
-      const newMode = mode || (editorMode === "visual" ? "recordmx" : "visual");
-      if (
-        editorMode === "visual" &&
-        visualRef.current &&
-        newMode === "recordmx"
-      ) {
-        // Sync current visual HTML to markup
-        const html = visualRef.current.innerHTML;
-        const newMarkup = convertHtmlToRecordMX(html);
-        setMarkup(newMarkup);
-        addToHistory(newMarkup);
-      }
-      setEditorMode(newMode as "visual" | "recordmx");
-    },
-    [editorMode, addToHistory]
-  );
-
-  // Tool command handler
-  const handleCommand = useCallback(
-    (command: string, ...args: any[]) => {
-      if (editorMode === "visual") {
-        handleVisualCommand(command, ...args);
-      } else {
-        handleRecordMXCommand(command, ...args);
-      }
-    },
-    [editorMode]
-  );
-
-  // Visual commands
-  const handleVisualCommand = useCallback(
-    (command: string, ...args: any[]) => {
-      const el = visualRef.current;
-      if (!el) return;
-      el.focus();
-      const sel = window.getSelection();
-      if (!sel || sel.rangeCount === 0) return;
-      const text = sel.toString();
-      // Dialog-based tools
-      if (
-        [
-          "link",
-          "image",
-          "video",
-          "codeBlock",
-          "math",
-          "table",
-          "template",
-          "reference"
-        ].includes(command)
-      ) {
-        setDialog({ open: true, type: command, data: {}, selection: text });
-        return;
-      }
-      // Inline formatting
-      const commandMap: Record<string, () => void> = {
-        bold: () => document.execCommand("bold"),
-        italic: () => document.execCommand("italic"),
-        underline: () => document.execCommand("underline"),
-        strikethrough: () => document.execCommand("strikeThrough"),
-        superscript: () => document.execCommand("superscript"),
-        subscript: () => document.execCommand("subscript"),
-        inlineCode: () => {
-          const span = document.createElement("span");
-          span.style.fontFamily = "monospace";
-          span.style.background = "#f1f3f4";
-          span.style.padding = "2px 4px";
-          span.style.borderRadius = "3px";
-          span.textContent = text;
-          const range = sel.getRangeAt(0);
-          range.deleteContents();
-          range.insertNode(span);
-        },
-        heading: () => {
-          const level = args[0] || 2;
-          const heading = document.createElement(`h${level}`);
-          heading.textContent = text || "Heading";
-          const range = sel.getRangeAt(0);
-          range.deleteContents();
-          range.insertNode(heading);
-        },
-        horizontalRule: () => {
-          const hr = document.createElement("hr");
-          const range = sel.getRangeAt(0);
-          range.insertNode(hr);
-        },
-        unorderedList: () => document.execCommand("insertUnorderedList"),
-        orderedList: () => document.execCommand("insertOrderedList"),
-        indent: () => document.execCommand("indent"),
-        outdent: () => document.execCommand("outdent"),
-        undo: () => handleUndo(),
-        redo: () => handleRedo()
-      };
-      if (commandMap[command]) {
-        commandMap[command]();
-        handleVisualInput();
-      }
-    },
-    [handleVisualInput, handleUndo, handleRedo]
-  );
-
-  // RecordMX (markdown-like) commands
-  const handleRecordMXCommand = useCallback(
-    (command: string, ...args: any[]) => {
-      const textarea = textareaRef.current;
-      if (!textarea) return;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selectedText = markup.substring(start, end);
-      // Dialog-based tools
-      if (
-        [
-          "link",
-          "image",
-          "video",
-          "codeBlock",
-          "math",
-          "table",
-          "template",
-          "reference"
-        ].includes(command)
-      ) {
-        setDialog({ open: true, type: command, data: {}, selection: selectedText });
-        return;
-      }
-      // Inline formatting
-      const commandMap: Record<string, string> = {
-        bold: `**${selectedText}**`,
-        italic: `*${selectedText}*`,
-        underline: `__${selectedText}__`,
-        strikethrough: `~~${selectedText}~~`,
-        superscript: `^${selectedText}^`,
-        subscript: `~${selectedText}~`,
-        inlineCode: `\`${selectedText}\``,
-        heading: `${"#".repeat(args[0] || 2)} ${selectedText}`,
-        horizontalRule: "\n\n---\n\n",
-        unorderedList: `- ${selectedText}`,
-        orderedList: `1. ${selectedText}`
-      };
-      let insertText = commandMap[command];
-      if (insertText) {
-        const newMarkup = markup.substring(0, start) + insertText + markup.substring(end);
-        setMarkup(newMarkup);
-        addToHistory(newMarkup);
-        setTimeout(() => {
-          if (textarea) {
-            const newPosition = start + insertText.length;
-            textarea.setSelectionRange(newPosition, newPosition);
-            textarea.focus();
-          }
-        }, 0);
-      }
-    },
-    [markup, addToHistory]
-  );
-
-  // Dialog submit handler
-  const handleDialogSubmit = useCallback(
-    (data: any) => {
-      const type = dialog.type;
-      const selection = dialog.selection;
-      let insertText = "";
-      switch (type) {
-        case "link":
-          insertText = `[${selection || data.text || "Link"}](${data.url || "https://example.com"})`;
-          break;
-        case "image":
-          insertText = `![${data.alt || "Image"}](${data.src || ""})${data.width || data.height ? `{${data.width || ""}${data.height ? "x" + data.height : ""}}` : ""}`;
-          break;
-        case "video":
-          insertText = `@[video](${data.src || ""})`;
-          break;
-        case "codeBlock":
-          insertText = `\`\`\`${data.language || "javascript"}${data.filename ? ` file:${data.filename}` : ""}\n${selection || data.code || ""}\n\`\`\``;
-          break;
-        case "math":
-          insertText = data.display ? `$$${data.formula || ""}$$` : `$${data.formula || ""}$`;
-          break;
-        case "table":
-          const rows = parseInt(data.rows || "3");
-          const cols = parseInt(data.cols || "3");
-          insertText = Array(rows)
-            .fill(0)
-            .map(
-              (_, i) =>
-                "|" +
-                Array(cols)
-                  .fill("Cell")
-                  .join("|") +
-                "|" +
-                (i === 0 ? "\n|" + Array(cols).fill("---").join("|") + "|" : "")
-            )
-            .join("\n");
-          break;
-        case "template":
-          insertText = `{% ${data.name || "template"} ${Object.entries(data.params || {})
-            .map(([k, v]) => `${k}=${v}`)
-            .join(" ")} %}`;
-          break;
-        case "reference":
-          insertText = `[@${data.id || "ref1"}]`;
-          break;
-        default:
-          return;
-      }
-      if (editorMode === "visual" && visualRef.current) {
-        const sel = window.getSelection();
-        if (sel && sel.rangeCount > 0) {
-          const range = sel.getRangeAt(0);
-          range.deleteContents();
-          const textNode = document.createTextNode(insertText);
-          range.insertNode(textNode);
-          range.setStartAfter(textNode);
-          range.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range);
-        }
-        handleVisualInput();
-      } else if (editorMode === "recordmx" && textareaRef.current) {
-        const start = textareaRef.current.selectionStart;
-        const end = textareaRef.current.selectionEnd;
-        const newMarkup = markup.slice(0, start) + insertText + markup.slice(end);
-        setMarkup(newMarkup);
-        addToHistory(newMarkup);
-        setTimeout(() => {
-          if (textareaRef.current) {
-            const newPosition = start + insertText.length;
-            textareaRef.current.setSelectionRange(newPosition, newPosition);
-            textareaRef.current.focus();
-          }
-        }, 0);
-      }
-      setDialog({ open: false, type: null, data: {}, selection: "" });
-    },
-    [dialog, editorMode, markup, handleVisualInput, addToHistory]
-  );
-
-  // Save handler (simulate backend save)
-  const handleSave = useCallback(async () => {
+  };
+  
+  const handleSave = async () => {
     if (!title.trim()) {
       setError("দয়া করে একটি শিরোনাম লিখুন");
       return;
@@ -450,142 +90,66 @@ export function MediaWikiEditor({
     setIsSaving(true);
     setError("");
     try {
-      let finalMarkup = markup;
-      if (editorMode === "visual" && visualRef.current) {
-        finalMarkup = convertHtmlToRecordMX(visualRef.current.innerHTML);
-      }
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise((resolve) => setTimeout(resolve, 800));
       alert("✓ নিবন্ধটি সফলভাবে সংরক্ষিত হয়েছে!");
     } catch (err: any) {
       setError(err?.message || "সংরক্ষণে ত্রুটি হয়েছে");
     } finally {
       setIsSaving(false);
     }
-  }, [title, markup, editorMode]);
-
-  // Responsive styles
-  const containerClass = isMobile
-    ? "w-full min-h-screen bg-gray-50 py-2"
-    : "w-full min-h-screen bg-gray-50";
-  const editorWrapperClass = isMobile
-    ? "max-w-full mx-auto bg-white min-h-[60vh] border rounded-lg shadow-sm px-1 py-1"
-    : "max-w-7xl mx-auto bg-white min-h-[70vh] border rounded-lg shadow-sm";
-  const toolbarContainerClass = isMobile
-    ? "border-b bg-white flex flex-col gap-2 items-stretch justify-between py-2 px-2"
-    : "border-b bg-white flex items-center justify-between py-4 px-4";
-  const statsClass = isMobile
-    ? "text-xs text-gray-600 flex items-center gap-2"
-    : "text-sm text-gray-600 flex items-center gap-4";
-
+  };
+  
   return (
-    <div className={containerClass}>
-      <div className={toolbarContainerClass}>
+    <div className="w-full min-h-screen bg-gray-50 py-2">
+      <div className="max-w-7xl mx-auto bg-white min-h-[70vh] border rounded-lg shadow-sm p-4">
         <input
           type="text"
           value={title}
-          onChange={e => setTitle(e.target.value)}
+          onChange={(e) => setTitle(e.target.value)}
           placeholder="নিবন্ধের শিরোনাম লিখুন..."
-          className={
-            isMobile
-              ? "text-base font-semibold text-gray-800 bg-transparent border-none outline-none w-full mb-2"
-              : "text-lg font-semibold text-gray-800 bg-transparent border-none outline-none w-full"
-          }
+          className="text-lg font-semibold text-gray-800 bg-transparent border-none outline-none w-full mb-4"
         />
-        <div className="bg-white flex items-center justify-end gap-2">
-          {parseResult && (
-            <div className={statsClass}>
-              <span>{wordCount} words</span>
-              <span>{parseResult.metadata.readingTime} min read</span>
-              {parseResult.errors.length > 0 && (
-                <span className="text-red-600">{parseResult.errors.length} errors</span>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-      {error && (
-        <div className="max-w-7xl mx-auto mt-4 p-4 bg-red-50 border border-red-200 rounded text-red-700">
-          {error}
-        </div>
-      )}
-      <EditorToolbar
-        editorMode={editorMode}
-        onCommand={handleCommand}
-        onModeSwitch={handleModeSwitch}
-        handleSave={handleSave}
-        isMobile={isMobile}
-      />
-      <div className={editorWrapperClass}>
-        {editorMode === "recordmx" ? (
-          <textarea
-            ref={textareaRef}
-            value={markup}
-            onChange={e => {
-              setMarkup(e.target.value);
-              addToHistory(e.target.value);
-            }}
-            className={
-              isMobile
-                ? "w-full min-h-[60vh] p-2 outline-none text-sm font-mono resize-none border-none"
-                : "w-full min-h-[70vh] p-4 outline-none text-sm font-mono resize-none border-none"
-            }
-            placeholder="RecordMX মার্কআপ এখানে লিখুন..."
-          />
-        ) : (
-          <div
-            ref={visualRef}
-            onInput={handleVisualInput}
-            onBlur={handleVisualInput}
-            className={
-              isMobile
-                ? "min-h-[60vh] p-2 outline-none prose max-w-none text-base"
-                : "min-h-[70vh] p-4 outline-none prose max-w-none"
-            }
-            contentEditable
-            suppressContentEditableWarning
-            spellCheck
-            data-placeholder="এখানে লেখা শুরু করুন..."
-            style={{
-              overflowY: "auto",
-              fontSize: isMobile ? "1rem" : undefined,
-            }}
-          />
+
+        {error && (
+          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-700">
+            {error}
+          </div>
         )}
+
+        <EditorToolbar
+          onCommand={handleCommand}
+          handleSave={handleSave}
+          editorMode={"visual"}
+          isMobile={false}
+          // Add any necessary props for your toolbar
+        />
+
+        <MDXEditor
+          value={markdown}
+          onChange={setMarkdown}
+          plugins={[
+            codeBlockPlugin(),
+            tablePlugin(),
+            linkPlugin(),
+            imagePlugin(),
+            frontmatterPlugin(),
+            headingsPlugin(),
+            listsPlugin(),
+            quotePlugin(),
+            markdownShortcutPlugin(),
+          ]}
+          className="min-h-[500px] bg-white"
+          editorRef={editor} // Connects to useEditor (may depend on mdxeditor version)
+        />
+
+        <button
+          className="mt-4 px-4 py-2 bg-gray-800 text-white rounded"
+          onClick={handleSave}
+          disabled={isSaving}
+        >
+          {isSaving ? "Saving..." : "Publish"}
+        </button>
       </div>
-      {(parseResult &&
-        (parseResult.errors.length > 0 || parseResult.warnings.length > 0)) && (
-        <div className={isMobile ? "max-w-full mx-auto mt-2 p-2" : "max-w-7xl mx-auto mt-4 p-4"}>
-          {parseResult.errors.length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded p-3 mb-2">
-              <h3 className="font-semibold text-red-800 mb-2">Errors:</h3>
-              {parseResult.errors.map((error, index) => (
-                <div key={index} className="text-red-700 text-sm">
-                  {error}
-                </div>
-              ))}
-            </div>
-          )}
-          {parseResult.warnings.length > 0 && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
-              <h3 className="font-semibold text-yellow-800 mb-2">Warnings:</h3>
-              {parseResult.warnings.map((warning, index) => (
-                <div key={index} className="text-yellow-700 text-sm">
-                  {warning}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-      <EditorDialog
-        open={dialog.open}
-        type={dialog.type}
-        data={dialog.data}
-        selection={dialog.selection}
-        onClose={() => setDialog({ open: false, type: null, data: {}, selection: "" })}
-        onSubmit={handleDialogSubmit}
-        isMobile={isMobile}
-      />
     </div>
   );
 }
