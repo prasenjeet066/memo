@@ -397,7 +397,7 @@ export default function RecordIdPage({ params }) {
         <div className="flex-1 px-3 border-r">
           <div className="w-full">
             <ErrorBoundary>
-              <CreateRecord recordName={recordName} editingMode={editingMode} />
+              <CreateRecord record_name={recordName} editor_mode={editingMode} />
         
             </ErrorBoundary>
             </div>
