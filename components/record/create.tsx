@@ -22,10 +22,11 @@ export default function CreateNew({
   const [payload, setPayload] = useState({
     title: '',
     content: ''
-  })
+  });
   
   const [activeAction, setActiveAction] = useState < string | null > (null);
   const editorRef = useRef < HTMLDivElement > (null);
+  const textareaRef = useRef < HTMLTextAreaElement > (null);
   
   useEffect(() => {
     if (!record_name?.trim()) {
@@ -46,45 +47,51 @@ export default function CreateNew({
   }, [activeAction]);
   
   const executeCommand = useCallback((action: string) => {
-    if (!editorRef.current) return;
-    
-    try {
-      switch (action) {
-        case 'bold':
-          document.execCommand('bold', false);
-          break;
-        case 'italic':
-          document.execCommand('italic', false);
-          break;
-        case 'underline':
-          document.execCommand('underline', false);
-          break;
-        case 'strikethrough':
-          document.execCommand('strikeThrough', false);
-          break;
-        default:
-          console.log(`Executing command: ${action}`);
+    if (editorMode === 'visual' && editorRef.current) {
+      try {
+        switch (action) {
+          case 'bold':
+            document.execCommand('bold', false);
+            break;
+          case 'italic':
+            document.execCommand('italic', false);
+            break;
+          case 'underline':
+            document.execCommand('underline', false);
+            break;
+          case 'strikethrough':
+            document.execCommand('strikeThrough', false);
+            break;
+          default:
+            console.log(`Executing command: ${action}`);
+        }
+      } catch (error) {
+        console.error(`Failed to execute command: ${action}`, error);
+      } finally {
+        setActiveAction(null);
       }
-    } catch (error) {
-      console.error(`Failed to execute command: ${action}`, error);
-    } finally {
-      setActiveAction(null);
     }
-  }, []);
+  }, [editorMode]);
   
   const handlePublish = useCallback(() => {
     if (onPublish) {
       onPublish();
     } else {
-      console.log('Publishing...');
+      console.log('Publishing...', payload);
     }
-  }, [onPublish]);
+  }, [onPublish, payload]);
   
   const handleToolbarAction = useCallback((action: string) => {
     if (action && action !== activeAction) {
       setActiveAction(action);
     }
   }, [activeAction]);
+  
+  const handleSwMode = useCallback((mode: string) => {
+    if (mode === 'visual' || mode === 'mdx') {
+      setEditorMode(mode);
+    }
+  }, []);
   
   const renderToolbarButton = useCallback((block: any, index: number) => {
     return (
@@ -102,16 +109,11 @@ export default function CreateNew({
       </button>
     );
   }, [activeAction, handleToolbarAction]);
-  const handleSwMode = (mode: string) => {
-    if (mode !== editorMode) {
-      setEditorMode(mode)
-    }
-  }
   
   const renderToolbarSelect = useCallback((block: any, index: number) => {
     return (
       <Select key={`toolbar-select-${index}`}>
-        <SelectTrigger className="max-w-[180px] w-auto  h-10 border-none">
+        <SelectTrigger className="max-w-[180px] w-auto h-10 border-none">
           <SelectValue placeholder={block.name || 'Select...'} />
         </SelectTrigger>
         <SelectContent>
@@ -119,9 +121,11 @@ export default function CreateNew({
             <SelectItem
               key={`item-${index}-${itemIndex}`}
               value={item.action || item.label}
-              onSelect={() => handleToolbarAction(item.action)}
             >
-              <div className="flex items-center gap-2">
+              <div 
+                className="flex items-center gap-2"
+                onClick={() => handleToolbarAction(item.action)}
+              >
                 <Fai icon={item.icon} style="fas" />
                 <span>{item.label}</span>
               </div>
@@ -132,6 +136,22 @@ export default function CreateNew({
     );
   }, [handleToolbarAction]);
   
+  const handleTextareaChange = useCallback((e: React.ChangeEvent < HTMLTextAreaElement > ) => {
+    setPayload(prev => ({
+      ...prev,
+      content: e.target.value
+    }));
+  }, []);
+  
+  const handleEditorContentChange = useCallback(() => {
+    if (editorRef.current) {
+      setPayload(prev => ({
+        ...prev,
+        content: editorRef.current?.innerHTML || ''
+      }));
+    }
+  }, []);
+  
   return (
     <div className="w-full h-full flex flex-col">
       {/* Header */}
@@ -139,41 +159,37 @@ export default function CreateNew({
         <h1 className="text-xl font-bold text-gray-900">
           {record_name?.trim() || 'Untitled Document'}
         </h1>
-        <Select onValueChange={(value) => handleSwMode(value)}>
+        <Select onValueChange={handleSwMode} value={editorMode}>
           <SelectTrigger className="max-w-[140px] w-auto h-10 border-none">
             <SelectValue placeholder={editorMode} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="visual">
-                Visual
-                </SelectItem>
-                <SelectItem value="mdx"> MDX
-                </SelectItem>
-                </SelectContent>
-          </Select>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="visual">Visual</SelectItem>
+            <SelectItem value="mdx">MDX</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Toolbar */}
       <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2">
-        {editorMode === 'visual' ?  (
-        <div className="flex items-center gap-2 overflow-x-auto flex-1">
-          {toolbarBlocks.map((block, index) => {
-            if (block.items && Array.isArray(block.items)) {
-              return renderToolbarSelect(block, index);
-            }
-            return renderToolbarButton(block, index);
-          })}
-        </div>
-        ): (
-          <div className = 'flex items-center justify-between bg-gray-50 w-full rounded-full px-2'></div>
+        {editorMode === 'visual' ? (
+          <div className="flex items-center gap-2 overflow-x-auto flex-1">
+            {toolbarBlocks.map((block, index) => {
+              if (block.items && Array.isArray(block.items)) {
+                return renderToolbarSelect(block, index);
+              }
+              return renderToolbarButton(block, index);
+            })}
+          </div>
+        ) : (
+          <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2"></div>
         )}
 
         {/* Actions */}
         <div className="flex items-center border-l">
-
           <button
             className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
-            onClick={()=>handlePublish(payload)}
+            onClick={handlePublish}
             aria-label="Publish document"
             type="button"
           >
@@ -181,21 +197,25 @@ export default function CreateNew({
           </button>
         </div>
       </div>
-      {
-        editorMode === 'mdx'? (
-        <>
-          <textarea className = 'flex-1 p-4 overflow-auto w-full bg-white min-h-[300px] border-none outline-none'
-          
-          />
-        </>): (
-                <div
-                ref={editorRef}
-                className="flex-1 p-4 overflow-auto w-full bg-white min-h-[300px] border-none outline-none"
-                contentEditable
-                suppressContentEditableWarning
-                aria-label="Editor content area"></div>
-        )
-      }
+
+      {editorMode === 'mdx' ? (
+        <textarea 
+          ref={textareaRef}
+          className="flex-1 p-4 overflow-auto w-full bg-white min-h-[300px] border-none outline-none"
+          value={payload.content}
+          onChange={handleTextareaChange}
+          placeholder="Start writing your MDX content..."
+        />
+      ) : (
+        <div
+          ref={editorRef}
+          className="flex-1 p-4 overflow-auto w-full bg-white min-h-[300px] border-none outline-none"
+          contentEditable
+          suppressContentEditableWarning
+          aria-label="Editor content area"
+          onInput={handleEditorContentChange}
+        />
+      )}
     </div>
   );
 }
