@@ -107,7 +107,7 @@ export default function Header({ navlist , replacement }: HeaderProps) {
           </div>
         )}
         </>
-        ): replacement.last}
+        ): <replacement.last/>}
       </header>
 
       {/* ===== Mobile Sidebar ===== */}
