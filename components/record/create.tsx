@@ -103,7 +103,7 @@ export default function CreateNew({
     );
   }, [activeAction, handleToolbarAction]);
   const handleSwMode = (mode: string) => {
-    if (mode !== editor_mode) {
+    if (mode !== editorMode) {
       setEditorMode(mode)
     }
   }
@@ -140,8 +140,8 @@ export default function CreateNew({
           {record_name?.trim() || 'Untitled Document'}
         </h1>
         <Select onValueChange={(value) => handleSwMode(value)}>
-          <SelectTrigger className="max-w-[80px] w-auto h-10 border-none">
-            <SelectValue placeholder={editor_mode} />
+          <SelectTrigger className="max-w-[140px] w-auto h-10 border-none">
+            <SelectValue placeholder={editorMode} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="visual">
@@ -155,7 +155,7 @@ export default function CreateNew({
 
       {/* Toolbar */}
       <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2">
-        {editor_mode=== 'visual' ?  (
+        {editorMode === 'visual' ?  (
         <div className="flex items-center gap-2 overflow-x-auto flex-1">
           {toolbarBlocks.map((block, index) => {
             if (block.items && Array.isArray(block.items)) {
@@ -182,7 +182,7 @@ export default function CreateNew({
         </div>
       </div>
       {
-        editor_mode === 'mdx'? (
+        editorMode === 'mdx'? (
         <>
           <textarea className = 'flex-1 p-4 overflow-auto w-full bg-white min-h-[300px] border-none outline-none'
           
