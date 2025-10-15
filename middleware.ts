@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 // Define supported locales
-const locales = ['en', 'fr', 'es'] // Add your supported locales here
+const locales = ['en', 'fr', 'es']
 const defaultLocale = 'en'
 
 // Public routes that don't require authentication (without locales)
@@ -16,21 +16,16 @@ const publicRoutes = [
   '/contact',
   '/auth/signin',
   '/auth/error',
-  // Add other public routes here
+  '/auth/signout',
+  '/auth/callback',
+  '/auth/verify-request',
 ]
-
-// Function to check if path is public
-function isPublicPath(pathname: string): boolean {
-  const pathWithoutLocale = getPathWithoutLocale(pathname)
-  return publicRoutes.some(route => pathWithoutLocale === route)
-}
 
 // Function to extract path without locale
 function getPathWithoutLocale(pathname: string): string {
-  // Remove locale prefix if present
   for (const locale of locales) {
     if (pathname.startsWith(`/${locale}/`)) {
-      return pathname.slice(locale.length + 1) // Remove '/en/' etc.
+      return pathname.slice(locale.length + 1)
     } else if (pathname === `/${locale}`) {
       return '/'
     }
@@ -38,13 +33,22 @@ function getPathWithoutLocale(pathname: string): string {
   return pathname
 }
 
-// Function to check if path should skip locale processing
-function shouldSkipLocaleProcessing(pathname: string): boolean {
+// Function to check if path is public
+function isPublicPath(pathname: string): boolean {
+  const pathWithoutLocale = getPathWithoutLocale(pathname)
+  return publicRoutes.some(route => {
+    // Exact match or starts with for nested routes
+    return pathWithoutLocale === route || pathWithoutLocale.startsWith(route + '/')
+  })
+}
+
+// Function to check if path should skip processing
+function shouldSkipProcessing(pathname: string): boolean {
   return (
     pathname.startsWith('/_next/') ||
-    pathname.startsWith('/api/') ||
+    pathname.startsWith('/api/auth/') || // Skip all NextAuth API routes
     pathname.startsWith('/static/') ||
-    /\..*$/.test(pathname) // Files with extensions
+    pathname.includes('.') // Files with extensions (images, fonts, etc.)
   )
 }
 
@@ -52,8 +56,8 @@ export default withAuth(
   function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl
     
-    // Skip locale processing for static files, API routes, etc.
-    if (shouldSkipLocaleProcessing(pathname)) {
+    // Skip processing for static files, API routes, etc.
+    if (shouldSkipProcessing(pathname)) {
       return NextResponse.next()
     }
     
@@ -62,15 +66,15 @@ export default withAuth(
       locale => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
     )
     
-    // Redirect to default locale only for root path without locale
-    if (!pathnameHasLocale && pathname === '/') {
+    // Redirect root path to default locale
+    if (pathname === '/' && !pathnameHasLocale) {
       return NextResponse.redirect(
         new URL(`/${defaultLocale}`, req.url)
       )
     }
     
-    // For other paths without locale, let Next.js handle them
-    // This prevents infinite redirects
+    // For paths without locale (except root), continue without redirect
+    // This prevents infinite redirects for auth pages and other routes
     if (!pathnameHasLocale && pathname !== '/') {
       return NextResponse.next()
     }
@@ -82,53 +86,63 @@ export default withAuth(
       authorized: ({ token, req }) => {
         const { pathname } = req.nextUrl
         
-        // Skip auth for static files and API routes (except protected ones)
-        if (shouldSkipLocaleProcessing(pathname)) {
+        // Always allow access to NextAuth API routes and static files
+        if (shouldSkipProcessing(pathname)) {
           return true
         }
         
         const pathWithoutLocale = getPathWithoutLocale(pathname)
         
-        // Check if the path is public
+        // Allow access to public routes
         if (isPublicPath(pathWithoutLocale)) {
           return true
         }
         
-        // Protect admin routes
+        // Protect admin routes - require ADMIN role
         if (pathWithoutLocale.startsWith('/admin')) {
-          return token?.role?.includes('ADMIN') ?? false
+          return token?.role === 'ADMIN' || (Array.isArray(token?.role) && token.role.includes('ADMIN'))
         }
         
-        // Protect create routes
+        // Protect create routes - require IP role
         if (pathWithoutLocale.startsWith('/create')) {
-          return token?.role?.includes('IP') ?? true
+          return token?.role === 'IP' || (Array.isArray(token?.role) && token.role.includes('IP')) || !!token
         }
         
-        // Protect account routes
+        // Protect account routes - require any authenticated user
         if (pathWithoutLocale.startsWith('/account')) {
           return !!token
         }
         
-        // Protect user dashboard
+        // Protect user dashboard - require any authenticated user
         if (pathWithoutLocale.startsWith('/dashboard')) {
           return !!token
         }
         
-        // Protect API routes
+        // Protect other API routes
         if (pathWithoutLocale.startsWith('/api/protected')) {
           return !!token
         }
         
-        // For all other routes, require authentication
-        return !!token
+        // Allow all other routes by default (change to !!token if you want to protect all routes)
+        return true
       },
+    },
+    pages: {
+      signIn: '/login', // Redirect to your login page
+      error: '/auth/error',
     },
   }
 )
 
 export const config = {
   matcher: [
-    // Match all paths except static files and specific excluded paths
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
-  ]
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico, sitemap.xml, robots.txt (static files)
+     * - public files with extensions
+     */
+    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)',
+  ],
 }
