@@ -43,7 +43,7 @@ export default function Header({ navlist , replacement }: HeaderProps) {
             onClick={() => setSideBarOpenLogic(!sideBarLogic)}
           />
           <Link href="/" className="flex items-center gap-1">
-            <h1 className="logo-style-font text-xl font-semibold text-gray-800 cursor-pointer">
+            <h1 className="logo-style-font sm:text-xl lg:text-2xl font-semibold text-gray-800 cursor-pointer">
               memo
             </h1>
           </Link>
