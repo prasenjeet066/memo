@@ -27,7 +27,7 @@ export default function MainPage() {
         <h1 className='text-center font-[PPNeueMachina-ubold]'>Find Anything.</h1>
         <div className='input w-full flex items-center justify-between gap-2 rounded-full p-2 bg-white px-4'>
           <input type='text' className='outline-none border-none bg-none w-full' placeholder ='About Bangladesh'/>
-          <button className='bg-gray-800 text-white p-2 rounded-full'>
+          <button className='bg-gray-800 text-white p-2 rounded-full px-4'>
             <Fai icon = 'arrow-right' style='fal'/>
           </button>
         </div>

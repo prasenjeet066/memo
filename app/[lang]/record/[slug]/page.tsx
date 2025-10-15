@@ -72,7 +72,7 @@ export default function RecordWithSlug({ params }) {
   )
   if (slug === 'new') {
     return (
-      <main className='min-h-screen w-full max-w-screen bg-gray-50'>
+      <main className='h-screen w-full max-h-screen max-w-screen bg-gray-50'>
         <Header navList={NavList}/>
         <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
           <ErrorBoundary>
