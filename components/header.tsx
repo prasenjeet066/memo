@@ -13,12 +13,15 @@ interface NavItem {
   icon: React.ComponentType < { className ? : string } > ;
   href ? : string;
 }
-
+interface Replenishment {
+  last : any ;
+}
 interface HeaderProps {
   navlist: NavItem[];
+  replacement?: Replenishment;
 }
 
-export default function Header({ navlist }: HeaderProps) {
+export default function Header({ navlist , replacement }: HeaderProps) {
   const [sideBarLogic, setSideBarOpenLogic] = useState < boolean > (false)
   const { data: session, status } = useSession()
   const isMobile = useMobile()
@@ -47,7 +50,9 @@ export default function Header({ navlist }: HeaderProps) {
         </div>
 
         {/* ===== Right Section ===== */}
-        {isMobile ? (
+        {!replacement.last ? (
+        <>
+          {isMobile ? (
           <div className="flex items-center gap-4">
             <Search className="w-6 h-6 cursor-pointer text-gray-700 hover:text-gray-900 transition-colors" />
             {session && (
@@ -101,6 +106,8 @@ export default function Header({ navlist }: HeaderProps) {
             )}
           </div>
         )}
+        </>
+        ): replacement.last}
       </header>
 
       {/* ===== Mobile Sidebar ===== */}

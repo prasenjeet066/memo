@@ -7,6 +7,22 @@ import { useMobile } from "@/lib/units/use-mobile"
 import { Home, Compass, HandHeart, Settings } from 'lucide-react'
 import { useState } from 'react'
 
+const HeaderNavs = ()=> {
+  const isMobile = useMobile()
+  return (
+    
+    <>
+      {
+        !isMobile && (
+          <>
+            
+          </>
+        )
+      }
+      
+    </>
+  )
+}
 export default function MainPage() {
   const isMobile = useMobile()
   const [isExpanded, setIsExpanded] = useState(true)
@@ -21,7 +37,9 @@ export default function MainPage() {
   
   return (
     <main className="min-h-screen w-full bg-gray-50 flex flex-col h-screen">
-      <Header navlist={NavList} />
+      <Header navlist={NavList}  replacement= {{
+        'last' : HeaderNavs
+      }}/>
       <div className="w-full h-full flex flex-col items-center justify-center">
         <div className='p-4 space-y-2'>
         <h1 className='text-center font-[PPNeueMachina-ubold] text-2xl'>Find Anything.</h1>
