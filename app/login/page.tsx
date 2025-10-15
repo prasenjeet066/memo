@@ -84,14 +84,11 @@ export default function LoginPage() {
       <header className="bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button 
-              onClick={() => router.back()} 
-              className="p-2 hover:bg-gray-100 transition-colors"
-              aria-label="Go back"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-700" />
-            </button>
-            <h1 className="text-xl font-semibold text-gray-900">Login to Account</h1>
+          <Link href="/" className="flex items-center gap-1">
+            <h1 className="logo-style-font text-2xl font-semibold text-gray-800 cursor-pointer">
+              memo
+            </h1>
+          </Link>
           </div>
           <Link 
             href='/register'
@@ -107,7 +104,7 @@ export default function LoginPage() {
         {/* Welcome Section */}
         <div className="mb-10">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            শুভেচ্ছা আপনাকে!
+            Welcome Back!
           </h2>
           <p className="text-gray-600">Sign in to continue to your account</p>
         </div>
@@ -120,7 +117,7 @@ export default function LoginPage() {
         )}
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-6 px-2">
+        <form onSubmit={handleSubmit} className="space-y-6 px-4">
           {/* Username or Email */}
           <div>
             <label 
@@ -135,8 +132,8 @@ export default function LoginPage() {
               type="text"
               value={formData.usernameOrEmail}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-              required
+              className="w-full px-4 py-3 bg-white rounded-full"
+              
               disabled={isLoading}
               placeholder="Enter your username or email"
             />
@@ -165,8 +162,8 @@ export default function LoginPage() {
                 type={passwordType ? 'password' : 'text'}
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-3 pr-12 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                required
+                className="w-full px-4 py-3 bg-white rounded-full"
+                
                 disabled={isLoading}
                 placeholder="Enter your password"
               />
@@ -189,7 +186,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-red-600 text-white py-3 px-4 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="w-full bg-gray-800 text-white rounded-full disabled:cursor-not-allowed font-medium"
           >
             {isLoading ? 'Signing in...' : 'Sign in'}
           </button>
@@ -206,7 +203,8 @@ export default function LoginPage() {
         <button
           onClick={handleGoogleSignIn}
           disabled={isLoading}
-          className="w-full border border-gray-300 bg-white text-gray-700 py-3 px-4 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 font-medium"
+          className="w-full border border-gray-300 bg-white text-gray-700 py-3 px-4
+          rounded-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 font-medium"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
