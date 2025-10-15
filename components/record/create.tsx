@@ -139,6 +139,19 @@ export default function CreateNew({
         <h1 className="text-xl font-bold text-gray-900">
           {record_name?.trim() || 'Untitled Document'}
         </h1>
+        <Select>
+            <SelectTrigger className="max-w-[80px] w-auto  h-10 border-none">
+              <SelectValue placeholder = {editor_mode}></SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem onSelect = {()=>handleSwMode('visual')}>
+                {'Visual'}
+              </SelectItem>
+              <SelectItem onSelect = {()=>handleSwMode('mdx')}>
+                {'MDX'}
+              </SelectItem>
+            </SelectContent>
+          </Select>
       </div>
 
       {/* Toolbar */}
@@ -158,19 +171,7 @@ export default function CreateNew({
 
         {/* Actions */}
         <div className="flex items-center border-l">
-          <Select>
-            <SelectTrigger className="max-w-[80px] w-auto  h-10 border-none">
-              <SelectValue placeholder = {editor_mode}></SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem onSelect = {()=>handleSwMode('visual')}>
-                {'Visual'}
-              </SelectItem>
-              <SelectItem onSelect = {()=>handleSwMode('mdx')}>
-                {'MDX'}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+
           <button
             className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
             onClick={()=>handlePublish(payload)}
