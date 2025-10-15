@@ -17,7 +17,7 @@ export default function CreateNew({
   record_name = '',
   onPublish
 }: EditorProps) {
-  const [editorMode, setEditorMode] = useState < 'visual' | 'markdown' > (editor_mode);
+  const [editorMode, setEditorMode] = useState < 'visual' | 'mdx' > (editor_mode);
   const [activeAction, setActiveAction] = useState < string | null > (null);
   const editorRef = useRef < HTMLDivElement > (null);
   
@@ -96,6 +96,11 @@ export default function CreateNew({
       </button>
     );
   }, [activeAction, handleToolbarAction]);
+  const handleSwMode = (mode:string)=>{
+    if (mode!== editor_mode) {
+      setEditorMode(mode)
+    }
+  }
   
   const renderToolbarSelect = useCallback((block: any, index: number) => {
     return (
@@ -132,7 +137,8 @@ export default function CreateNew({
 
       {/* Toolbar */}
       <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2">
-        <div className="flex items-center gap-2 overflow-x-auto">
+        {editor_mode=== 'visual' ?  (
+        <div className="flex items-center gap-2 overflow-x-auto flex-1">
           {toolbarBlocks.map((block, index) => {
             if (block.items && Array.isArray(block.items)) {
               return renderToolbarSelect(block, index);
@@ -140,9 +146,25 @@ export default function CreateNew({
             return renderToolbarButton(block, index);
           })}
         </div>
+        ): (
+          <div className = 'flex items-center justify-between bg-gray-50 w-full rounded-full px-2'></div>
+        )}
 
         {/* Actions */}
         <div className="flex items-center border-l">
+          <Select>
+            <SelectTrigger className="max-w-[80px] w-auto  h-10 border-none">
+              <SelectValue placeholder = {editor_mode}></SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem onSelect = {()=>handleSwMode('visual')}>
+                {'Visual'}
+              </SelectItem>
+              <SelectItem onSelect = {()=>handleSwMode('mdx')}>
+                {'MDX'}
+              </SelectItem>
+            </SelectContent>
+          </Select>
           <button
             className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
             onClick={handlePublish}

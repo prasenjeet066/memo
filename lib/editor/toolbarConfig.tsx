@@ -48,8 +48,8 @@ export const toolbarBlocks = [
       name: "Lists",
       items: [
         { icon: "list-ul", action: "unorderedList", label: "Bullet List" },
-        { icon: "list-ol", action: "orderedList", label: "Numbered List" },
-        { icon: "list-check", action: "refList", label: "Task/Reference List" },
+        { icon: "list-ol", action: "orderedList", label: "Num List" },
+        { icon: "list-check", action: "refList", label: "Reference List" },
       ],
     },
     
@@ -62,13 +62,13 @@ export const toolbarBlocks = [
     {
       name: "Insert",
       items: [
-        { icon: "file-code", action: "codeBlock", label: "Code Block" },
+        { icon: "file-code", action: "codeBlock", label: "Code" },
         { icon: "square-root-variable", action: "math", label: "Math Formula" },
         { icon: "table", action: "table", label: "Table" },
         { icon: "minus", action: "horizontalRule", label: "Horizontal Line" },
         
         { icon: "puzzle-piece", action: "template", label: "Template" },
-        { icon: "file-alt", action: "reference", label: "Reference / Citation" },
+        { icon: "file-alt", action: "reference", label: "Reference" },
       
       ],
     },
