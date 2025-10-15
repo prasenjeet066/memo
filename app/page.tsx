@@ -43,7 +43,7 @@ export default function MainPage() {
       <div className="w-full h-full flex flex-col items-center justify-center">
         <div className='p-4 space-y-2'>
         <h1 className='text-center font-[PPNeueMachina-ubold] text-2xl'>Find Anything.</h1>
-        <div className={'input w-full flex items-center justify-between gap-2 rounded-full p-2 bg-white px-4' + ' ' + !isMobile &&  'min-w-[150px]'}>
+        <div className={'input w-full flex items-center justify-between gap-2 rounded-full p-2 bg-white px-4 ' + ' ' + !isMobile ?  'min-w-[150px]' :'' }>
           <input type='text' className='outline-none border-none bg-none w-full' placeholder ='About Bangladesh'/>
           <button className='bg-gray-800 text-white p-2 rounded-full px-4'>
             <Fai icon = 'arrow-right' style='fal'/>
