@@ -50,8 +50,8 @@ export default function Header({ navlist , replacement }: HeaderProps) {
         </div>
 
         {/* ===== Right Section ===== */}
-        {!replacement.last ? (
-        <>
+        
+        
           {isMobile ? (
           <div className="flex items-center gap-4">
             <Search className="w-6 h-6 cursor-pointer text-gray-700 hover:text-gray-900 transition-colors" />
@@ -106,8 +106,8 @@ export default function Header({ navlist , replacement }: HeaderProps) {
             )}
           </div>
         )}
-        </>
-        ): <replacement.last/>}
+        
+        
       </header>
 
       {/* ===== Mobile Sidebar ===== */}
