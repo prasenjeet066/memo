@@ -20,12 +20,12 @@ export default function MainPage() {
   
   
   return (
-    <main className="min-h-screen w-full bg-gray-50">
+    <main className="min-h-screen w-full bg-gray-50 flex flex-col h-screen">
       <Header navlist={NavList} />
-      <div className="w-full h-full flex items-center justify-center">
+      <div className="w-full h-full flex flex-col items-center justify-center">
         <div className='p-4 space-y-2'>
         <h1>Find Anything.</h1>
-        <div className='input w-full flex items-center justify-between gap-2 rounded-full p-2 bg-white'>
+        <div className='input w-full flex items-center justify-between gap-2 rounded-full p-2 bg-white px-4'>
           <input type='text' className='outline-none border-none bg-none w-full' placeholder ='About Bangladesh'/>
           <button className='bg-gray-800 text-white p-2 rounded-full'>
             <Fai icon = ' arrow-right' style='fal'/>
