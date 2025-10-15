@@ -139,18 +139,17 @@ export default function CreateNew({
         <h1 className="text-xl font-bold text-gray-900">
           {record_name?.trim() || 'Untitled Document'}
         </h1>
-        <Select>
-            <SelectTrigger className="max-w-[80px] w-auto  h-10 border-none">
-              <SelectValue placeholder = {editor_mode}></SelectValue>
+        <Select onValueChange={(value) => handleSwMode(value)}>
+          <SelectTrigger className="max-w-[80px] w-auto h-10 border-none">
+            <SelectValue placeholder={editor_mode} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem onSelect = {()=>handleSwMode('visual')}>
-                {'Visual'}
-              </SelectItem>
-              <SelectItem onSelect = {()=>handleSwMode('mdx')}>
-                {'MDX'}
-              </SelectItem>
-            </SelectContent>
+              <SelectItem value="visual">
+                Visual
+                </SelectItem>
+                <SelectItem value="mdx"> MDX
+                </SelectItem>
+                </SelectContent>
           </Select>
       </div>
 
