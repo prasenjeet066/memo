@@ -18,6 +18,12 @@ export default function CreateNew({
   onPublish
 }: EditorProps) {
   const [editorMode, setEditorMode] = useState < 'visual' | 'mdx' > (editor_mode);
+  
+  const [payload , setPayload] = useState({
+    title : '',
+    content : ''
+  })
+  
   const [activeAction, setActiveAction] = useState < string | null > (null);
   const editorRef = useRef < HTMLDivElement > (null);
   
@@ -167,7 +173,7 @@ export default function CreateNew({
           </Select>
           <button
             className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
-            onClick={handlePublish}
+            onClick={()=>handlePublish(payload)}
             aria-label="Publish document"
             type="button"
           >

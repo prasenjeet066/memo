@@ -17,7 +17,13 @@ export default function RecordWithSlug({ params }) {
     { name: 'Contribute', icon: HandHeart, href: '/contribute' },
     { name: 'Settings', icon: Settings, href: '/settings' },
   ]
-  
+  const handlePublish = (payload:any)=>{
+      if (payload) {
+        
+        
+      }
+      return null
+    }
   const Sidebar = !isMobile && (
     <div className='w-auto max-w-64 h-full bg-white mr-2 flex flex-col justify-between rounded-2xl'>
       <div className='p-4 border-b border-gray-200'>
@@ -71,12 +77,13 @@ export default function RecordWithSlug({ params }) {
     </div>
   )
   if (slug === 'new') {
+    
     return (
       <main className='h-screen w-full max-h-screen max-w-screen bg-gray-50'>
         <Header navList={NavList}/>
         <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
           <ErrorBoundary>
-            <CreateNew/>
+            <CreateNew onPublish = {handlePublish}/>
           </ErrorBoundary>
           {Sidebar}
         </div>
