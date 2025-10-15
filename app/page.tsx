@@ -1,6 +1,7 @@
 // ===== FIXED: app/page.tsx =====
 'use client'
 
+import { Fai } from '@/components/Fontawesome';
 import Header from '@/components/header'
 import { useMobile } from "@/lib/units/use-mobile"
 import { Home, Compass, HandHeart, Settings } from 'lucide-react'
@@ -21,8 +22,16 @@ export default function MainPage() {
   return (
     <main className="min-h-screen w-full bg-gray-50">
       <Header navlist={NavList} />
-      <div className="flex gap-2">
-        
+      <div className="w-full h-full flex items-center justify-center">
+        <div className='p-4 space-y-2'>
+        <h1>Find Anything.</h1>
+        <div className='input w-full flex items-center justify-between gap-2 rounded-full p-2 bg-white'>
+          <input type='text' className='outline-none border-none bg-none w-full' placeholder ='About Bangladesh'/>
+          <button className='bg-gray-800 text-white p-2 rounded-full'>
+            <Fai icon = ' arrow-right' style='fal'/>
+          </button>
+        </div>
+        </div>
       </div>
     </main>
   )
