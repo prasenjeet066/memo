@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Fai } from '@/components/Fontawesome';
-import {toolbarBlocks} from '@/lib/editor/toolbarConfig';
+import { toolbarBlocks } from '@/lib/editor/toolbarConfig';
 
 interface EditorProps {
-  editor_mode ? : 'visual' | 'markdown';
+  editor_mode ? : 'visual' | 'mdx';
   record_name ? : string;
   onPublish ? : () => void;
 }
@@ -19,9 +19,9 @@ export default function CreateNew({
 }: EditorProps) {
   const [editorMode, setEditorMode] = useState < 'visual' | 'mdx' > (editor_mode);
   
-  const [payload , setPayload] = useState({
-    title : '',
-    content : ''
+  const [payload, setPayload] = useState({
+    title: '',
+    content: ''
   })
   
   const [activeAction, setActiveAction] = useState < string | null > (null);
@@ -102,8 +102,8 @@ export default function CreateNew({
       </button>
     );
   }, [activeAction, handleToolbarAction]);
-  const handleSwMode = (mode:string)=>{
-    if (mode!== editor_mode) {
+  const handleSwMode = (mode: string) => {
+    if (mode !== editor_mode) {
       setEditorMode(mode)
     }
   }
@@ -181,17 +181,21 @@ export default function CreateNew({
           </button>
         </div>
       </div>
-
-      {/* Editor Content */}
-      <div
-        ref={editorRef}
-        className="flex-1 p-4 overflow-auto w-full bg-white min-h-[300px] border-none outline-none"
-        contentEditable
-        suppressContentEditableWarning
-        aria-label="Editor content area"
-      >
-        {/* Editor content goes here */}
-      </div>
+      {
+        editor_mode === 'mdx'? (
+        <>
+          <textarea className = 'flex-1 p-4 overflow-auto w-full bg-white min-h-[300px] border-none outline-none'
+          
+          />
+        </>): (
+                <div
+                ref={editorRef}
+                className="flex-1 p-4 overflow-auto w-full bg-white min-h-[300px] border-none outline-none"
+                contentEditable
+                suppressContentEditableWarning
+                aria-label="Editor content area"></div>
+        )
+      }
     </div>
   );
 }
