@@ -114,14 +114,11 @@ export default function RegisterPage() {
       <header className="bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => router.back()}
-              className="p-2 hover:bg-gray-100 transition-colors"
-              aria-label="Go back"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-700" />
-            </button>
-            <h1 className="text-xl font-semibold text-gray-900">Create Account</h1>
+            <Link href="/" className="flex items-center gap-1">
+              <h1 className="logo-style-font text-2xl font-semibold text-gray-800 cursor-pointer">
+                memo
+              </h1>
+            </Link>
           </div>
           <Link
             href="/login"
@@ -133,22 +130,40 @@ export default function RegisterPage() {
       </header>
 
       <div className="max-w-md mx-auto px-4 py-12">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Registration: Step {step + 1} of 3
+        {/* Welcome Section */}
+        <div className="mb-10">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            Create Your Account
           </h2>
           <p className="text-gray-600">
-            {step === 0 && "Your personal details"}
-            {step === 1 && "Account information"}
-            {step === 2 && "Set your password"}
+            {step === 0 && "Let's start with your personal details"}
+            {step === 1 && "Set up your account information"}
+            {step === 2 && "Secure your account with a password"}
           </p>
         </div>
 
+        {/* Progress Indicator */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">Step {step + 1} of 3</span>
+            <span className="text-sm text-gray-500">{Math.round(((step + 1) / 3) * 100)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-gray-800 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${((step + 1) / 3) * 100}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Error Message */}
         {serverError && (
           <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm">
             {serverError}
           </div>
         )}
+        
+        {/* Success Message */}
         {success && (
           <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 text-sm">
             {success}
@@ -158,7 +173,7 @@ export default function RegisterPage() {
         {/* Multi-step Form */}
         <form
           onSubmit={step === 2 ? handleSubmit : handleNext}
-          className="space-y-6 px-2"
+          className="space-y-6 px-4"
         >
           {step === 0 && (
             <>
@@ -172,14 +187,13 @@ export default function RegisterPage() {
                   type="text"
                   value={form.fullName}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border ${errors.fullName ? "border-red-400" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
+                  className="w-full px-4 py-3 bg-white rounded-full"
                   disabled={isLoading}
                   autoComplete="name"
-                  
                   placeholder="Enter your full name"
                 />
                 {errors.fullName && (
-                  <p className="text-red-600 text-xs mt-1">{errors.fullName}</p>
+                  <p className="text-red-600 text-xs mt-2 ml-4">{errors.fullName}</p>
                 )}
               </div>
               <div>
@@ -192,12 +206,11 @@ export default function RegisterPage() {
                   type="date"
                   value={form.dob}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border ${errors.dob ? "border-red-400" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
+                  className="w-full px-4 py-3 bg-white rounded-full"
                   disabled={isLoading}
-                  
                 />
                 {errors.dob && (
-                  <p className="text-red-600 text-xs mt-1">{errors.dob}</p>
+                  <p className="text-red-600 text-xs mt-2 ml-4">{errors.dob}</p>
                 )}
               </div>
             </>
@@ -215,14 +228,13 @@ export default function RegisterPage() {
                   type="email"
                   value={form.email}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border ${errors.email ? "border-red-400" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
+                  className="w-full px-4 py-3 bg-white rounded-full"
                   disabled={isLoading}
                   autoComplete="email"
-                  
                   placeholder="Enter your email"
                 />
                 {errors.email && (
-                  <p className="text-red-600 text-xs mt-1">{errors.email}</p>
+                  <p className="text-red-600 text-xs mt-2 ml-4">{errors.email}</p>
                 )}
               </div>
               <div>
@@ -235,14 +247,13 @@ export default function RegisterPage() {
                   type="text"
                   value={form.username}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border ${errors.username ? "border-red-400" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
+                  className="w-full px-4 py-3 bg-white rounded-full"
                   disabled={isLoading}
                   autoComplete="username"
-                  
                   placeholder="Choose a username"
                 />
                 {errors.username && (
-                  <p className="text-red-600 text-xs mt-1">{errors.username}</p>
+                  <p className="text-red-600 text-xs mt-2 ml-4">{errors.username}</p>
                 )}
               </div>
             </>
@@ -261,15 +272,14 @@ export default function RegisterPage() {
                     type={showPassword ? "text" : "password"}
                     value={form.password}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 pr-12 border ${errors.password ? "border-red-400" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
+                    className="w-full px-4 py-3 bg-white rounded-full"
                     disabled={isLoading}
-                    required
                     placeholder="Create a password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(s => !s)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 transition-colors"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 transition-colors rounded-full"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
@@ -280,7 +290,7 @@ export default function RegisterPage() {
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="text-red-600 text-xs mt-1">{errors.password}</p>
+                  <p className="text-red-600 text-xs mt-2 ml-4">{errors.password}</p>
                 )}
               </div>
               <div>
@@ -294,15 +304,14 @@ export default function RegisterPage() {
                     type={showConfirm ? "text" : "password"}
                     value={form.confirmPassword}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 pr-12 border ${errors.confirmPassword ? "border-red-400" : "border-gray-300"} focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
+                    className="w-full px-4 py-3 bg-white rounded-full"
                     disabled={isLoading}
-                    required
                     placeholder="Confirm your password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirm(s => !s)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 transition-colors"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 transition-colors rounded-full"
                     aria-label={showConfirm ? "Hide password" : "Show password"}
                   >
                     {showConfirm ? (
@@ -313,44 +322,48 @@ export default function RegisterPage() {
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="text-red-600 text-xs mt-1">{errors.confirmPassword}</p>
+                  <p className="text-red-600 text-xs mt-2 ml-4">{errors.confirmPassword}</p>
                 )}
               </div>
             </>
           )}
 
           {/* Navigation Buttons */}
-          <div className="flex justify-between items-center mt-6">
-            {step > 0 ? (
+          <div className="flex gap-3 mt-8">
+            {step > 0 && (
               <button
                 type="button"
                 onClick={handleBack}
-                className="px-4 py-2 text-sm rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700"
+                className="flex-1 bg-gray-100 text-gray-700 rounded-full py-3 hover:bg-gray-200 transition-colors font-medium"
                 disabled={isLoading}
               >
                 Back
               </button>
-            ) : <span />}
+            )}
             <button
               type="submit"
               disabled={isLoading}
-              className={`px-4 py-2 rounded-md bg-blue-600 text-white font-semibold transition-colors hover:bg-blue-700 disabled:opacity-50`}
+              className={`${step > 0 ? 'flex-1' : 'w-full'} bg-gray-800 text-white rounded-full py-3 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors`}
             >
               {isLoading
-                ? step === 2 ? "Creating Account..." : "Next..."
-                : step === 2 ? "Sign Up" : "Next"
+                ? step === 2 ? "Creating Account..." : "Processing..."
+                : step === 2 ? "Create Account" : "Continue"
               }
             </button>
           </div>
         </form>
 
-        <div className="mt-8 text-center text-gray-600 text-sm">
-          Already have an account?{" "}
-          <Link href="/login" className="text-blue-600 hover:text-blue-500 font-medium">
-            Login
-          </Link>
+        {/* Login Link */}
+        <div className="mt-8 text-center">
+          <p className="text-gray-600 text-sm">
+            Already have an account?{" "}
+            <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium transition-colors">
+              Sign in
+            </Link>
+          </p>
         </div>
 
+        {/* Footer Links */}
         <div className="mt-12 pt-8 border-t border-gray-200">
           <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
             <Link href="/terms" className="hover:text-gray-700 transition-colors">
