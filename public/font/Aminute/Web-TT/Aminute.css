@@ -16,3 +16,13 @@
     font-weight: normal;
     text-rendering: optimizeLegibility;
 }
+@font-face {
+    font-family: "PPNeueMachina";
+    src: url("PPNeueMachina-Light.otf");
+    text-rendering: optimizeLegibility;
+}
+@font-face {
+    font-family: "PPNeueMachina-Regular";
+    src: url("PPNeueMachina-Regular.otf");
+    text-rendering: optimizeLegibility;
+}

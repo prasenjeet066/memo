@@ -3,13 +3,13 @@
 @tailwind utilities;
 
 body{
-  font-family: "Styrene B Regular Regular" !important;
+  font-family: "PPNeueMachina-Regular" !important;
 }
 
 .logo-style-font {
   font-family: "Harper" !important;
 }
 .logo-style-font:after{
-  content: "CN";
+  content: "";
   color:#210BFF;
 }
