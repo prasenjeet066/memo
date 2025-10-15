@@ -18,7 +18,7 @@ export default function MainPage() {
   ]
   
   const Sidebar = !isMobile && (
-    <div className='w-auto max-w-64 min-h-screen bg-white ml-2 flex flex-col justify-between rounded-2xl'>
+    <div className='w-auto max-w-64 h-full bg-white ml-2 flex flex-col justify-between rounded-2xl'>
       <div className='p-4 border-b border-gray-200'>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
@@ -71,9 +71,9 @@ export default function MainPage() {
   )
   
   return (
-    <main className="min-h-screen w-full bg-gray-50">
+    <main className="min-h-screen w-full h-screen bg-gray-50 flex flex-col">
       <Header navlist={NavList} />
-      <div className="flex gap-2">
+      <div className="flex h-full w-full gap-2">
         {Sidebar}
         <div className='flex-1 p-6'>
           <div className='max-w-4xl mx-auto'>

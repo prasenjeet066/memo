@@ -19,7 +19,7 @@ export default function RecordWithSlug({ params }) {
   ]
   
   const Sidebar = !isMobile && (
-    <div className='w-auto max-w-64 min-h-screen bg-white mr-2 flex flex-col justify-between rounded-2xl'>
+    <div className='w-auto max-w-64 h-full bg-white mr-2 flex flex-col justify-between rounded-2xl'>
       <div className='p-4 border-b border-gray-200'>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
@@ -86,9 +86,9 @@ export default function RecordWithSlug({ params }) {
   
   // Handle other slug cases
   return (
-    <div className='min-h-screen w-full bg-gray-50'>
+    <div className='min-h-screen w-full bg-gray-50 h-screen '>
       <Header navList={NavList}/>
-      <div className='w-full  p-4 gap-2 flex items-start justify-start'>
+      <div className='w-full h-full p-4 gap-2 flex items-start justify-start'>
         {Sidebar}
         <p>Record ID: {slug}</p>
         {/* Add your record display component here */}
