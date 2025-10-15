@@ -40,9 +40,7 @@ export default function MainPage() {
   
   return (
   <main className="min-h-screen w-full bg-gray-50 flex flex-col">
-    <Header navlist={NavList} replacement={{
-    'last': HeaderNavs
-    }} />
+    <Header navlist={NavList}/>
     <div className="w-full flex-1 flex flex-col items-center justify-center">
     <div className='p-4 space-y-2 w-full max-w-md'>
       <h1 className='text-center  text-2xl'>Find Anything.</h1>
@@ -54,7 +52,7 @@ export default function MainPage() {
       </div>
     </div>
     <div className = 'text-center w-full'>
-      Footer
+      
     </div>
   </div>
 </main>)
