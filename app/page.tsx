@@ -13,14 +13,14 @@ const HeaderNavs = () => {
     
     <>
       {
-        !isMobile && (
+        !isMobile ? (
           <>
-            <button className = 'px-4 bg-gray-800 text-white rounded-full'>
+            <button className = ' p-2 px-4  bg-gray-800 text-white rounded-full'>
               <Fai icon = 'arrow-right' className='mr-1'/>
               {'Be a contributor!'}
             </button>
           </>
-        )
+        ) : null
       }
       
     </>
