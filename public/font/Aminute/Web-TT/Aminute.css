@@ -26,3 +26,8 @@
     src: url("PPNeueMachina-Regular.otf");
     text-rendering: optimizeLegibility;
 }
+@font-face {
+    font-family: "PPNeueMachina-ubold";
+    src: url("PPNeueMachina-Ultrabold.otf");
+    text-rendering: optimizeLegibility;
+}
