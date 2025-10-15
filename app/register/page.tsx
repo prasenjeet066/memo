@@ -334,7 +334,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={handleBack}
-                className="flex-1 bg-gray-100 text-gray-700 rounded-full py-3 hover:bg-gray-200 transition-colors font-medium"
+                className="flex-1 text-gray-800 font-medium"
                 disabled={isLoading}
               >
                 Back
@@ -346,7 +346,7 @@ export default function RegisterPage() {
               className={`${step > 0 ? 'flex-1' : 'w-full'} bg-gray-800 text-white rounded-full py-3 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors`}
             >
               {isLoading
-                ? step === 2 ? "Creating Account..." : "Processing..."
+                ? step === 2 ? "Please Wait" : "Processing..."
                 : step === 2 ? "Create Account" : "Continue"
               }
             </button>
