@@ -42,8 +42,8 @@ export default function MainPage() {
     }} />
     <div className="w-full flex-1 flex flex-col items-center justify-center">
     <div className='p-4 space-y-2 w-full max-w-md'>
-      <h1 className='text-center font-[PPNeueMachina-ubold] text-2xl'>Find Anything.</h1>
-      <div className={`input w-full flex items-center justify-between gap-2 rounded-full p-2 bg-white px-4 ${!isMobile ? 'min-w-[150px]' : ''}`}>
+      <h1 className='text-center  text-2xl'>Find Anything.</h1>
+      <div className={`w-full flex items-center justify-between gap-2 rounded-full p-2 bg-white px-4`}>
         <input type='text' className='outline-none border-none bg-transparent w-full' placeholder='About Bangladesh' />
         <button className='bg-gray-800 text-white p-2 rounded-full px-4'>
           <Fqi icon={'arrow-right'}/>
