@@ -16,8 +16,8 @@ const HeaderNavs = () => {
         !isMobile ? (
           <>
             <button className = ' p-2 px-4  bg-gray-800 text-white rounded-full'>
-              <Fai icon = 'arrow-right' className='mr-1'/>
-              {'Be a contributor!'}
+              <Fai icon = 'heart' className='mr-1'/>
+              {'Contribute Now!'}
             </button>
           </>
         ) : null
