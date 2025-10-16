@@ -88,20 +88,23 @@ export default function RecordWithSlug({ params }) {
   if (slug === 'new') {
     
     return (
+      <ErrorBoundary>
       <main className='h-screen w-full max-h-screen max-w-screen bg-gray-50'>
         <Header navList={NavList}/>
         <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
-          <ErrorBoundary>
+          
+            
             <CreateNew
             onPublish = {handlePublish}
             ExpandedIs ={isExpanded}
             sideBarTools = {handleSideBarTools}
             IsExpandedSet= {setIsExpanded}
             />
-          </ErrorBoundary>
+
           {!isMobile && sidebarElement}
         </div>
       </main>
+      </ErrorBoundary>
     )
   }
   
