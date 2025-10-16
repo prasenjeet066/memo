@@ -13,3 +13,18 @@ body{
   content: "";
   color:#210BFF;
 }
+.tbl-oparator {
+  position: relative;
+}
+.tbl-oparator button {
+  position: absolute;
+}
+.tbl-oparator #addRow {
+  right: 0;
+  top: 0;
+}
+.tbl-oparator #addCol {
+  bottom: 0;
+  right: 0;
+  width: 100%;
+}

@@ -40,12 +40,6 @@ export default function CreateNew({
     }
   }, [editor_mode, editorMode]);
   
-  useEffect(() => {
-    if (activeAction) {
-      editorRef.current.focus()
-      executeCommand(activeAction);
-    }
-  }, [activeAction]);
   
   const executeCommand = useCallback((action: string) => {
     if (editorMode === 'visual' && editorRef.current) {
@@ -63,7 +57,7 @@ export default function CreateNew({
             const rows = 3;
             const cols = 4;
             
-            let tableHTML = '<table border="1" style="border-collapse: collapse; width: 100%; margin: 10px 0;">';
+            let tableHTML = '<div class = "tbl-oparator"><table border="1" style="border-collapse: collapse; width: 100%; margin: 10px 0;">';
             
             for (let i = 0; i < rows; i++) {
               tableHTML += '<tr>';
@@ -73,10 +67,9 @@ export default function CreateNew({
               tableHTML += '</tr>';
             }
             
-            tableHTML += '</table><br>';
+            tableHTML += '</table><button id="adRow">Add Row</button><button id = "addCol">Add Col</button></div><br>';
             
             document.execCommand('insertHTML', false, tableHTML);
-            
             break;
           case 'underline':
             document.execCommand('underline', false);
