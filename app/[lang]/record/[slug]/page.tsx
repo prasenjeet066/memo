@@ -17,8 +17,10 @@ export default function RecordWithSlug({ params }) {
     { name: 'Contribute', icon: HandHeart, href: '/contribute' },
     { name: 'Settings', icon: Settings, href: '/settings' },
   ]
-  const [sidebarElement, setSidebarElement] = useState(Sidebar)
-  
+  const [sidebarElement, setSidebarElement] = useState()
+  useEffect(()=>{
+    setSidebarElement(Sidebar)
+  },[Sidebar])
   const handleSideBarTools = (arg) => {
     setSidebarElement(arg);
   }
