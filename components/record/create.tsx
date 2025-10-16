@@ -54,7 +54,7 @@ export default function CreateNew({
   useEffect(() => {
     if (ActiveEditionPoint !== null) {
       if (ActiveEditionPoint.length) {
-        let block = findBlockByAction(activeAction[1]);
+        let block = findBlockByAction(activeAction.action);
         if (block.editor && block.editor.length) {
           let innerEditor: TableEditorField[] = block.editor;
           let isExpanded = ExpandedIs;
@@ -133,7 +133,7 @@ export default function CreateNew({
   function attachTableEventListeners(tableId) {
     const tableContainer = document.querySelector(`[data-table-id="${tableId}"]`);
     if (!tableContainer) return;
-    setActiveEditionPoint([tableContainer, 'table'])
+    setActiveEditionPoint({ref:tableContainer, action:'table'})
     // Add row functionality
     const addRowBtn = tableContainer.querySelector('.add-row-btn');
     addRowBtn?.addEventListener('click', function() {
