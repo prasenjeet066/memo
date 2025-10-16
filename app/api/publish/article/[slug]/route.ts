@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/security/auth/authOptions';
+import { authOptions } from '@/lib/auth/auth';
 import { eventFlow } from '@/lib/workflow';
 import { RecordService } from '@/lib/services/record.service';
 
