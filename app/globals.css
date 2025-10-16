@@ -13,7 +13,7 @@ body{
   content: "";
   color:#210BFF;
 }
-.tbl-operator {
+.table-controls {
   position: relative;
   width:100%;
   display: flex;
@@ -25,9 +25,8 @@ body{
   boborder-radius: 10%;
 }
 
-.tbl-operator button {
+.table-controls button {
   padding: 4;
-  
   cursor: pointer;
 }
 .tbl-operator table {
