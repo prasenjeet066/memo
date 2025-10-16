@@ -89,7 +89,7 @@ export default function RecordWithSlug({ params }: RecordWithSlugProps) {
   const handlePublish = async(payload: any) => {
     if (payload) {
       // Handle publish logic
-      let xht = await fetch(`/api/publish/ffff`,{
+      let xht = await fetch(`/api/publish/article/sakib_al`,{
         method: 'POST',
         
       })
