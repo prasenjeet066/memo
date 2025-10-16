@@ -20,11 +20,13 @@ body{
   align-items: center;
   justify-content: start;
   gap: 2px;
-  border-top-right-radius: 0px;
-  border-top-left-radius: 0px;
   padding: 4px 4px 4px 4px;
   background: #f1f1f1;
   border-radius: 10px;
+  padding-left: 8px;
+  padding-right: 8px;
+  border-top-right-radius: 0px;
+  border-top-left-radius: 0px;
 }
 
 .table-controls button {
@@ -35,12 +37,12 @@ body{
   text-align: center;
   border-collapse: separate;
   width: 100%;
+  background: #f1f1f1;
   border-radius: 10px;
 }
 
 .tbl-operator td {
   padding: 8px;
   border: none;
-  background: #f1f1f1;
   min-width: 100px;
 }
