@@ -3,13 +3,18 @@
 import { eventFlow } from '@/lib/workflow';
 import { RecordDAL } from '@/lib/dal/record.dal';
 import { RecordService } from '@/lib/services/record.service';
-import { generateObject, generateText } from 'ai';
-import { openai } from '@ai-sdk/openai';
-import { anthropic } from '@ai-sdk/anthropic';
+import OpenAI from 'openai';
 import { z } from 'zod';
 
 // ==========================================
-// Zod Schemas for AI SDK
+// OpenAI Client Setup
+// ==========================================
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// ==========================================
+// Zod Schemas for OpenAI Response Parsing
 // ==========================================
 const ContentCorrectionSchema = z.object({
   type: z.enum(['grammar', 'spelling', 'punctuation', 'style']),
@@ -25,24 +30,15 @@ const AIProcessingResultSchema = z.object({
 });
 
 // ==========================================
-// AI Content Processing Service using AI SDK
+// AI Content Processing Service using OpenAI
 // ==========================================
 class AIContentProcessor {
   private static getModel() {
-    // Check which AI provider is configured
-    const provider = process.env.AI_PROVIDER || 'openai';
-    
-    switch (provider) {
-      case 'anthropic':
-        return anthropic('claude-3-5-sonnet-20241022');
-      case 'openai':
-      default:
-        return openai('gpt-4-turbo');
-    }
+    return process.env.OPENAI_MODEL || 'gpt-4-turbo-preview';
   }
 
   /**
-   * Scan and fix content errors using AI SDK
+   * Scan and fix content errors using OpenAI
    */
   static async scanAndFixContent(content: string, title: string): Promise<{
     fixedContent: string;
@@ -50,41 +46,62 @@ class AIContentProcessor {
     summary: string;
   }> {
     try {
-      console.log('🤖 Using AI SDK to process content...');
+      console.log('🤖 Using OpenAI to process content...');
       
-      const { object } = await generateObject({
+      const completion = await openai.chat.completions.create({
         model: this.getModel(),
-        schema: AIProcessingResultSchema,
-        prompt: `You are an expert editor. Analyze and fix the following article content.
-
-Title: ${title}
-
-Content:
-${content}
-
+        messages: [
+          {
+            role: 'system',
+            content: `You are an expert editor. Analyze and fix the following article content.
+            
 Please:
 1. Fix all grammar, spelling, and punctuation errors
 2. Improve sentence structure and clarity
 3. Maintain the original meaning and tone
 4. Ensure consistency in formatting
 
-Provide:
-- fixedContent: The corrected version of the content
-- corrections: Array of all corrections made with type, original text, fixed text, and explanation
-- summary: A brief summary of the changes made`,
+Respond with a JSON object that matches this schema:
+{
+  "fixedContent": "The corrected version of the content",
+  "corrections": [
+    {
+      "type": "grammar|spelling|punctuation|style",
+      "original": "original text",
+      "fixed": "fixed text", 
+      "explanation": "why this was changed"
+    }
+  ],
+  "summary": "Brief summary of changes made"
+}`
+          },
+          {
+            role: 'user',
+            content: `Title: ${title}\n\nContent:\n${content}`
+          }
+        ],
         temperature: 0.3,
+        response_format: { type: 'json_object' }
       });
 
-      console.log(`   ✓ AI SDK processed content successfully`);
-      console.log(`   ✓ Found and fixed ${object.corrections.length} issues`);
+      const responseText = completion.choices[0]?.message?.content;
+      if (!responseText) {
+        throw new Error('No response from OpenAI');
+      }
+
+      const parsedResult = JSON.parse(responseText);
+      const validatedResult = AIProcessingResultSchema.parse(parsedResult);
+
+      console.log(`   ✓ OpenAI processed content successfully`);
+      console.log(`   ✓ Found and fixed ${validatedResult.corrections.length} issues`);
 
       return {
-        fixedContent: object.fixedContent,
-        corrections: object.corrections,
-        summary: object.summary,
+        fixedContent: validatedResult.fixedContent,
+        corrections: validatedResult.corrections,
+        summary: validatedResult.summary,
       };
     } catch (error) {
-      console.error('AI SDK content processing error:', error);
+      console.error('OpenAI content processing error:', error);
       // Fallback: return original content if AI fails
       return {
         fixedContent: content,
@@ -95,7 +112,7 @@ Provide:
   }
 
   /**
-   * Generate enhanced quality analysis using AI SDK
+   * Generate enhanced quality analysis using OpenAI
    */
   static async generateEnhancedQualityReport(
     content: string, 
@@ -104,34 +121,54 @@ Provide:
     try {
       const basicMetrics = this.calculateBasicMetrics(content);
       
-      // Use AI SDK to generate enhanced analysis
-      const { text } = await generateText({
+      const completion = await openai.chat.completions.create({
         model: this.getModel(),
-        prompt: `Analyze the following article for quality and provide recommendations:
-
-Title: ${title}
+        messages: [
+          {
+            role: 'system',
+            content: `Analyze the article for quality and provide specific recommendations to improve it. 
+            Focus on content structure, readability, SEO optimization, and engagement.
+            Return ONLY a JSON array of recommendation strings.`
+          },
+          {
+            role: 'user',
+            content: `Title: ${title}
 Word Count: ${basicMetrics.wordCount}
 Paragraphs: ${basicMetrics.paragraphs}
 
 Content:
 ${content.substring(0, 2000)}... ${content.length > 2000 ? '(truncated)' : ''}
 
-Provide 3-5 specific recommendations to improve the article quality. Focus on:
-- Content structure and organization
-- Readability and clarity
-- SEO optimization
-- Engagement and flow
-
-Format as a numbered list.`,
+Provide 3-5 specific recommendations as a JSON array of strings.`
+          }
+        ],
         temperature: 0.5,
-        maxTokens: 500,
+        max_tokens: 500,
+        response_format: { type: 'json_object' }
       });
 
-      // Parse recommendations from AI response
-      const aiRecommendations = text
-        .split('\n')
-        .filter(line => line.trim().match(/^\d+\./))
-        .map(line => line.replace(/^\d+\.\s*/, '').trim());
+      const responseText = completion.choices[0]?.message?.content;
+      let aiRecommendations: string[] = [];
+
+      if (responseText) {
+        try {
+          const parsed = JSON.parse(responseText);
+          // Handle different possible response structures
+          if (Array.isArray(parsed.recommendations)) {
+            aiRecommendations = parsed.recommendations;
+          } else if (Array.isArray(parsed)) {
+            aiRecommendations = parsed;
+          } else {
+            // Try to extract array from object
+            const values = Object.values(parsed);
+            if (values.length > 0 && Array.isArray(values[0])) {
+              aiRecommendations = values[0] as string[];
+            }
+          }
+        } catch (parseError) {
+          console.warn('Failed to parse OpenAI recommendations:', parseError);
+        }
+      }
 
       return {
         ...basicMetrics,
@@ -141,7 +178,7 @@ Format as a numbered list.`,
           : this.generateBasicRecommendations(basicMetrics),
       };
     } catch (error) {
-      console.error('AI SDK quality report error:', error);
+      console.error('OpenAI quality report error:', error);
       const basicMetrics = this.calculateBasicMetrics(content);
       return {
         ...basicMetrics,
@@ -152,29 +189,35 @@ Format as a numbered list.`,
   }
 
   /**
-   * Generate SEO-optimized summary using AI SDK
+   * Generate SEO-optimized summary using OpenAI
    */
   static async generateSEOSummary(content: string, title: string): Promise<string> {
     try {
-      const { text } = await generateText({
+      const completion = await openai.chat.completions.create({
         model: this.getModel(),
-        prompt: `Create a concise, SEO-optimized summary (150-160 characters) for the following article:
-
-Title: ${title}
-
-Content:
-${content.substring(0, 1500)}...
-
-The summary should:
-- Be engaging and click-worthy
-- Include relevant keywords naturally
-- Accurately represent the content
-- Be between 150-160 characters`,
+        messages: [
+          {
+            role: 'system',
+            content: `Create a concise, SEO-optimized summary (150-160 characters) that is engaging, 
+            click-worthy, includes relevant keywords naturally, and accurately represents the content.`
+          },
+          {
+            role: 'user',
+            content: `Title: ${title}\n\nContent:\n${content.substring(0, 1500)}...`
+          }
+        ],
         temperature: 0.7,
-        maxTokens: 100,
+        max_tokens: 100,
       });
 
-      return text.trim();
+      const summary = completion.choices[0]?.message?.content?.trim() || '';
+      
+      // Fallback if summary is too long or short
+      if (summary && summary.length >= 50 && summary.length <= 200) {
+        return summary;
+      } else {
+        return content.substring(0, 157) + '...';
+      }
     } catch (error) {
       console.error('SEO summary generation error:', error);
       return content.substring(0, 157) + '...';
@@ -255,7 +298,7 @@ The summary should:
 }
 
 // ==========================================
-// Type Definitions
+// Type Definitions (unchanged)
 // ==========================================
 interface ContentCorrection {
   type: 'grammar' | 'spelling' | 'punctuation' | 'style';
@@ -314,12 +357,12 @@ interface ArticleJSON {
 }
 
 // ==========================================
-// Publishing Workflow
+// Publishing Workflow (unchanged except for console logs)
 // ==========================================
 eventFlow.createFunction(
   {
     id: 'publish-article-workflow',
-    name: 'Article Publishing Workflow with AI SDK Processing',
+    name: 'Article Publishing Workflow with OpenAI Processing',
     retries: 3
   },
   {
@@ -332,7 +375,7 @@ eventFlow.createFunction(
     console.log(`   ID: ${articleId}`);
     console.log(`   Slug: ${slug}`);
     console.log(`   Author: ${username}`);
-    console.log(`   AI Provider: ${process.env.AI_PROVIDER || 'openai'}\n`);
+    console.log(`   OpenAI Model: ${process.env.OPENAI_MODEL || 'gpt-4-turbo-preview'}\n`);
 
     // ==========================================
     // STEP 1: Fetch Article Data
@@ -357,12 +400,12 @@ eventFlow.createFunction(
     });
 
     // ==========================================
-    // STEP 2: AI Content Scanning & Fixing (AI SDK)
+    // STEP 2: AI Content Scanning & Fixing (OpenAI)
     // ==========================================
     const aiProcessing = await step.run(
       'ai-content-processing',
       async () => {
-        console.log('🤖 Scanning content with AI SDK for errors...');
+        console.log('🤖 Scanning content with OpenAI for errors...');
         
         const result = await AIContentProcessor.scanAndFixContent(
           article.content,
@@ -377,10 +420,10 @@ eventFlow.createFunction(
     );
 
     // ==========================================
-    // STEP 3: Generate Enhanced Quality Report (AI SDK)
+    // STEP 3: Generate Enhanced Quality Report (OpenAI)
     // ==========================================
     const qualityReport = await step.run('generate-quality-report', async () => {
-      console.log('📊 Generating enhanced quality report with AI SDK...');
+      console.log('📊 Generating enhanced quality report with OpenAI...');
       
       const report = await AIContentProcessor.generateEnhancedQualityReport(
         aiProcessing.fixedContent,
@@ -396,10 +439,10 @@ eventFlow.createFunction(
     });
 
     // ==========================================
-    // STEP 4: Generate SEO Summary (AI SDK)
+    // STEP 4: Generate SEO Summary (OpenAI)
     // ==========================================
     const seoSummary = await step.run('generate-seo-summary', async () => {
-      console.log('🎯 Generating SEO-optimized summary with AI SDK...');
+      console.log('🎯 Generating SEO-optimized summary with OpenAI...');
       
       const summary = await AIContentProcessor.generateSEOSummary(
         aiProcessing.fixedContent,
@@ -546,7 +589,7 @@ eventFlow.createFunction(
             processedAt: new Date(),
             corrections: aiProcessing.corrections.length,
             qualityScore: qualityReport.score,
-            provider: process.env.AI_PROVIDER || 'openai'
+            provider: 'openai'
           }
         }
       } as any);
