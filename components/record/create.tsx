@@ -39,6 +39,21 @@ export default function CreateNew({
       setEditorMode(editor_mode);
     }
   }, [editor_mode, editorMode]);
+  const buildTemplate = (arg?:{
+    name?: string;
+    parameters?: [
+      {
+        id: string;
+        value: string
+      }
+    ]
+  })=>{
+    return `
+    <div class='tpl'>
+    
+    </div>
+    `
+  }
   // Function to attach event listeners to table buttons
   function attachTableEventListeners(tableId) {
     const tableContainer = document.querySelector(`[data-table-id="${tableId}"]`);
@@ -142,7 +157,13 @@ export default function CreateNew({
           case 'strikethrough':
             document.execCommand('strikeThrough', false);
             break;
-            
+          case 'template':
+            let template = `<br/> ${buildTemplate()} <br/>
+            `
+           // document.execCommand('insertHTML',false,template)
+           let dm = editorRef.current;
+           dm.insertAdjacentHTML('beforebegin',template)
+            break;
           default:
             console.log(`Executing command: ${action}`);
         }
