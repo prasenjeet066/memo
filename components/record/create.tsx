@@ -42,6 +42,7 @@ export default function CreateNew({
   
   useEffect(() => {
     if (activeAction) {
+      editorRef.current.focus()
       executeCommand(activeAction);
     }
   }, [activeAction]);
@@ -56,12 +57,34 @@ export default function CreateNew({
           case 'italic':
             document.execCommand('italic', false);
             break;
+          case 'table':
+            const editor = editorRef.current;
+            editor.focus();
+            const rows = 3;
+            const cols = 4;
+            
+            let tableHTML = '<table border="1" style="border-collapse: collapse; width: 100%; margin: 10px 0;">';
+            
+            for (let i = 0; i < rows; i++) {
+              tableHTML += '<tr>';
+              for (let j = 0; j < cols; j++) {
+                tableHTML += `<td style="padding: 8px; border: 1px solid #ccc;">Row ${i+1}, Col ${j+1}</td>`;
+              }
+              tableHTML += '</tr>';
+            }
+            
+            tableHTML += '</table><br>';
+            
+            document.execCommand('insertHTML', false, tableHTML);
+            
+            break;
           case 'underline':
             document.execCommand('underline', false);
             break;
           case 'strikethrough':
             document.execCommand('strikeThrough', false);
             break;
+            
           default:
             console.log(`Executing command: ${action}`);
         }
@@ -73,6 +96,9 @@ export default function CreateNew({
     }
   }, [editorMode]);
   
+  useEffect(() => {
+    executeCommand(activeAction)
+  }, [activeAction])
   const handlePublish = useCallback(() => {
     if (onPublish) {
       onPublish();
