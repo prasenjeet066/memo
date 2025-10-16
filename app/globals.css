@@ -13,16 +13,34 @@ body{
   content: "";
   color:#210BFF;
 }
-.tbl-oparator {
+.tbl-operator {
   position: relative;
+  margin: 10px 0;
 }
-.tbl-oparator button {
+
+.tbl-operator button {
   border: 1px dashed #111;
-  padding: 4;
+  padding: 4px 8px;
+  margin: 2px;
+  background: white;
+  cursor: pointer;
 }
-.tbl-oparator #addRow {
+
+.tbl-operator .add-row-btn {
   transform: rotate(90deg);
 }
-.tbl-oparator #addCol {
+
+.tbl-operator .add-col-btn {
   width: 100%;
+}
+
+.tbl-operator table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.tbl-operator td {
+  padding: 8px;
+  border: 1px solid #ccc;
+  min-width: 100px;
 }

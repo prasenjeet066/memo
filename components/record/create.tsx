@@ -39,7 +39,53 @@ export default function CreateNew({
       setEditorMode(editor_mode);
     }
   }, [editor_mode, editorMode]);
+  // Function to attach event listeners to table buttons
+  function attachTableEventListeners(tableId) {
+    const tableContainer = document.querySelector(`[data-table-id="${tableId}"]`);
+    if (!tableContainer) return;
+    
+    // Add row functionality
+    const addRowBtn = tableContainer.querySelector('.add-row-btn');
+    addRowBtn?.addEventListener('click', function() {
+      addTableRow(tableContainer);
+    });
+    
+    // Add column functionality
+    const addColBtn = tableContainer.querySelector('.add-col-btn');
+    addColBtn?.addEventListener('click', function() {
+      addTableColumn(tableContainer);
+    });
+  }
   
+  // Function to add a new row
+  function addTableRow(tableContainer) {
+    const table = tableContainer.querySelector('table');
+    const rows = table.querySelectorAll('tr');
+    const cols = rows[0].querySelectorAll('td').length;
+    
+    const newRow = document.createElement('tr');
+    for (let i = 0; i < cols; i++) {
+      const newCell = document.createElement('td');
+      newCell.contentEditable = true;
+      newCell.textContent = `Row ${rows.length + 1}, Col ${i + 1}`;
+      newRow.appendChild(newCell);
+    }
+    
+    table.appendChild(newRow);
+  }
+  
+  // Function to add a new column
+  function addTableColumn(tableContainer) {
+    const table = tableContainer.querySelector('table');
+    const rows = table.querySelectorAll('tr');
+    
+    rows.forEach((row, index) => {
+      const newCell = document.createElement('td');
+      newCell.contentEditable = true;
+      newCell.textContent = `Row ${index + 1}, Col ${row.children.length + 1}`;
+      row.appendChild(newCell);
+    });
+  }
   
   const executeCommand = useCallback((action: string) => {
     if (editorMode === 'visual' && editorRef.current) {
@@ -57,33 +103,32 @@ export default function CreateNew({
             const rows = 3;
             const cols = 4;
             
-            let tableHTML = '<div class ="tbl-oparator" id = "mtbl"><table border="1" id = "mtbl" style="border-collapse: collapse; width: 100%; margin: 10px 0;">';
+            // Generate unique ID for this table instance
+            const tableId = 'table-' + Date.now();
+            
+            let tableHTML = `<div class="tbl-operator" data-table-id="${tableId}">`;
+            tableHTML += '<table border="1" style="border-collapse: collapse; width: 100%;">';
             
             for (let i = 0; i < rows; i++) {
               tableHTML += '<tr>';
               for (let j = 0; j < cols; j++) {
-                tableHTML += `<td style="padding: 8px; border: 1px solid #ccc;">Row ${i+1}, Col ${j+1}</td>`;
+                tableHTML += `<td contenteditable="true">Row ${i+1}, Col ${j+1}</td>`;
               }
               tableHTML += '</tr>';
             }
             
-            tableHTML += '</table></div><br>';
+            tableHTML += '</table>';
+            tableHTML += '<div class="table-controls">';
+            tableHTML += `<button class="add-row-btn" data-table="${tableId}" contenteditable="false">+ Row</button>`;
+            tableHTML += `<button class="add-col-btn" data-table="${tableId}" contenteditable="false">+ Column</button>`;
+            tableHTML += '</div></div><br>';
             
             document.execCommand('insertHTML', false, tableHTML);
+            
+            // Add event listeners after a short delay
             setTimeout(() => {
-              let tbl = document.querySelectorAll('#mtbl');
-              if (tbl.length) {
-                tbl.forEach((t) => {
-                  let opt = `
-                  <div>
-                  <button contentEditable= "false" id="adRow">Add Row</button><button id = "addCol"contentEditable= "false">Add Col</button>
-                  </div>
-                  `
-                  t.insertAdjacentHTML('beforebegin', opt)
-                })
-              }
-              
-            }, 300)
+              attachTableEventListeners(tableId);
+            }, 100);
             break;
           case 'underline':
             document.execCommand('underline', false);
