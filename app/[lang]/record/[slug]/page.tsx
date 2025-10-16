@@ -17,10 +17,8 @@ export default function RecordWithSlug({ params }) {
     { name: 'Contribute', icon: HandHeart, href: '/contribute' },
     { name: 'Settings', icon: Settings, href: '/settings' },
   ]
-  const [sidebarElement, setSidebarElement] = useState()
-  useEffect(() => {
-    setSidebarElement(Sidebar)
-  }, [])
+  const [sidebarElement, setSidebarElement] = useState(Sidebar)
+  
   const handleSideBarTools = (arg) => {
     setSidebarElement(arg);
   }
@@ -99,7 +97,7 @@ export default function RecordWithSlug({ params }) {
             IsExpandedSet= {setIsExpanded}
             />
           </ErrorBoundary>
-          {!isMobile && Sidebar}
+          {!isMobile && sidebarElement}
         </div>
       </main>
     )
