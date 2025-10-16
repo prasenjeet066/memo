@@ -15,14 +15,14 @@ body{
 }
 .table-controls {
   position: relative;
-  width:100%;
+  width: max-content;
   display: flex;
   align-items: center;
   justify-content: start;
   gap: 2px;
-  padding: 4;
+  padding: 4px 4px 4px 4px;
   background: #f1f1f1;
-  border-radius: 10%;
+  border-radius: 10px;
 }
 
 .table-controls button {
