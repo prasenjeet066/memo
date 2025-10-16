@@ -9,24 +9,100 @@ interface EditorProps {
   editor_mode ? : 'visual' | 'mdx';
   record_name ? : string;
   onPublish ? : () => void;
+  sideBarTools ? : () => void;
+  ExpandedIs ? : boolean;
+  IsExpandedSet: any
+}
+interface TableEditorOption {
+  value: string;
+  text: string;
 }
 
+interface TableEditorField {
+  type: string;
+  label: string;
+  name: string;
+  options ? : TableEditorOption[];
+  min ? : number;
+  max ? : number;
+  step ? : number;
+}
+
+interface TableEditorConfig {
+  icon: string;
+  action: string;
+  label: string;
+  editor: TableEditorField[];
+  
+}
 // Rename export for clarity, but keep compatibility with previous usage
 export default function CreateNew({
   editor_mode = 'visual',
   record_name = '',
-  onPublish
+  onPublish,
+  sideBarTools,
+  ExpandedIs,
+  IsExpandedSet,
 }: EditorProps) {
   const [editorMode, setEditorMode] = useState < 'visual' | 'mdx' > (editor_mode);
-  
+  const [ActiveEditionPoint, setActiveEditionPoint] = useState(null);
   const [payload, setPayload] = useState({
     title: '',
     content: ''
   });
   
+  useEffect(() => {
+    if (ActiveEditionPoint !== null) {
+      if (ActiveEditionPoint.length) {
+        let block = findBlockByAction(activeAction[1]);
+        if (block.editor && block.editor.length) {
+          let innerEditor: TableEditorField[] = block.editor;
+          let isExpanded = ExpandedIs;
+          let setIsExpanded = IsExpandedSet;
+          sideBarTools((<>
+          <div className='w-auto max-w-64 h-full bg-white mr-2 flex flex-col justify-between rounded-2xl'>
+      <div className='p-4 border-b border-gray-200'>
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className='text-xs text-gray-500 hover:text-gray-700 transition-colors'
+        >
+          {isExpanded ? 'Collapse' : 'Expand'}
+        </button>
+      </div>
+
+      <nav className='flex-1 p-4 flex flex-col justify-between'>
+        <div className='space-y-2 flex-1'>
+          {innerEditor.map((nav) => (
+            <div
+              key={nav.label}
+              
+              className='flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors group'
+            >
+              
+            </div>
+          ))}
+        </div>
+        </nav>
+        </div>
+        </>))
+        }
+      }
+    }
+  }, [ActiveEditionPoint])
   const [activeAction, setActiveAction] = useState < string | null > (null);
   const editorRef = useRef < HTMLDivElement > (null);
   const textareaRef = useRef < HTMLTextAreaElement > (null);
+  // Create a flattened version once
+  const flattenedBlocks = toolbarBlocks.flatMap(block => [block, ...(block.items || []), ...(block.editor || [])]
+    .flatMap(item => [item, ...(item.items || []), ...(item.editor || [])])
+  ).filter(Boolean);
+  
+  // Then use simple find
+  function findBlockByAction(actionName) {
+    return flattenedBlocks.find(block => block.action === actionName);
+  }
+  
+  // Usage
   
   useEffect(() => {
     if (!record_name?.trim()) {
@@ -57,7 +133,7 @@ export default function CreateNew({
   function attachTableEventListeners(tableId) {
     const tableContainer = document.querySelector(`[data-table-id="${tableId}"]`);
     if (!tableContainer) return;
-    
+    setActiveEditionPoint([tableContainer, 'table'])
     // Add row functionality
     const addRowBtn = tableContainer.querySelector('.add-row-btn');
     addRowBtn?.addEventListener('click', function() {
@@ -137,10 +213,10 @@ export default function CreateNew({
             }
             
             tableHTML += '</table>';
-            tableHTML += '<div class="table-controls">';
+            tableHTML += '<div class="table-controls" contenteditable="false">';
             tableHTML += `<button class="add-row-btn fas fa-table" data-table="${tableId}" contenteditable="false"></button>`;
             
-            tableHTML += `<hr/><button class="add-col-btn fas fa-column" data-table="${tableId}" contenteditable="false"></button>`;
+            tableHTML += `<hr/><button class="add-col-btn fas fa-teble" data-table="${tableId}" contenteditable="false"></button>`;
             tableHTML += '</div></div><br>';
             
             document.execCommand('insertHTML', false, tableHTML);

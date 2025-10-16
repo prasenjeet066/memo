@@ -4,7 +4,7 @@ import { Home, Compass, HandHeart, Settings } from 'lucide-react'
 import Header from '@/components/header'
 import { useMobile } from "@/lib/units/use-mobile"
 import CreateNew from '@/components/record/create'
-import React, { useState } from 'react'
+import React, { useState , useEffect} from 'react'
 
 export default function RecordWithSlug({ params }) {
   const slug = params.slug;
@@ -17,13 +17,18 @@ export default function RecordWithSlug({ params }) {
     { name: 'Contribute', icon: HandHeart, href: '/contribute' },
     { name: 'Settings', icon: Settings, href: '/settings' },
   ]
-  const handlePublish = (payload:any)=>{
-      if (payload) {
-        
-        
-      }
-      return null
+  const [sidebarElement, setSidebarElement] = useState()
+  const handleSideBarTools = (arg) => {
+    setSidebarElement(arg);
+  }
+  const handlePublish = (payload: any) => {
+    if (payload) {
+      
+      
     }
+    return null
+  }
+  
   const Sidebar = !isMobile && (
     <div className='w-auto max-w-64 h-full bg-white mr-2 flex flex-col justify-between rounded-2xl'>
       <div className='p-4 border-b border-gray-200'>
@@ -76,6 +81,9 @@ export default function RecordWithSlug({ params }) {
       </nav>
     </div>
   )
+  useEffect(() => {
+    setSidebarElement(Sidebar)
+  }, [])
   if (slug === 'new') {
     
     return (
@@ -83,7 +91,12 @@ export default function RecordWithSlug({ params }) {
         <Header navList={NavList}/>
         <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
           <ErrorBoundary>
-            <CreateNew onPublish = {handlePublish}/>
+            <CreateNew
+            onPublish = {handlePublish}
+            ExpandedIs ={isExpanded}
+            sideBarTools = {handleSideBarTools}
+            IsExpandedSet= {setIsExpanded}
+            />
           </ErrorBoundary>
           {Sidebar}
         </div>
