@@ -86,10 +86,17 @@ export default function RecordWithSlug({ params }: RecordWithSlugProps) {
     setCurrentSidebar(arg);
   }
 
-  const handlePublish = (payload: any) => {
+  const handlePublish = async(payload: any) => {
     if (payload) {
       // Handle publish logic
-      console.log('Publishing:', payload)
+      let xht = await fetch(`/api/publish/ffff`,{
+        method: 'POST',
+        
+      })
+      let res = await xht.json()
+      if (xht.ok) {
+        alert(res)
+      }
     }
     return null
   }
