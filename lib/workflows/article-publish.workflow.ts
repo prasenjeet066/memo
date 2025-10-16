@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { eventFlow } from '@/lib/workflow';
+import { memoFlow } from '@/lib/workflow';
 
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
@@ -7,7 +7,7 @@ const openai = new OpenAI({
 });
 
 // Article Review Workflow using AI
-eventFlow.createFunction(
+memoFlow.createFunction(
   {
     id: "ai-article-review-workflow",
     name: "AI-Powered Article Submission Review",
@@ -18,44 +18,38 @@ eventFlow.createFunction(
   },
   async ({ event, step }) => {
     const { articleId, htmlContent, author, title, category } = event.data;
-
-    console.log(`🤖 Starting AI review for article: "${title}" by ${author}`);
-
     // Step 1: AI-Powered HTML Cleaning and Security Fix
     const cleanedHtml = await step.run(
       "ai-clean-html",
       async () => {
-        console.log("🔧 Step 1: AI cleaning HTML and fixing security issues...");
+        
         return await aiCleanAndSecureHtml(htmlContent);
-      },
-      { maxRetries: 2 }
+      }, { maxRetries: 2 }
     );
-
+    
     // Step 2: AI-Powered JSON Parsing and Structure Analysis
     const jsonData = await step.run(
       "ai-parse-json",
       async () => {
-        console.log("📋 Step 2: AI parsing content to structured JSON...");
+        
         return await aiParseArticleToJson(cleanedHtml, { articleId, title, author, category });
-      },
-      { maxRetries: 2 }
+      }, { maxRetries: 2 }
     );
-
+    
     // Step 3: AI Content Review (Spelling, Grammar, NSFW, Quality)
     const contentReview = await step.run(
       "ai-content-review",
       async () => {
-        console.log("🔍 Step 3: AI reviewing content quality and safety...");
+        
         return await aiReviewContent(jsonData);
-      },
-      { maxRetries: 3 }
+      }, { maxRetries: 3 }
     );
-
+    
     // Step 4: Store the AI-Reviewed Article
     const storageResult = await step.run(
       "store-article",
       async () => {
-        console.log("💾 Step 4: Storing AI-reviewed article...");
+        
         return await storeReviewedArticle({
           articleId,
           originalHtml: htmlContent,
@@ -66,11 +60,10 @@ eventFlow.createFunction(
           status: contentReview.nsfwDetected ? 'flagged' : 'approved',
           aiConfidence: contentReview.aiConfidence
         });
-      },
-      { maxRetries: 3 }
+      }, { maxRetries: 3 }
     );
-
-    console.log(`✅ AI article review completed for: "${title}"`);
+    
+    
     
     return {
       articleId,
@@ -84,7 +77,7 @@ eventFlow.createFunction(
 );
 
 // AI-Powered Helper Functions
-async function aiCleanAndSecureHtml(html: string): Promise<string> {
+async function aiCleanAndSecureHtml(html: string): Promise < string > {
   const prompt = `
 You are an HTML security expert. Clean and secure this HTML content by:
 
@@ -100,35 +93,34 @@ ${html}
 
 Return ONLY the cleaned HTML without any explanations.
 `;
-
+  
   try {
     const completion = await openai.chat.completions.create({
       model: "alibaba/tongyi-deepresearch-30b-a3b:free",
       messages: [
-        {
-          role: "system",
-          content: "You are an HTML security expert that returns only cleaned HTML code."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
+      {
+        role: "system",
+        content: "You are an HTML security expert that returns only cleaned HTML code."
+      },
+      {
+        role: "user",
+        content: prompt
+      }],
       max_tokens: 4000,
       temperature: 0.1
     });
-
+    
     return completion.choices[0].message.content?.trim() || html;
   } catch (error) {
     console.error("AI HTML cleaning failed, using fallback:", error);
     // Fallback basic cleaning
     return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-              .replace(/on\w+="[^"]*"/g, '')
-              .replace(/javascript:/gi, '');
+      .replace(/on\w+="[^"]*"/g, '')
+      .replace(/javascript:/gi, '');
   }
 }
 
-async function aiParseArticleToJson(html: string, metadata: any): Promise<any> {
+async function aiParseArticleToJson(html: string, metadata: any): Promise < any > {
   const prompt = `
 Parse this HTML article content into a structured JSON format. Extract:
 
@@ -148,24 +140,23 @@ ${html}
 
 Return ONLY valid JSON without any additional text.
 `;
-
+  
   try {
     const completion = await openai.chat.completions.create({
       model: "alibaba/tongyi-deepresearch-30b-a3b:free",
       messages: [
-        {
-          role: "system",
-          content: "You are a data extraction expert that returns only valid JSON."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
+      {
+        role: "system",
+        content: "You are a data extraction expert that returns only valid JSON."
+      },
+      {
+        role: "user",
+        content: prompt
+      }],
       max_tokens: 2000,
       temperature: 0.1
     });
-
+    
     const jsonString = completion.choices[0].message.content?.trim();
     return JSON.parse(jsonString || '{}');
   } catch (error) {
@@ -179,7 +170,7 @@ Return ONLY valid JSON without any additional text.
   }
 }
 
-async function aiReviewContent(articleData: any): Promise<any> {
+async function aiReviewContent(articleData: any): Promise < any > {
   const prompt = `
 Comprehensively review this article content for:
 
@@ -206,24 +197,23 @@ Return a JSON object with this structure:
   "aiConfidence": 0-1
 }
 `;
-
+  
   try {
     const completion = await openai.chat.completions.create({
       model: "alibaba/tongyi-deepresearch-30b-a3b:free",
       messages: [
-        {
-          role: "system",
-          content: "You are a content review expert that returns only valid JSON."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
+      {
+        role: "system",
+        content: "You are a content review expert that returns only valid JSON."
+      },
+      {
+        role: "user",
+        content: prompt
+      }],
       max_tokens: 3000,
       temperature: 0.2
     });
-
+    
     const jsonString = completion.choices[0].message.content?.trim();
     return JSON.parse(jsonString || '{}');
   } catch (error) {
@@ -244,7 +234,7 @@ Return a JSON object with this structure:
 }
 
 // Storage function (mock implementation)
-async function storeReviewedArticle(article: any): Promise<{ id: string; url: string }> {
+async function storeReviewedArticle(article: any): Promise < { id: string;url: string } > {
   // In real implementation, this would save to database
   const storageId = `article_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   

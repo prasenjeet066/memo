@@ -50,7 +50,7 @@ export default function CreateNew({
     title: '',
     content: ''
   });
-  
+/**
   useEffect(() => {
     if (ActiveEditionPoint !== null) {
       
@@ -93,7 +93,7 @@ export default function CreateNew({
       }
       
     }
-  }, [ActiveEditionPoint])
+  }, [ActiveEditionPoint])**/
   const [activeAction, setActiveAction] = useState < string | null > (null);
   const editorRef = useRef < HTMLDivElement > (null);
   const textareaRef = useRef < HTMLTextAreaElement > (null);
