@@ -35,7 +35,7 @@ export const toolbarBlocks = [
     
     // === HEADINGS & PARAGRAPH ===
     {
-      name: "Headings",
+      name: "H1",
       items: [
         { icon: "heading", action: "heading", label: "Heading 2", args: [2] },
         { icon: "heading", action: "heading", label: "Heading 3", args: [3] },
