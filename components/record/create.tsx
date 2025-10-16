@@ -157,7 +157,10 @@ export default function CreateNew({
             document.execCommand('strikeThrough', false);
             break;
           case 'template':
-            let template = `<br/> ${buildTemplate()} <br/>
+            let template = `<br/> ${buildTemplate({
+              name: 'infobox',
+              parameters:[]
+            })} <br/>
             `
             document.execCommand('insertHTML', false, template)
             
