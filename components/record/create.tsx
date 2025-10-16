@@ -124,8 +124,9 @@ export default function CreateNew({
             
             tableHTML += '</table>';
             tableHTML += '<div class="table-controls">';
-            tableHTML += `<button class="add-row-btn" data-table="${tableId}" contenteditable="false">+ Row</button>`;
-            tableHTML += `<button class="add-col-btn" data-table="${tableId}" contenteditable="false">+ Column</button>`;
+            tableHTML += `<button class="add-row-btn fas fa-table" data-table="${tableId}" contenteditable="false"></button>`;
+            
+            tableHTML += `<hr/><button class="add-col-btn fas fa-column" data-table="${tableId}" contenteditable="false"></button>`;
             tableHTML += '</div></div><br>';
             
             document.execCommand('insertHTML', false, tableHTML);
