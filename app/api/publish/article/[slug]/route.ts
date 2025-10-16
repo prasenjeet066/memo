@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { memoFlow } from "@/lib/workflow"; // your MemoFlow instance
-import "@/lib/aiArticleReviewWorkflow"; // the file containing your workflow definition
+import "@/lib/workflows/article-publish.workflow"; // the file containing your workflow definition
 
 export async function POST(req: Request) {
   try {
