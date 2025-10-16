@@ -20,6 +20,8 @@ body{
   align-items: center;
   justify-content: start;
   gap: 2px;
+  border-top-right-radius: 0;
+  border-top-left-radius: 0;
   padding: 4px 4px 4px 4px;
   background: #f1f1f1;
   border-radius: 10px;
