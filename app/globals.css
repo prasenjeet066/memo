@@ -47,7 +47,8 @@ body{
   padding: 8px;
   min-width: 100px;
 }
-.tpl-*{
+
+[class*="tpl-"]{
   border-radius: 10px;
   background: #f1f1f1;
   padding: 4px 4px 4px 4px;
