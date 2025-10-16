@@ -53,7 +53,7 @@ export default function CreateNew({
   
   useEffect(() => {
     if (ActiveEditionPoint !== null) {
-      if (ActiveEditionPoint.length) {
+      
         let block = findBlockByAction(activeAction.action);
         if (block.editor && block.editor.length) {
           let innerEditor: TableEditorField[] = block.editor;
@@ -86,7 +86,7 @@ export default function CreateNew({
         </div>
         </>))
         }
-      }
+      
     }
   }, [ActiveEditionPoint])
   const [activeAction, setActiveAction] = useState < string | null > (null);
