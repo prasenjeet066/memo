@@ -4,11 +4,11 @@ import "@/lib/workflows/article-publish.workflow"; // the file containing your w
 
 export async function POST(req: Request) {
   try {
-    let body = await req.json();
+    //let body = await req.json();
     
     // Example body:
     
-    body = {
+    let body = {
       "articleId": "123",
       "htmlContent": "<p>Hello world</p>",
       "author": "Alice",
