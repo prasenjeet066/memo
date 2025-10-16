@@ -57,7 +57,7 @@ export default function CreateNew({
             const rows = 3;
             const cols = 4;
             
-            let tableHTML = '<table border="1" id = "mtbl" style="border-collapse: collapse; width: 100%; margin: 10px 0;">';
+            let tableHTML = '<div class ="tbl-oparator" id = "mtbl"><table border="1" id = "mtbl" style="border-collapse: collapse; width: 100%; margin: 10px 0;">';
             
             for (let i = 0; i < rows; i++) {
               tableHTML += '<tr>';
@@ -67,7 +67,7 @@ export default function CreateNew({
               tableHTML += '</tr>';
             }
             
-            tableHTML += '</table><br>';
+            tableHTML += '</table></div><br>';
             
             document.execCommand('insertHTML', false, tableHTML);
             setTimeout(() => {
@@ -75,8 +75,8 @@ export default function CreateNew({
               if (tbl.length) {
                 tbl.forEach((t) => {
                   let opt = `
-                  <div class = "tbl-oparator">
-                  <button id="adRow">Add Row</button><button id = "addCol">Add Col</button>
+                  <div>
+                  <button contentEditable= "false" id="adRow">Add Row</button><button id = "addCol"contentEditable= "false">Add Col</button>
                   </div>
                   `
                   t.insertAdjacentHTML('beforebegin',opt)
