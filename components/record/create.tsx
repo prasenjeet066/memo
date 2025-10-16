@@ -50,7 +50,7 @@ export default function CreateNew({
   })=>{
     return `
     <div class='tpl'>
-    
+      Hello
     </div>
     `
   }
