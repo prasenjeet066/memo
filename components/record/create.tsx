@@ -54,12 +54,13 @@ export default function CreateNew({
   useEffect(() => {
     if (ActiveEditionPoint !== null) {
       
-        let block = findBlockByAction(ActiveEditionPoint.action);
-        if (block.editor && block.editor.length) {
-          let innerEditor: TableEditorField[] = block.editor;
-          let isExpanded = ExpandedIs;
-          let setIsExpanded = IsExpandedSet;
-          sideBarTools((<>
+      let block = findBlockByAction(ActiveEditionPoint.action);
+      alert(block.editor.length)
+      if (block.editor && block.editor.length) {
+        let innerEditor: TableEditorField[] = block.editor;
+        let isExpanded = ExpandedIs;
+        let setIsExpanded = IsExpandedSet;
+        sideBarTools((<>
           <div className='w-auto max-w-64 h-full bg-white mr-2 flex flex-col justify-between rounded-2xl'>
       <div className='p-4 border-b border-gray-200'>
         <button
@@ -85,7 +86,7 @@ export default function CreateNew({
         </nav>
         </div>
         </>))
-        }
+      }
       
     }
   }, [ActiveEditionPoint])
@@ -133,7 +134,7 @@ export default function CreateNew({
   function attachTableEventListeners(tableId) {
     const tableContainer = document.querySelector(`[data-table-id="${tableId}"]`);
     if (!tableContainer) return;
-    setActiveEditionPoint({ref:tableContainer, action:'table'})
+    setActiveEditionPoint({ ref: tableContainer, action: 'table' })
     // Add row functionality
     const addRowBtn = tableContainer.querySelector('.add-row-btn');
     addRowBtn?.addEventListener('click', function() {
