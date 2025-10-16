@@ -35,13 +35,15 @@ body{
 }
 .tbl-operator table {
   text-align: center;
-  border-collapse: separate;
+  border-collapse: collapse;
   width: 100%;
   background: #f1f1f1;
   border-radius: 10px;
+  border-bottom-left-radius:0px  ;
 }
 
 .tbl-operator td {
+  border: 1px solid #fff;
   padding: 8px;
   border: none;
   min-width: 100px;
