@@ -14,6 +14,7 @@ body{
   color:#210BFF;
 }
 .tbl-operator {
+  overflow-x: scroll;
   position: relative;
   margin: 10px 0;
 }
@@ -27,11 +28,13 @@ body{
 }
 
 .tbl-operator .add-row-btn {
-  transform: rotate(90deg);
+  width: 100%;
 }
 
 .tbl-operator .add-col-btn {
-  width: 100%;
+  float: right;
+  transform: rotate(90deg);
+  height: 100%;
 }
 
 .tbl-operator table {
