@@ -4,9 +4,16 @@ import { Home, Compass, HandHeart, Settings } from 'lucide-react'
 import Header from '@/components/header'
 import { useMobile } from "@/lib/units/use-mobile"
 import CreateNew from '@/components/record/create'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 
-export default function RecordWithSlug({ params }) {
+// Define proper types for params
+interface RecordWithSlugProps {
+  params: {
+    slug: string
+  }
+}
+
+export default function RecordWithSlug({ params }: RecordWithSlugProps) {
   const slug = params.slug;
   const isMobile = useMobile()
   const [isExpanded, setIsExpanded] = useState(true);
@@ -17,22 +24,9 @@ export default function RecordWithSlug({ params }) {
     { name: 'Contribute', icon: HandHeart, href: '/contribute' },
     { name: 'Settings', icon: Settings, href: '/settings' },
   ]
-  const [sidebarElement, setSidebarElement] = useState()
-  useEffect(()=>{
-    setSidebarElement(Sidebar)
-  },[Sidebar])
-  const handleSideBarTools = (arg) => {
-    setSidebarElement(arg);
-  }
-  const handlePublish = (payload: any) => {
-    if (payload) {
-      
-      
-    }
-    return null
-  }
-  
-  const Sidebar = 
+
+  // Fix 1: Use useMemo for Sidebar to prevent infinite re-renders
+  const Sidebar = useMemo(() => 
     <div className='w-auto max-w-64 h-full bg-white mr-2 flex flex-col justify-between rounded-2xl'>
       <div className='p-4 border-b border-gray-200'>
         <button
@@ -83,27 +77,38 @@ export default function RecordWithSlug({ params }) {
         </div>
       </nav>
     </div>
+  , [isExpanded, NavList]) // Add dependencies
+
+  // Fix 2: Remove problematic useEffect and state that was causing infinite loop
+  const [currentSidebar, setCurrentSidebar] = useState<React.ReactNode>(Sidebar)
   
-  
+  const handleSideBarTools = (arg: React.ReactNode) => {
+    setCurrentSidebar(arg);
+  }
+
+  const handlePublish = (payload: any) => {
+    if (payload) {
+      // Handle publish logic
+      console.log('Publishing:', payload)
+    }
+    return null
+  }
+
   if (slug === 'new') {
-    
     return (
       <ErrorBoundary>
-      <main className='h-screen w-full max-h-screen max-w-screen bg-gray-50'>
-        <Header navList={NavList}/>
-        <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
-          
-            
+        <main className='h-screen w-full max-h-screen max-w-screen bg-gray-50'>
+          <Header navList={NavList}/>
+          <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
             <CreateNew
-            onPublish = {handlePublish}
-            ExpandedIs ={isExpanded}
-            sideBarTools = {handleSideBarTools}
-            IsExpandedSet= {setIsExpanded}
+              onPublish={handlePublish}
+              ExpandedIs={isExpanded}
+              sideBarTools={handleSideBarTools}
+              IsExpandedSet={setIsExpanded}
             />
-
-          {!isMobile && sidebarElement}
-        </div>
-      </main>
+            {!isMobile && currentSidebar}
+          </div>
+        </main>
       </ErrorBoundary>
     )
   }
@@ -117,7 +122,6 @@ export default function RecordWithSlug({ params }) {
         <p>Record ID: {slug}</p>
         {/* Add your record display component here */}
       </div>
-      
     </div>
   )
 }
