@@ -54,7 +54,7 @@ export default function CreateNew({
   useEffect(() => {
     if (ActiveEditionPoint !== null) {
       
-        let block = findBlockByAction(activeAction.action);
+        let block = findBlockByAction(ActiveEditionPoint.action);
         if (block.editor && block.editor.length) {
           let innerEditor: TableEditorField[] = block.editor;
           let isExpanded = ExpandedIs;
