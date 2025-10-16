@@ -4,7 +4,7 @@ import { z } from "zod";
 
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
-  apiKey: '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',
+  apiKey: process.env.OPENROUTER_API_KEY,
 });
 
 // ---------------------
