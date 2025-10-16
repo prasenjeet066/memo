@@ -15,27 +15,21 @@ body{
 }
 .tbl-operator {
   position: relative;
-  margin: 10px 0;
+  width:100%;
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  gap: 2px;
+  padding: 4;
+  background: #f1f1f1;
+  boborder-radius: 10%;
 }
 
 .tbl-operator button {
-  border: 1px dashed #111;
-  padding: 4px 8px;
-  margin: 2px;
-  background: white;
+  padding: 4;
+  
   cursor: pointer;
 }
-
-.tbl-operator .add-row-btn {
-  width: 100%;
-}
-
-.tbl-operator .add-col-btn {
-  float: right;
-  transform: rotate(90deg);
-  height: 100%;
-}
-
 .tbl-operator table {
   border-collapse: collapse;
   width: 100%;
