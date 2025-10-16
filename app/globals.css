@@ -18,10 +18,13 @@ body{
 }
 .tbl-oparator button {
   position: absolute;
+  border: 1px dashed #111;
+  padding: 4;
 }
 .tbl-oparator #addRow {
   right: 0;
   top: 0;
+  transform: rotate(180deg);
 }
 .tbl-oparator #addCol {
   bottom: 0;

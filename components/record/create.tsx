@@ -57,7 +57,7 @@ export default function CreateNew({
             const rows = 3;
             const cols = 4;
             
-            let tableHTML = '<div class = "tbl-oparator"><table border="1" style="border-collapse: collapse; width: 100%; margin: 10px 0;">';
+            let tableHTML = '<table border="1" id = "mtbl" style="border-collapse: collapse; width: 100%; margin: 10px 0;">';
             
             for (let i = 0; i < rows; i++) {
               tableHTML += '<tr>';
@@ -67,9 +67,23 @@ export default function CreateNew({
               tableHTML += '</tr>';
             }
             
-            tableHTML += '</table><button id="adRow">Add Row</button><button id = "addCol">Add Col</button></div><br>';
+            tableHTML += '</table><br>';
             
             document.execCommand('insertHTML', false, tableHTML);
+            setTimeout(() => {
+              let tbl = document.querySelectorAll('#mtbl');
+              if (tbl.length) {
+                tbl.forEach((t) => {
+                  let opt = `
+                  <div class = "tbl-oparator">
+                  <button id="adRow">Add Row</button><button id = "addCol">Add Col</button>
+                  </div>
+                  `
+                  t.insertAdjacentHTML('beforebegin',opt)
+                })
+              }
+              
+            }, 300)
             break;
           case 'underline':
             document.execCommand('underline', false);
