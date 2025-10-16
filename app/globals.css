@@ -30,6 +30,7 @@ body{
   cursor: pointer;
 }
 .tbl-operator table {
+  text-align: center;
   border-collapse: collapse;
   width: 100%;
   border-radius: 10px;
