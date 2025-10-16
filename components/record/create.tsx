@@ -79,7 +79,7 @@ export default function CreateNew({
                   <button contentEditable= "false" id="adRow">Add Row</button><button id = "addCol"contentEditable= "false">Add Col</button>
                   </div>
                   `
-                  t.insertAdjacentHTML('beforebegin',opt)
+                  t.insertAdjacentHTML('beforebegin', opt)
                 })
               }
               
