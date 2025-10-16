@@ -20,8 +20,8 @@ body{
   align-items: center;
   justify-content: start;
   gap: 2px;
-  border-top-right-radius: 0;
-  border-top-left-radius: 0;
+  border-top-right-radius: 0px;
+  border-top-left-radius: 0px;
   padding: 4px 4px 4px 4px;
   background: #f1f1f1;
   border-radius: 10px;
@@ -33,13 +33,14 @@ body{
 }
 .tbl-operator table {
   text-align: center;
-  border-collapse: collapse;
+  border-collapse: separate;
   width: 100%;
   border-radius: 10px;
 }
 
 .tbl-operator td {
   padding: 8px;
-  border: 1px solid #ccc;
+  border: none;
+  background: #f1f1f1;
   min-width: 100px;
 }
