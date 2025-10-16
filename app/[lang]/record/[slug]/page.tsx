@@ -4,7 +4,7 @@ import { Home, Compass, HandHeart, Settings } from 'lucide-react'
 import Header from '@/components/header'
 import { useMobile } from "@/lib/units/use-mobile"
 import CreateNew from '@/components/record/create'
-import React, { useState , useEffect} from 'react'
+import React, { useState, useEffect } from 'react'
 
 export default function RecordWithSlug({ params }) {
   const slug = params.slug;
@@ -18,6 +18,9 @@ export default function RecordWithSlug({ params }) {
     { name: 'Settings', icon: Settings, href: '/settings' },
   ]
   const [sidebarElement, setSidebarElement] = useState()
+  useEffect(() => {
+    setSidebarElement(Sidebar)
+  }, [])
   const handleSideBarTools = (arg) => {
     setSidebarElement(arg);
   }
@@ -29,7 +32,7 @@ export default function RecordWithSlug({ params }) {
     return null
   }
   
-  const Sidebar = !isMobile && (
+  const Sidebar = 
     <div className='w-auto max-w-64 h-full bg-white mr-2 flex flex-col justify-between rounded-2xl'>
       <div className='p-4 border-b border-gray-200'>
         <button
@@ -80,10 +83,8 @@ export default function RecordWithSlug({ params }) {
         </div>
       </nav>
     </div>
-  )
-  useEffect(() => {
-    setSidebarElement(Sidebar)
-  }, [])
+  
+  
   if (slug === 'new') {
     
     return (
@@ -98,7 +99,7 @@ export default function RecordWithSlug({ params }) {
             IsExpandedSet= {setIsExpanded}
             />
           </ErrorBoundary>
-          {Sidebar}
+          {!isMobile && Sidebar}
         </div>
       </main>
     )

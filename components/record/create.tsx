@@ -55,12 +55,12 @@ export default function CreateNew({
     if (ActiveEditionPoint !== null) {
       
       let block = findBlockByAction(ActiveEditionPoint.action);
-      alert(block.editor.length)
-      if (block.editor && block.editor.length) {
+      
+      if (block.editor || block.editor.length) {
         let innerEditor: TableEditorField[] = block.editor;
         let isExpanded = ExpandedIs;
         let setIsExpanded = IsExpandedSet;
-        sideBarTools((<>
+        sideBarTools(<>
           <div className='w-auto max-w-64 h-full bg-white mr-2 flex flex-col justify-between rounded-2xl'>
       <div className='p-4 border-b border-gray-200'>
         <button
@@ -85,7 +85,7 @@ export default function CreateNew({
         </div>
         </nav>
         </div>
-        </>))
+        </>)
       }
       
     }
