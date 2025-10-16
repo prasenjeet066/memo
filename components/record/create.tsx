@@ -266,7 +266,7 @@ export default function CreateNew({
           {record_name?.trim() || 'Untitled Document'}
         </h1>
         <Select onValueChange={handleSwMode} value={editorMode}>
-          <SelectTrigger className="max-w-[140px] w-auto h-10 border-none">
+          <SelectTrigger className="max-w-[140px] w-auto h-10 border-none bg-white rounded-full">
             <SelectValue placeholder={editorMode} />
           </SelectTrigger>
           <SelectContent>
