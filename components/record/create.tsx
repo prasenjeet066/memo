@@ -39,17 +39,16 @@ export default function CreateNew({
       setEditorMode(editor_mode);
     }
   }, [editor_mode, editorMode]);
-  const buildTemplate = (arg?:{
-    name?: string;
-    parameters?: [
-      {
-        id: string;
-        value: string
-      }
-    ]
-  })=>{
+  const buildTemplate = (arg ? : {
+    name ? : string;
+    parameters ? : [
+    {
+      id: string;
+      value: string
+    }]
+  }) => {
     return `
-    <div class='tpl'>
+    <div class='tpl-${arg.name}'>
       Hello
     </div>
     `
@@ -112,7 +111,7 @@ export default function CreateNew({
           case 'heading':
             editorRef.current.focus()
             let heading = '<br/><h1 class="heading-lind">Title...</h1><hr/><br/>'
-            document.execCommand('insertHTML',false,heading)
+            document.execCommand('insertHTML', false, heading)
             break;
           case 'italic':
             document.execCommand('italic', false);
@@ -160,9 +159,8 @@ export default function CreateNew({
           case 'template':
             let template = `<br/> ${buildTemplate()} <br/>
             `
-           // document.execCommand('insertHTML',false,template)
-           let dm = editorRef.current;
-           dm.insertAdjacentHTML('beforebegin',template)
+            document.execCommand('insertHTML', false, template)
+            
             break;
           default:
             console.log(`Executing command: ${action}`);
