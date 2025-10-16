@@ -64,10 +64,10 @@ export default function CreateNew({
           <div className='w-auto max-w-64 h-full bg-white mr-2 flex flex-col justify-between rounded-2xl'>
       <div className='p-4 border-b border-gray-200'>
         <button
-          onClick={() => setIsExpanded(!isExpanded)}
+          
           className='text-xs text-gray-500 hover:text-gray-700 transition-colors'
         >
-          {isExpanded ? 'Collapse' : 'Expand'}
+          {ActiveEditionPoint.action}
         </button>
       </div>
 
@@ -79,6 +79,10 @@ export default function CreateNew({
               
               className='flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors group'
             >
+              <small className = 'border-b w-full'>{nav.label}</small>
+              <div>
+                
+              </div>
               
             </div>
           ))}
