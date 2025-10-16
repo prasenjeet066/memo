@@ -14,7 +14,6 @@ body{
   color:#210BFF;
 }
 .tbl-operator {
-  overflow-x: scroll;
   position: relative;
   margin: 10px 0;
 }
