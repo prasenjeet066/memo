@@ -94,6 +94,11 @@ export default function CreateNew({
           case 'bold':
             document.execCommand('bold', false);
             break;
+          case 'heading':
+            editorRef.current.focus()
+            let heading = '<br/><h1 class="heading-lind">Title...</h1><hr/><br/>'
+            document.execCommand('insertHTML',false,heading)
+            break;
           case 'italic':
             document.execCommand('italic', false);
             break;
