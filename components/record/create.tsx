@@ -7,7 +7,7 @@ import InfoBox from '@/lib/editor/templates/infobox'
 import { toolbarBlocks } from '@/lib/editor/toolbarConfig';
 
 interface EditorProps {
-  editor_mode ? : 'visual' | 'mdx';
+  editor_mode ? : 'visual' | 'code';
   record_name ? : string;
   onPublish ? : () => void;
   sideBarTools ? : () => void;
@@ -528,6 +528,7 @@ export default function CreateNew({
       ...prev,
       content: e.target.value
     }));
+    
   }, []);
   
   const handleEditorContentChange = useCallback(() => {
@@ -585,13 +586,14 @@ export default function CreateNew({
         </div>
       </div>
 
-      {editorMode === 'mdx' ? (
+      {editorMode === 'code' ? (
         <textarea 
           ref={textareaRef}
           className="flex-1 p-4 overflow-auto w-full bg-white min-h-[300px] border-none outline-none"
           value={payload.content}
           onChange={handleTextareaChange}
           placeholder="Start writing your MDX content..."
+          
         />
       ) : (
         <div
@@ -601,6 +603,7 @@ export default function CreateNew({
           suppressContentEditableWarning
           aria-label="Editor content area"
           onInput={handleEditorContentChange}
+          
         />
       )}
     </div>
