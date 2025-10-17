@@ -266,36 +266,29 @@ export default function CreateNew({
           case 'table':
             const editor = editorRef.current;
             editor.focus();
-            const rows = 3;
-            const cols = 4;
-            
-            // Generate unique ID for this table instance
             const tableId = 'table-' + Date.now();
             
-            let tableHTML = `<div class="tbl-operator" data-table-id="${tableId}">`;
-            tableHTML += '<table border="1" style="border-collapse: collapse; width: 100%;">';
+            // Helper functions
+            const makeHeader = j => `<th contenteditable>Header ${j+1}</th>`;
+            const makeCell = (i, j) => `<td contenteditable>Row ${i+1}, Col ${j+1}</td>`;
+            const makeRow = (i, isHeader = false) =>
+              `<tr>${Array(4).fill().map((_, j) => isHeader ? makeHeader(j) : makeCell(i, j)).join('')}</tr>`;
             
-            for (let i = 0; i < rows; i++) {
-              tableHTML += '<tr>';
-              for (let j = 0; j < cols; j++) {
-                tableHTML += `<td contenteditable="true">Row ${i+1}, Col ${j+1}</td>`;
-              }
-              tableHTML += '</tr>';
-            }
-            
-            tableHTML += '</table>';
-            tableHTML += '<div class="table-controls" contenteditable="false">';
-            tableHTML += `<button class="add-row-btn fas fa-arrow-down-from-dotted-line" data-table="${tableId}" contenteditable="false"></button>`;
-            
-            tableHTML += `<hr/><button class="add-col-btn fas fa-arrow-left-from-line" data-table="${tableId}" contenteditable="false"></button>`;
-            tableHTML += '</div></div><br>';
+            const tableHTML = `
+    <div class="tbl-operator" data-table-id="${tableId}">
+      <table border="1" style="border-collapse:collapse;width:100%">
+        <thead>${makeRow(0, true)}</thead>
+        <tbody>${[0,1,2].map(i => makeRow(i)).join('')}</tbody>
+      </table>
+      <div class="table-controls" contenteditable="false">
+        <button class="add-row-btn fas fa-arrow-down-from-dotted-line" data-table="${tableId}"></button>
+        <hr/><button class="add-col-btn fas fa-arrow-left-from-line" data-table="${tableId}"></button>
+      </div>
+    </div><br>
+  `;
             
             document.execCommand('insertHTML', false, tableHTML);
-            
-            // Add event listeners after a short delay
-            setTimeout(() => {
-              attachTableEventListeners(tableId);
-            }, 100);
+            setTimeout(() => attachTableEventListeners(tableId), 100);
             break;
           case 'underline':
             document.execCommand('underline', false);
