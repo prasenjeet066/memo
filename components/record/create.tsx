@@ -484,7 +484,7 @@ export default function CreateNew({
           setEditorMode(mode)
         }
       }
-    } 
+    }
     setEditorMode(mode)
   }, []);
   
@@ -555,7 +555,7 @@ export default function CreateNew({
         <h1 className="text-xl font-bold text-gray-900">
           {record_name?.trim() || 'Untitled Document'}
         </h1>
-        {session?.user &&  session?.user.role ==='ADMIN' && (
+        {session?.user &&  session?.user.role ==='REG' && (
         <Select
   defaultValue={editorMode}
   onValueChange={(value) => handleSwMode(value)}
