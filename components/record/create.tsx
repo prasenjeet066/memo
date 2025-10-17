@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Fai } from '@/components/Fontawesome';
+import InfoBox from '@/lib/editor/templates/infobox'
 import { toolbarBlocks } from '@/lib/editor/toolbarConfig';
 
 interface EditorProps {
@@ -50,50 +51,50 @@ export default function CreateNew({
     title: '',
     content: ''
   });
-/**
-  useEffect(() => {
-    if (ActiveEditionPoint !== null) {
-      
-      let block = findBlockByAction(ActiveEditionPoint.action);
-      
-      if (block.editor || block.editor.length) {
-        let innerEditor: TableEditorField[] = block.editor;
-        let isExpanded = ExpandedIs;
-        let setIsExpanded = IsExpandedSet;
-        sideBarTools(<>
-          <div className='w-auto h-full bg-white mr-2 flex flex-col justify-between rounded-2xl'>
-      <div className='p-4 border-b border-gray-200'>
-        <button
-          
-          className='text-xs text-gray-500 hover:text-gray-700 transition-colors'
-        >
-          {ActiveEditionPoint.action}
-        </button>
-      </div>
+  /**
+    useEffect(() => {
+      if (ActiveEditionPoint !== null) {
+        
+        let block = findBlockByAction(ActiveEditionPoint.action);
+        
+        if (block.editor || block.editor.length) {
+          let innerEditor: TableEditorField[] = block.editor;
+          let isExpanded = ExpandedIs;
+          let setIsExpanded = IsExpandedSet;
+          sideBarTools(<>
+            <div className='w-auto h-full bg-white mr-2 flex flex-col justify-between rounded-2xl'>
+        <div className='p-4 border-b border-gray-200'>
+          <button
+            
+            className='text-xs text-gray-500 hover:text-gray-700 transition-colors'
+          >
+            {ActiveEditionPoint.action}
+          </button>
+        </div>
 
-      <nav className='flex-1 p-4 flex flex-col justify-between'>
-        <div className='space-y-2 flex-1'>
-          {innerEditor.map((nav) => (
-            <div
-              key={nav.label}
-              
-              className='flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors group'
-            >
-              <small className = 'border-b w-full'>{nav.label}</small>
-              <div>
+        <nav className='flex-1 p-4 flex flex-col justify-between'>
+          <div className='space-y-2 flex-1'>
+            {innerEditor.map((nav) => (
+              <div
+                key={nav.label}
+                
+                className='flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors group'
+              >
+                <small className = 'border-b w-full'>{nav.label}</small>
+                <div>
+                  
+                </div>
                 
               </div>
-              
-            </div>
-          ))}
-        </div>
-        </nav>
-        </div>
-        </>)
+            ))}
+          </div>
+          </nav>
+          </div>
+          </>)
+        }
+        
       }
-      
-    }
-  }, [ActiveEditionPoint])**/
+    }, [ActiveEditionPoint])**/
   const [activeAction, setActiveAction] = useState < string | null > (null);
   const editorRef = useRef < HTMLDivElement > (null);
   const textareaRef = useRef < HTMLTextAreaElement > (null);
@@ -120,20 +121,85 @@ export default function CreateNew({
       setEditorMode(editor_mode);
     }
   }, [editor_mode, editorMode]);
+  
   const buildTemplate = (arg ? : {
     name ? : string;
-    parameters ? : [
-    {
+    parameters ? : Array < {
       id: string;
-      value: string
-    }]
-  }) => {
-    return `
-    <div class='tpl-${arg.name}'>
-      Hello
-    </div>
-    `
-  }
+      value: string;
+    } > ;
+  }): string => {
+    let infobox = `
+  <div class='tpl-${arg?.name || ''}'>`;
+    
+    if (InfoBox.length) {
+      InfoBox.forEach((ibox) => {
+        infobox += `<div class='x-tpl-${arg?.name || ''}'>`;
+        
+        if (ibox.image) {
+          infobox += `<img src='${ibox.image.url}' height='${ibox.image.height}' width='${ibox.image.width}' alt='${ibox.image.alt}'/>`;
+          if (ibox.image.caption) {
+            infobox += `<caption>${ibox.image.caption}</caption>`;
+          }
+        }
+        
+        if (ibox.title) {
+          infobox += `<h2 class='heading-tpl'>${ibox.title}</h2>`;
+          if (ibox.subtitle) {
+            infobox += `<h4>${ibox.subtitle}</h4>`;
+          }
+        }
+        
+        // Add sections processing
+        if (ibox.sections && ibox.sections.length) {
+          ibox.sections.forEach((section) => {
+            infobox += `<div class="section">`;
+            infobox += `<h3>${section.header}</h3>`;
+            
+            if (section.fields && section.fields.length) {
+              section.fields.forEach((field) => {
+                infobox += `<div class="field ${field.className || ''}">`;
+                infobox += `<strong>${field.label}:</strong> `;
+                
+                if (field.type === "text") {
+                  infobox += `<span>${field.value}</span>`;
+                } else if (field.type === "link" && Array.isArray(field.value)) {
+                  infobox += `<ul>`;
+                  (field.value as string[]).forEach(item => {
+                    infobox += `<li>${item}</li>`;
+                  });
+                  infobox += `</ul>`;
+                } else if (field.type === "coordinates") {
+                  infobox += `<span class="coordinates">${field.value}</span>`;
+                } else if (field.type === "signature") {
+                  infobox += `<span class="signature">${field.value}</span>`;
+                } else if (field.type === "image" && typeof field.value === 'object' && field.value.image) {
+                  infobox += `<img src="${field.value.image.url}" alt="${field.value.image.alt}" width="${field.value.image.width}">`;
+                } else if (typeof field.value === 'object' && field.value.text) {
+                  infobox += `<a href="${field.value.href}">${field.value.text}</a>`;
+                  if (field.value.subtext) {
+                    infobox += `<small>${field.value.subtext}</small>`;
+                  }
+                } else {
+                  infobox += `<span>${field.value}</span>`;
+                }
+                
+                infobox += `</div>`;
+              });
+            }
+            
+            infobox += `</div>`;
+          });
+        }
+        
+        infobox += '</div>';
+      });
+    }
+    
+    infobox += `</div>`;
+    
+    return infobox;
+  };
   // Function to attach event listeners to table buttons
   function attachTableEventListeners(tableId) {
     const tableContainer = document.querySelector(`[data-table-id="${tableId}"]`);
