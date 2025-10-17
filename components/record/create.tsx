@@ -480,6 +480,23 @@ export default function CreateNew({
     }
   }, []);
   
+  const renderToolbarButton = useCallback((block: any, index: number) => {
+    return (
+      <button
+        key={`toolbar-btn-${index}`}
+        className={`px-4 border-0 border-l hover:bg-gray-100 transition-colors ${
+          block.action === activeAction ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
+        }`}
+        onClick={() => handleToolbarAction(block.action)}
+        title={block.label}
+        aria-label={block.label}
+        type="button"
+      >
+        <Fai icon={block.icon} style="fas" />
+      </button>
+    );
+  }, [activeAction, handleToolbarAction]);
+  
   const renderToolbarSelect = useCallback((block: any, index: number) => {
     return (
       <Select key={`toolbar-select-${index}`}>
@@ -530,7 +547,7 @@ export default function CreateNew({
         <h1 className="text-xl font-bold text-gray-900">
           {record_name?.trim() || 'Untitled Document'}
         </h1>
-<Select
+        <Select
   defaultValue={editorMode}
   onValueChange={(value) => handleSwMode(value)}
 >
