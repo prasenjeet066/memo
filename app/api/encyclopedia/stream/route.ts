@@ -28,7 +28,7 @@ const MODEL_CONFIG = [
   // local model endpoint fallback (if you host one)
 ];
 
-// Generate System Prompt
+// Generate System Prompt (HTML version)
 function generateSystemPrompt(style: string): string {
   const styleGuides = {
     academic: 'Write in a formal, scholarly tone suitable for academic publications. Use precise terminology and maintain objectivity.',
@@ -42,16 +42,16 @@ function generateSystemPrompt(style: string): string {
 Style Guide: ${styleGuides[style as keyof typeof styleGuides]}
 
 Requirements:
-1. Structure the article with clear sections and subsections
-2. Start with a concise introduction/overview
-3. Use markdown formatting (headers, lists, emphasis)
-4. Include relevant examples and context
-5. Maintain factual accuracy and neutrality
-6. Cite sources when possible
-7. End with a conclusion or summary
-8. Add related topics section if relevant
+1. Structure the article with clear <section>, <h2>, and <p> elements.
+2. Start with a concise <h1> introduction or overview.
+3. Use semantic HTML (headings, paragraphs, lists, emphasis).
+4. Include relevant examples and context.
+5. Maintain factual accuracy and neutrality.
+6. Cite sources when possible.
+7. End with a conclusion or summary section.
+8. Add a "Related Topics" or "Further Reading" section if relevant.
 
-Format your response in clean markdown that can be directly rendered.`;
+⚠️ Output valid, clean, semantic **HTML** only — no Markdown or plaintext.`;
 }
 
 // Generate Article Prompt
@@ -73,10 +73,10 @@ ${depthGuides[request.depth]}
   }
 
   if (request.includeReferences) {
-    prompt += '\nInclude a "References" or "Further Reading" section at the end.\n';
+    prompt += '\nInclude a <section> for "References" or "Further Reading" at the end.\n';
   }
 
-  prompt += '\nProvide accurate, well-researched content with proper citations where applicable.';
+  prompt += '\nEnsure all output is valid, structured HTML with no Markdown syntax.';
 
   return prompt;
 }
@@ -93,11 +93,18 @@ async function streamArticle(
   let lastError: Error | null = null;
   let modelUsed = '';
 
+  // Send initial <article> start tag
+  controller.enqueue(
+    encoder.encode(
+      `data: ${JSON.stringify({ type: 'content', content: '<article>' })}\n\n`
+    )
+  );
+
   // Try each model in sequence
   for (const model of MODEL_CONFIG) {
     try {
       modelUsed = model.name;
-      
+
       // Send metadata
       controller.enqueue(
         encoder.encode(
@@ -137,7 +144,16 @@ async function streamArticle(
         }
       }
 
-      // Send completion
+      // Send closing </article> and completion notice
+      controller.enqueue(
+        encoder.encode(
+          `data: ${JSON.stringify({
+            type: 'content',
+            content: '</article>',
+          })}\n\n`
+        )
+      );
+
       controller.enqueue(
         encoder.encode(
           `data: ${JSON.stringify({
@@ -148,7 +164,7 @@ async function streamArticle(
         )
       );
 
-      return; // Success, exit
+      return; // success — stop trying more models
     } catch (error) {
       lastError = error as Error;
       console.error(`Model ${model.name} failed:`, error);
@@ -178,12 +194,21 @@ async function streamArticle(
       })}\n\n`
     )
   );
+
+  // Close <article> if not closed
+  controller.enqueue(
+    encoder.encode(
+      `data: ${JSON.stringify({
+        type: 'content',
+        content: '</article>',
+      })}\n\n`
+    )
+  );
 }
 
 // Main Route Handler
 export async function POST(req: NextRequest) {
   try {
-    // Parse and validate request
     const body = await req.json();
     const validationResult = EncyclopediaRequestSchema.safeParse(body);
 
@@ -193,29 +218,19 @@ export async function POST(req: NextRequest) {
           error: 'Invalid request',
           details: validationResult.error.errors,
         }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        }
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     const request = validationResult.data;
 
-    // Validate API key
     if (!process.env.OPENROUTER_API_KEY) {
       return new Response(
-        JSON.stringify({
-          error: 'OPENROUTER_API_KEY not configured',
-        }),
-        {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' },
-        }
+        JSON.stringify({ error: 'OPENROUTER_API_KEY not configured' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // Create streaming response
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
@@ -250,10 +265,7 @@ export async function POST(req: NextRequest) {
         error: 'Internal server error',
         message: error instanceof Error ? error.message : 'Unknown error',
       }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }
@@ -262,7 +274,7 @@ export async function POST(req: NextRequest) {
 export async function GET() {
   return new Response(
     JSON.stringify({
-      message: 'Encyclopedia Article Streaming API',
+      message: 'Encyclopedia Article Streaming API (HTML Output)',
       usage: 'POST to this endpoint with JSON body',
       example: {
         topic: 'Quantum Computing',
@@ -272,8 +284,6 @@ export async function GET() {
         sections: ['History', 'Principles', 'Applications', 'Future'],
       },
     }),
-    {
-      headers: { 'Content-Type': 'application/json' },
-    }
+    { headers: { 'Content-Type': 'application/json' } }
   );
 }
