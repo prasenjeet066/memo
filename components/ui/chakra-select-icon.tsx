@@ -1,15 +1,14 @@
 "use client"
+
 import {
   HStack,
   IconButton,
   Portal,
   Select,
-  createListCollection,
-  useSelectContext,
   Text,
+  useSelectContext,
 } from "@chakra-ui/react"
 import { Fai } from '@/components/Fontawesome';
-
 import { useState } from "react"
 
 interface Framework {
@@ -18,9 +17,7 @@ interface Framework {
   icon: React.ReactNode
 }
 
-
-
-const SelectTrigger = (iconBase) => {
+const SelectTrigger = ({ iconBase }: { iconBase: React.ReactNode }) => {
   const select = useSelectContext()
   
   return (
@@ -30,7 +27,7 @@ const SelectTrigger = (iconBase) => {
       size="sm"
       {...select.getTriggerProps()}
     >
-      <Fai icon = {iconBase}/>
+      <Fai icon={iconBase}/>
     </IconButton>
   )
 }
@@ -51,40 +48,38 @@ export default function IconSelectBox({
     handleToolbarAction(item.action)
   }
   
-  const collection = createListCollection({
-    items: block.items,
-  })
-  
-  return (<Select.Root
-  positioning={{ sameWidth: false }}
-  size="sm"
-  width="auto"
-  defaultValue={[block.items[0].value]}
-  onValueChange={(details) => {
-    const selectedItem = block.items.find(
-      (item: any) => item.value === details.value[0]
-    )
-    if (selectedItem) handleSelect(selectedItem)
-  }}
->
-  <Select.HiddenSelect />
-  <Select.Control>
-    <SelectTrigger iconBase={block.icon} />
-  </Select.Control>
-  <Portal>
-    <Select.Positioner>
-      <Select.Content minW="32">
-        {block.items.map((item: any, itemIndex: number) => (
-          <Select.Item key={`menu-item-${itemIndex}`} value={item.value}>
-            <HStack spacing={3}>
-              {item.icon}
-              <Text>{item.label}</Text>
-            </HStack>
-            <Select.ItemIndicator />
-          </Select.Item>
-        ))}
-      </Select.Content>
-    </Select.Positioner>
-  </Portal>
-</Select.Root>)
+  return (
+    <Select.Root
+      positioning={{ sameWidth: false }}
+      size="sm"
+      width="auto"
+      defaultValue={[block.items[0].value]}
+      onValueChange={(details) => {
+        const selectedItem = block.items.find(
+          (item: any) => item.value === details.value[0]
+        )
+        if (selectedItem) handleSelect(selectedItem)
+      }}
+    >
+      <Select.HiddenSelect />
+      <Select.Control>
+        <SelectTrigger iconBase={block.icon} />
+      </Select.Control>
+      <Portal>
+        <Select.Positioner>
+          <Select.Content minW="32">
+            {block.items.map((item: any, index: number) => (
+              <Select.Item key={index} value={item.value}>
+                <HStack spacing={3}>
+                  {item.icon}
+                  <Text>{item.label}</Text>
+                </HStack>
+                <Select.ItemIndicator />
+              </Select.Item>
+            ))}
+          </Select.Content>
+        </Select.Positioner>
+      </Portal>
+    </Select.Root>
+  )
 }
