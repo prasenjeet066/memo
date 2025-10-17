@@ -9,13 +9,7 @@ import {
   Text,
 } from "@chakra-ui/react"
 import { Fai } from '@/components/Fontawesome';
-import {
-  RiAngularjsLine,
-  RiForbidLine,
-  RiReactjsLine,
-  RiSvelteLine,
-  RiVuejsLine,
-} from "react-icons/ri"
+
 import { useState } from "react"
 
 interface Framework {
@@ -24,18 +18,11 @@ interface Framework {
   icon: React.ReactNode
 }
 
-const frameworks = createListCollection({
-  items: [
-    { label: "React.js", value: "react", icon: <RiReactjsLine /> },
-    { label: "Vue.js", value: "vue", icon: <RiVuejsLine /> },
-    { label: "Angular", value: "angular", icon: <RiAngularjsLine /> },
-    { label: "Svelte", value: "svelte", icon: <RiSvelteLine /> },
-  ],
-})
+
 
 const SelectTrigger = (iconBase) => {
   const select = useSelectContext()
-  const items = select.selectedItems as Framework[]
+  
   return (
     <IconButton
       px="2"
