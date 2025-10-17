@@ -20,7 +20,7 @@ const EncyclopediaRequestSchema = z.object({
   sections: z.array(z.string()).optional(),
 });
 
-type EncyclopediaRequest = z.infer<typeof EncyclopediaRequestSchema>;
+type EncyclopediaRequest = z.infer < typeof EncyclopediaRequestSchema > ;
 
 // Model Configuration with Fallbacks
 const CONTENT_MODEL = 'deepseek/deepseek-r1:free'; // For article content
@@ -33,14 +33,14 @@ function generateContentPrompt(request: EncyclopediaRequest): string {
     standard: 'Write a comprehensive encyclopedia article (1200-2000 words) with detailed coverage.',
     comprehensive: 'Write an in-depth encyclopedia article (2500-4000 words) with extensive details, examples, and analysis.',
   };
-
+  
   const styleGuides = {
     academic: 'Use formal, scholarly language with precise terminology and objectivity.',
     casual: 'Use accessible, conversational language while maintaining accuracy.',
     technical: 'Use technical precision with domain-specific terminology.',
     simple: 'Use simple, clear language suitable for general audiences.',
   };
-
+  
   let prompt = `You are writing a Wikipedia-style encyclopedia article about: "${request.topic}"
 
 REQUIREMENTS:
@@ -55,7 +55,7 @@ STRUCTURE YOUR ARTICLE WITH THESE SECTIONS:
    - Summarize key points
 
 2. **Main Content Sections**`;
-
+  
   if (request.sections && request.sections.length > 0) {
     prompt += `
    Include these specific sections:
@@ -67,7 +67,7 @@ ${request.sections.map(s => `   - ${s}`).join('\n')}`;
    - Applications/Impact
    - Current State/Developments`;
   }
-
+  
   prompt += `
 
 3. **Additional Sections** (as relevant)
@@ -76,7 +76,7 @@ ${request.sections.map(s => `   - ${s}`).join('\n')}`;
    - Future Outlook
 
 `;
-
+  
   if (request.includeReferences) {
     prompt += `4. **References**
    - Include 5-10 credible sources
@@ -84,7 +84,7 @@ ${request.sections.map(s => `   - ${s}`).join('\n')}`;
 
 `;
   }
-
+  
   prompt += `5. **See Also** (Related Topics)
    - List 3-5 related articles
 
@@ -102,7 +102,7 @@ OUTPUT FORMAT:
 Write the complete article in plain text/markdown format with clear section markers (##).
 Focus on content quality, accuracy, and encyclopedic tone.
 Do NOT output HTML - just the article content.`;
-
+  
   return prompt;
 }
 
@@ -212,39 +212,47 @@ async function streamArticle(
         })}\n\n`
       )
     );
-
+    
     const contentPrompt = generateContentPrompt(request);
     let articleContent = '';
-
+    
     const contentStream = await openai.chat.completions.create({
       model: CONTENT_MODEL,
       messages: [
-        { role: 'system', content: 'You are an expert encyclopedia writer specializing in comprehensive, well-researched articles.' },
+        { role: 'system', content: 'You are an expert encyclopedia writer.' },
         { role: 'user', content: contentPrompt }
       ],
-      max_tokens: 4000,
+      max_tokens: 2000, // safer token limit
       temperature: 0.7,
       stream: true,
     });
-
-    // Collect the full article content
-    for await (const chunk of contentStream) {
-      const content = chunk.choices[0]?.delta?.content;
-      if (content) {
-        articleContent += content;
-        // Optionally stream progress
-        controller.enqueue(
-          encoder.encode(
-            `data: ${JSON.stringify({
-              type: 'progress',
-              step: 1,
-              content: content
-            })}\n\n`
-          )
-        );
+    
+    try {
+      for await (const chunk of contentStream) {
+        // Check if provider returned an error in chunk
+        if ('error' in chunk) {
+          throw new Error(chunk.error?.message || 'Unknown OpenRouter error (content step)');
+        }
+        
+        const content = chunk.choices[0]?.delta?.content;
+        if (content) {
+          articleContent += content;
+          
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({
+                type: 'progress',
+                step: 1,
+                content
+              })}\n\n`
+            )
+          );
+        }
       }
+    } catch (streamError) {
+      throw new Error(`Error during content streaming: ${streamError instanceof Error ? streamError.message : streamError}`);
     }
-
+    
     controller.enqueue(
       encoder.encode(
         `data: ${JSON.stringify({
@@ -255,7 +263,7 @@ async function streamArticle(
         })}\n\n`
       )
     );
-
+    
     // ============= STEP 2: Convert to HTML =============
     controller.enqueue(
       encoder.encode(
@@ -266,42 +274,43 @@ async function streamArticle(
         })}\n\n`
       )
     );
-
+    
     const htmlPrompt = generateHTMLPrompt(articleContent);
-
-    controller.enqueue(
-      encoder.encode(
-        `data: ${JSON.stringify({ type: 'content', content: '' })}\n\n`
-      )
-    );
-
+    
     const htmlStream = await openai.chat.completions.create({
       model: HTML_MODEL,
       messages: [
-        { role: 'system', content: 'You are an expert at converting encyclopedia articles into semantic, Wikipedia-style HTML. Output only HTML code with proper structure and CSS classes.' },
+        { role: 'system', content: 'You are an expert at converting encyclopedia articles into semantic HTML.' },
         { role: 'user', content: htmlPrompt }
       ],
-      max_tokens: 4000,
-      temperature: 0.3, // Lower temperature for more consistent formatting
+      max_tokens: 2000,
+      temperature: 0.3,
       stream: true,
     });
-
-    // Stream the HTML output
-    for await (const chunk of htmlStream) {
-      const content = chunk.choices[0]?.delta?.content;
-      if (content) {
-        controller.enqueue(
-          encoder.encode(
-            `data: ${JSON.stringify({
-              type: 'content',
-              content
-            })}\n\n`
-          )
-        );
+    
+    try {
+      for await (const chunk of htmlStream) {
+        if ('error' in chunk) {
+          throw new Error(chunk.error?.message || 'Unknown OpenRouter error (HTML step)');
+        }
+        
+        const content = chunk.choices[0]?.delta?.content;
+        if (content) {
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({
+                type: 'content',
+                content
+              })}\n\n`
+            )
+          );
+        }
       }
+    } catch (streamError) {
+      throw new Error(`Error during HTML streaming: ${streamError instanceof Error ? streamError.message : streamError}`);
     }
-
-    // Send completion
+    
+    // Final completion
     controller.enqueue(
       encoder.encode(
         `data: ${JSON.stringify({
@@ -317,7 +326,7 @@ async function streamArticle(
         })}\n\n`
       )
     );
-
+    
   } catch (error) {
     controller.enqueue(
       encoder.encode(
@@ -335,26 +344,24 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const validationResult = EncyclopediaRequestSchema.safeParse(body);
-
+    
     if (!validationResult.success) {
       return new Response(
         JSON.stringify({
           error: 'Invalid request',
           details: validationResult.error.errors,
-        }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        }), { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
-
+    
     const request = validationResult.data;
-
+    
     if (!process.env.OPENROUTER_API_KEY) {
       return new Response(
-        JSON.stringify({ error: 'OPENROUTER_API_KEY not configured' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'OPENROUTER_API_KEY not configured' }), { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
-
+    
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
@@ -374,7 +381,7 @@ export async function POST(req: NextRequest) {
         }
       },
     });
-
+    
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
@@ -388,8 +395,7 @@ export async function POST(req: NextRequest) {
       JSON.stringify({
         error: 'Internal server error',
         message: error instanceof Error ? error.message : 'Unknown error',
-      }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      }), { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }
@@ -411,7 +417,6 @@ export async function GET() {
         includeReferences: true,
         sections: ['History', 'Principles', 'Applications', 'Future'],
       },
-    }),
-    { headers: { 'Content-Type': 'application/json' } }
+    }), { headers: { 'Content-Type': 'application/json' } }
   );
 }
