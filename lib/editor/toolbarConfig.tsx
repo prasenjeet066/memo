@@ -63,6 +63,11 @@ export const toolbarBlocks = [
     name: "Insert",
     items: [
       { icon: "file-code", action: "codeBlock", label: "Code" },
+      {
+        icon: "magic",
+        action: 'aiTask',
+        lable: 'AI'
+      },
       { icon: "square-root-variable", action: "math", label: "Math Formula" },
       {
         icon: "table",

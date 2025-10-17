@@ -70,6 +70,7 @@ export default function CreateNew({
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const [activeAction, setActiveAction] = useState<string | null>(null);
+  const [PromptAiTask, setPromptAiTask] = useState<{ content: string | null }>({ content: null });
 
   const generateAIArticle = useCallback(
     async (topic: string) => {
@@ -113,18 +114,9 @@ export default function CreateNew({
                 const data = JSON.parse(part.replace(/^data:\s*/, ''));
                 if (data.type === 'content') {
                   startTransition(() => {
-                    setPayload(prev => ({
-                      ...prev,
+                    setPromptAiTask(prev => ({
                       content: (prev.content || '') + data.content,
                     }));
-
-                    if (editorMode === 'visual' && editorRef.current) {
-                      editorRef.current.innerHTML += data.content;
-                    } else if (monacoEditorRef.current) {
-                      const editor = monacoEditorRef.current;
-                      const currentValue = editor.getValue();
-                      editor.setValue(currentValue + data.content);
-                    }
                   });
                 } else if (data.type === 'error') {
                   setGenerationError(data.error);
@@ -145,7 +137,6 @@ export default function CreateNew({
     [editorMode]
   );
 
-  // Flatten toolbar blocks
   const flattenedBlocks = toolbarBlocks
     .flatMap((block: any) => [block, ...(block.items || []), ...(block.editor || [])]
       .flatMap(item => [item, ...(item.items || []), ...(item.editor || [])]))
@@ -191,18 +182,16 @@ export default function CreateNew({
     try {
       ref.current.focus();
       const template = `<br/>${buildTemplate()}<br/>`.trim();
-      if (!document.execCommand('insertHTML', false, template)) {
-        const selection = window.getSelection();
-        if (selection && selection.rangeCount > 0) {
-          const range = selection.getRangeAt(0);
-          range.deleteContents();
-          const templateNode = document.createRange().createContextualFragment(template);
-          range.insertNode(templateNode);
-          range.setStartAfter(templateNode.lastChild || templateNode);
-          range.collapse(true);
-          selection.removeAllRanges();
-          selection.addRange(range);
-        }
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+        const templateNode = document.createRange().createContextualFragment(template);
+        range.insertNode(templateNode);
+        range.setStartAfter(templateNode.lastChild || templateNode);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
       }
       return true;
     } catch (error) {
@@ -227,7 +216,7 @@ export default function CreateNew({
     const table = tableContainer.querySelector('table');
     if (!table) return;
     const rows = table.querySelectorAll('tr');
-    const cols = rows[0]?.querySelectorAll('td').length || 1;
+    const cols = rows[0]?.querySelectorAll('td, th').length || 1;
     const newRow = document.createElement('tr');
     for (let i = 0; i < cols; i++) {
       const newCell = document.createElement('td');
@@ -235,14 +224,13 @@ export default function CreateNew({
       newCell.textContent = `Row ${rows.length + 1}, Col ${i + 1}`;
       newRow.appendChild(newCell);
     }
-    table.appendChild(newRow);
+    table.querySelector('tbody')?.appendChild(newRow);
   };
 
   const addTableColumn = (tableContainer: HTMLElement) => {
     const table = tableContainer.querySelector('table');
     if (!table) return;
-    const rows = table.querySelectorAll('tr');
-    rows.forEach((row, index) => {
+    table.querySelectorAll('tr').forEach((row, index) => {
       const newCell = document.createElement('td');
       newCell.contentEditable = 'true';
       newCell.textContent = `Row ${index + 1}, Col ${row.children.length + 1}`;
@@ -250,24 +238,52 @@ export default function CreateNew({
     });
   };
 
+  const executionCall = (attr: string) => {
+    const aiprompt = document.querySelector(`.${attr}`);
+    if (!aiprompt) return;
+
+    const input = aiprompt.querySelector('input') as HTMLInputElement;
+    const btn = aiprompt.querySelector('button') as HTMLButtonElement;
+
+    if (input && btn) {
+      btn.onclick = async (e) => {
+        e.preventDefault();
+        if (!input.value.trim()) return alert('Enter a prompt');
+        await generateAIArticle(input.value);
+        if (PromptAiTask.content) {
+          const container = document.createElement('div');
+          container.id = 'ai_generated';
+          container.innerHTML = PromptAiTask.content;
+          aiprompt.parentElement?.insertBefore(container, aiprompt.nextSibling);
+        }
+      };
+    }
+  };
+
   const executeCommand = useCallback(
     (action: string) => {
       if (editorMode === 'visual' && editorRef.current) {
         try {
           switch (action) {
+            case 'aiTask': {
+              const aiPrompt = document.createElement('div');
+              aiPrompt.className = 'ai-task-div';
+              aiPrompt.contentEditable = 'false';
+              aiPrompt.innerHTML = `<input type="text" class="prompt-input" placeholder="Write anything..." /><button class="fas fa-arrow-right"></button>`;
+              editorRef.current.appendChild(aiPrompt);
+              setTimeout(() => executionCall('ai-task-div'), 300);
+              break;
+            }
             case 'bold':
-              document.execCommand('bold', false);
+              document.execCommand('bold');
               break;
             case 'heading':
-              editorRef.current.focus();
               document.execCommand('insertHTML', false, '<br/><h1 class="heading-lind">Title...</h1><hr/><br/>');
               break;
             case 'italic':
-              document.execCommand('italic', false);
+              document.execCommand('italic');
               break;
             case 'table': {
-              const editor = editorRef.current;
-              editor.focus();
               const tableId = 'table-' + Date.now();
               const makeHeader = (j: number) => `<th contenteditable>Header ${j + 1}</th>`;
               const makeCell = (i: number, j: number) => `<td contenteditable>Row ${i + 1}, Col ${j + 1}</td>`;
@@ -278,7 +294,7 @@ export default function CreateNew({
                 <div class="tbl-operator" data-table-id="${tableId}">
                   <table border="1" style="border-collapse:collapse;width:100%">
                     <thead>${makeRow(0, true)}</thead>
-                    <tbody>${[0, 1, 2].map(i => makeRow(i)).join('')}</tbody>
+                    <tbody>${[0,1,2].map(i => makeRow(i)).join('')}</tbody>
                   </table>
                   <div class="table-controls" contenteditable="false">
                     <button class="add-row-btn fas fa-arrow-down-from-dotted-line" data-table="${tableId}"></button>
@@ -292,10 +308,10 @@ export default function CreateNew({
               break;
             }
             case 'underline':
-              document.execCommand('underline', false);
+              document.execCommand('underline');
               break;
             case 'strikethrough':
-              document.execCommand('strikeThrough', false);
+              document.execCommand('strikeThrough');
               break;
             case 'template':
               insertTemplate(editorRef);
@@ -312,14 +328,6 @@ export default function CreateNew({
     },
     [editorMode]
   );
-
-  // Run AI generation only once on mount if content is empty
-  useEffect(() => {
-    if (payload.content.trim() === '' && record_name) {
-      generateAIArticle(record_name);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [record_name]);
 
   useEffect(() => {
     if (activeAction) executeCommand(activeAction);
@@ -361,6 +369,7 @@ export default function CreateNew({
   }, []);
 
   return (
+    
     <div className="w-full h-full flex flex-col">
       {/* Header */}
       <div className="px-4 py-3">
@@ -472,5 +481,6 @@ export default function CreateNew({
         />
       )}
     </div>
+  
   );
 }
