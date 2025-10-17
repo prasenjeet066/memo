@@ -47,7 +47,7 @@ body{
   border-radius: 10px;
   border-bottom-left-radius:0px  ;
 }
-.tbl-operator table thead{
+.tbl-operator  thead{
   padding: 8px;
   
 }

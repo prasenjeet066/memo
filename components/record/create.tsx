@@ -299,6 +299,7 @@ export default function CreateNew({
   
   // Template insertion handler
   const insertTemplate = (editorRef: React.RefObject < HTMLElement > ): boolean => {
+    
     if (!editorRef.current) {
       console.warn('Editor reference not available');
       return false;
