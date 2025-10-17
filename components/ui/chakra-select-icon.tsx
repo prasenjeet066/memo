@@ -8,7 +8,7 @@ import {
   Text,
   useSelectContext,
 } from "@chakra-ui/react"
-import { Fai } from '@/components/Fontawesome';
+import { Fai } from '@/components/Fontawesome'
 import { useState } from "react"
 
 interface Framework {
@@ -27,7 +27,7 @@ const SelectTrigger = ({ iconBase }: { iconBase: React.ReactNode }) => {
       size="sm"
       {...select.getTriggerProps()}
     >
-      <Fai icon={iconBase}/>
+      <Fai icon={iconBase} />
     </IconButton>
   )
 }
@@ -53,7 +53,7 @@ export default function IconSelectBox({
       positioning={{ sameWidth: false }}
       size="sm"
       width="auto"
-      defaultValue={[block.items[0].value]}
+      value={[selected.value]}
       onValueChange={(details) => {
         const selectedItem = block.items.find(
           (item: any) => item.value === details.value[0]
@@ -69,8 +69,8 @@ export default function IconSelectBox({
         <Select.Positioner>
           <Select.Content minW="32">
             {block.items.map((item: any, index: number) => (
-              <Select.Item key={index} value={item.value}>
-                <HStack spacing={3}>
+              <Select.Item key={index} item={item.value} value={item.value}>
+                <HStack gap={3}>
                   {item.icon}
                   <Text>{item.label}</Text>
                 </HStack>
