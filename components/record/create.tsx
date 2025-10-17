@@ -93,7 +93,7 @@ export default function CreateNew({
       });
       
       if (!response.ok || !response.body) {
-        throw new Error('Failed to connect to AI stream.');
+        setGenerationError('Failed to connect to AI stream.');
       }
       
       const reader = response.body.getReader();
