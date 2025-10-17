@@ -285,9 +285,9 @@ export default function CreateNew({
             
             tableHTML += '</table>';
             tableHTML += '<div class="table-controls" contenteditable="false">';
-            tableHTML += `<button class="add-row-btn fas fa-table" data-table="${tableId}" contenteditable="false"></button>`;
+            tableHTML += `<button class="add-row-btn fas fa-arrow-down-from-dotted-line" data-table="${tableId}" contenteditable="false"></button>`;
             
-            tableHTML += `<hr/><button class="add-col-btn fas fa-teble" data-table="${tableId}" contenteditable="false"></button>`;
+            tableHTML += `<hr/><button class="add-col-btn fas fa-arrow-left-from-line" data-table="${tableId}" contenteditable="false"></button>`;
             tableHTML += '</div></div><br>';
             
             document.execCommand('insertHTML', false, tableHTML);
