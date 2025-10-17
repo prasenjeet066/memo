@@ -45,7 +45,7 @@ export default function CreateNew({
   ExpandedIs,
   IsExpandedSet,
 }: EditorProps) {
-  const [editorMode, setEditorMode] = useState < 'visual' | 'code' > (editor_mode);
+  const [editorMode, setEditorMode] = useState < 'visual' | 'code' > ('visual');
   const [ActiveEditionPoint, setActiveEditionPoint] = useState(null);
   const [payload, setPayload] = useState({
     title: '',
