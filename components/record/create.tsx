@@ -304,6 +304,7 @@ export default function CreateNew({
             document.execCommand('strikeThrough', false);
             break;
           case 'template':
+            editorRef.current.focus()
             let template = `<br/> ${buildTemplate({
               name: 'infobox',
               parameters:[]
