@@ -55,36 +55,36 @@ export default function IconSelectBox({
     items: block.items,
   })
   
-  return (
-    <Select.Root
-      positioning={{ sameWidth: false }}
-      collection={collection}
-      size="sm"
-      width="auto"
-      defaultValue={[block.items[0].value]}
-      onValueChange={(details) => {
-        const selectedItem = block.items.find(
-          (item: any) => item.value === details.value[0]
-        )
-        if (selectedItem) {
-          handleSelect(selectedItem)
-        }
-      }}
-    >
-      <Select.HiddenSelect /> <Select.Control >
-    <SelectTrigger iconBase = {block.icon} /> </Select.Control> <Portal >
+  return (<Select.Root
+  positioning={{ sameWidth: false }}
+  size="sm"
+  width="auto"
+  defaultValue={[block.items[0].value]}
+  onValueChange={(details) => {
+    const selectedItem = block.items.find(
+      (item: any) => item.value === details.value[0]
+    )
+    if (selectedItem) handleSelect(selectedItem)
+  }}
+>
+  <Select.HiddenSelect />
+  <Select.Control>
+    <SelectTrigger iconBase={block.icon} />
+  </Select.Control>
+  <Portal>
     <Select.Positioner>
-          <Select.Content minW="32">
-            {block.items.map((item: any, itemIndex: number) => (
-              <Select.Item item={item} key={`menu-item-${itemIndex}`}>
-                <HStack spacing={3}>
-                  {item.icon}
-                  <Text>{item.label}</Text>
-                </HStack>
-                <Select.ItemIndicator />
-              </Select.Item>
-            ))}
-          </Select.Content>
-        </Select.Positioner> </Portal> </Select.Root>
-  )
+      <Select.Content minW="32">
+        {block.items.map((item: any, itemIndex: number) => (
+          <Select.Item key={`menu-item-${itemIndex}`} value={item.value}>
+            <HStack spacing={3}>
+              {item.icon}
+              <Text>{item.label}</Text>
+            </HStack>
+            <Select.ItemIndicator />
+          </Select.Item>
+        ))}
+      </Select.Content>
+    </Select.Positioner>
+  </Portal>
+</Select.Root>)
 }
