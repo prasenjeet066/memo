@@ -478,18 +478,12 @@ export default function CreateNew({
     if (mode === 'visual') {
       if (editorRef.current) {
         if (payload.content !== null) {
-          editorRef.current.innerHTML = payload.content;
+          editorRef.current.innerHTML = payload?.content || '';
           setEditorMode(mode)
         }
       }
-    } else if (mode === 'code') {
-      if (editorRef.current) {
-        setPayload((prev) => ({
-          ...prev,
-          content: textareaRef.current.value || ''
-        }))
-      }
-    }
+    } 
+    setEditorMode(mode)
   }, []);
   
   const renderToolbarButton = useCallback((block: any, index: number) => {
