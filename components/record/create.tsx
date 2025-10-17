@@ -45,7 +45,7 @@ export default function CreateNew({
   ExpandedIs,
   IsExpandedSet,
 }: EditorProps) {
-  const [editorMode, setEditorMode] = useState < 'visual' | 'mdx' > (editor_mode);
+  const [editorMode, setEditorMode] = useState < 'visual' | 'code' > (editor_mode);
   const [ActiveEditionPoint, setActiveEditionPoint] = useState(null);
   const [payload, setPayload] = useState({
     title: '',
@@ -117,11 +117,7 @@ export default function CreateNew({
     }
   }, [record_name]);
   
-  useEffect(() => {
-    if (editor_mode !== editorMode) {
-      setEditorMode(editor_mode);
-    }
-  }, [editor_mode, editorMode]);
+  
   // Types for better type safety
   interface TemplateImage {
     url: string;
@@ -556,7 +552,7 @@ export default function CreateNew({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="visual">Visual</SelectItem>
-            <SelectItem value="mdx">MDX</SelectItem>
+            <SelectItem value="code">code</SelectItem>
           </SelectContent>
         </Select>
       </div>
