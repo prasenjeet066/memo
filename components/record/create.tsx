@@ -1,20 +1,19 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useTransition } from 'react';
 import Editor from '@monaco-editor/react';
 import { useSession } from 'next-auth/react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Fai } from '@/components/Fontawesome';
 import InfoBox from '@/lib/editor/templates/infobox';
 import { toolbarBlocks } from '@/lib/editor/toolbarConfig';
-import { useTransition } from 'react';
 
 interface EditorProps {
-  editor_mode ? : 'visual' | 'code';
-  record_name ? : string;
-  onPublish ? : () => void;
-  sideBarTools ? : () => void;
-  ExpandedIs ? : boolean;
+  editor_mode?: 'visual' | 'code';
+  record_name?: string;
+  onPublish?: () => void;
+  sideBarTools?: () => void;
+  ExpandedIs?: boolean;
   IsExpandedSet: any;
 }
 
@@ -27,10 +26,10 @@ interface TableEditorField {
   type: string;
   label: string;
   name: string;
-  options ? : TableEditorOption[];
-  min ? : number;
-  max ? : number;
-  step ? : number;
+  options?: TableEditorOption[];
+  min?: number;
+  max?: number;
+  step?: number;
 }
 
 interface TableEditorConfig {
@@ -48,14 +47,14 @@ export default function CreateNew({
   ExpandedIs,
   IsExpandedSet,
 }: EditorProps) {
-  const [editorMode, setEditorMode] = useState < 'visual' | 'code' > (editor_mode);
-  const [ActiveEditionPoint, setActiveEditionPoint] = useState < any > (null);
+  const [editorMode, setEditorMode] = useState<'visual' | 'code'>(editor_mode);
+  const [ActiveEditionPoint, setActiveEditionPoint] = useState<any>(null);
   const [payload, setPayload] = useState({ title: '', content: '' });
   const { data: session } = useSession();
-  
-  const editorRef = useRef < HTMLDivElement | null > (null);
-  const monacoEditorRef = useRef < any > (null);
-  
+
+  const editorRef = useRef<HTMLDivElement | null>(null);
+  const monacoEditorRef = useRef<any>(null);
+
   const handleEditorDidMount = (editor: any) => {
     monacoEditorRef.current = editor;
     editor.updateOptions({
@@ -66,123 +65,129 @@ export default function CreateNew({
       scrollBeyondLastLine: false,
     });
   };
-  // --- ADD THESE IMPORTS AT THE TOP ---
-  
-  
-  // --- INSIDE THE COMPONENT ---
+
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationError, setGenerationError] = useState < string | null > (null);
-  const [_, startTransition] = useTransition();
-  
-  // --- ADD THIS FUNCTION ---
-  const generateAIArticle = useCallback(async (topic: string) => {
-    alert('')
-    if (!topic.trim()) return alert('Please provide a topic.');
-    setIsGenerating(true);
-    setGenerationError(null);
-    
-    try {
-      const response = await fetch('/api/encyclopedia/stream', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          topic,
-          depth: 'standard',
-          style: 'academic',
-          includeReferences: true,
-        }),
-      });
-      
-      if (!response.ok || !response.body) {
-        setGenerationError('Failed to connect to AI stream.');
-      }
-      
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        
-        const parts = buffer.split('\n\n');
-        buffer = parts.pop() || '';
-        
-        for (const part of parts) {
-          if (part.startsWith('data:')) {
-            const data = JSON.parse(part.replace(/^data:\s*/, ''));
-            if (data.type === 'content') {
-              startTransition(() => {
-                setPayload(prev => ({
-                  ...prev,
-                  content: (prev.content || '') + data.content,
-                }));
-                if (editorMode === 'visual' && editorRef.current) {
-                  editorRef.current.innerHTML += data.content;
-                } else if (monacoEditorRef.current) {
-                  const editor = monacoEditorRef.current;
-                  const currentValue = editor.getValue();
-                  editor.setValue(currentValue + data.content);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
+  const [activeAction, setActiveAction] = useState<string | null>(null);
+
+  const generateAIArticle = useCallback(
+    async (topic: string) => {
+      if (!topic?.trim()) return alert('Please provide a topic.');
+      setIsGenerating(true);
+      setGenerationError(null);
+
+      try {
+        const response = await fetch('/api/encyclopedia/stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            topic,
+            depth: 'standard',
+            style: 'academic',
+            includeReferences: true,
+          }),
+        });
+
+        if (!response.ok || !response.body) {
+          setGenerationError('Failed to connect to AI stream.');
+          setIsGenerating(false);
+          return;
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          const parts = buffer.split('\n\n');
+          buffer = parts.pop() || '';
+
+          for (const part of parts) {
+            if (part.startsWith('data:')) {
+              try {
+                const data = JSON.parse(part.replace(/^data:\s*/, ''));
+                if (data.type === 'content') {
+                  startTransition(() => {
+                    setPayload(prev => ({
+                      ...prev,
+                      content: (prev.content || '') + data.content,
+                    }));
+
+                    if (editorMode === 'visual' && editorRef.current) {
+                      editorRef.current.innerHTML += data.content;
+                    } else if (monacoEditorRef.current) {
+                      const editor = monacoEditorRef.current;
+                      const currentValue = editor.getValue();
+                      editor.setValue(currentValue + data.content);
+                    }
+                  });
+                } else if (data.type === 'error') {
+                  setGenerationError(data.error);
                 }
-              });
-            } else if (data.type === 'error') {
-              setGenerationError(data.error);
+              } catch (err) {
+                console.error('Invalid JSON in stream:', part);
+              }
             }
           }
         }
+      } catch (error: any) {
+        console.error('AI generation failed:', error);
+        setGenerationError(error.message || 'Unknown error');
+      } finally {
+        setIsGenerating(false);
       }
-    } catch (error: any) {
-      console.error('AI generation failed:', error);
-      setGenerationError(error.message || 'Unknown error');
-    } finally {
-      setIsGenerating(false);
-    }
-  }, [editorMode]);
-  const [activeAction, setActiveAction] = useState < string | null > (null);
-  
-  
+    },
+    [editorMode]
+  );
+
   // Flatten toolbar blocks
   const flattenedBlocks = toolbarBlocks
     .flatMap((block: any) => [block, ...(block.items || []), ...(block.editor || [])]
       .flatMap(item => [item, ...(item.items || []), ...(item.editor || [])]))
     .filter(Boolean);
-  
+
   const findBlockByAction = (actionName: string) =>
     flattenedBlocks.find((block: any) => block.action === actionName);
-  
+
   useEffect(() => {
     if (!record_name?.trim()) console.warn('Record name is empty or undefined');
   }, [record_name]);
-  useEffect(()=>{
-    if (generationError!==null ) {
-      setPayload((prev)=>({...prev,content: `${payload.content} \n //Error : ${generationError}`}))
+
+  useEffect(() => {
+    if (generationError) {
+      setPayload(prev => ({
+        ...prev,
+        content: `${prev.content}\n // Error: ${generationError}`,
+      }));
     }
-  },[generationError])
+  }, [generationError]);
+
   const escapeHtml = (unsafe: any): string => {
     if (unsafe === null || unsafe === undefined) return '';
     const str = String(unsafe);
     return str
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   };
-  
+
   const buildTemplate = (): string => {
     if (!Array.isArray(InfoBox) || InfoBox.length === 0) {
       return `<div class='tpl-infobox'></div>`;
     }
     return InfoBox.map(() => `<div class='tpl-infobox'></div>`).join('');
   };
-  
-  const insertTemplate = (ref: React.RefObject < HTMLElement > ): boolean => {
-    if (!ref.current) {
-      console.warn('Editor reference not available');
-      return false;
-    }
-    
+
+  const insertTemplate = (ref: React.RefObject<HTMLElement>): boolean => {
+    if (!ref.current) return false;
+
     try {
       ref.current.focus();
       const template = `<br/>${buildTemplate()}<br/>`.trim();
@@ -205,19 +210,19 @@ export default function CreateNew({
       return false;
     }
   };
-  
+
   const attachTableEventListeners = (tableId: string) => {
     const tableContainer = document.querySelector(`[data-table-id="${tableId}"]`);
     if (!tableContainer) return;
     setActiveEditionPoint({ ref: tableContainer, action: 'table' });
-    
+
     const addRowBtn = tableContainer.querySelector('.add-row-btn');
     const addColBtn = tableContainer.querySelector('.add-col-btn');
-    
+
     addRowBtn?.addEventListener('click', () => addTableRow(tableContainer as HTMLElement));
     addColBtn?.addEventListener('click', () => addTableColumn(tableContainer as HTMLElement));
   };
-  
+
   const addTableRow = (tableContainer: HTMLElement) => {
     const table = tableContainer.querySelector('table');
     if (!table) return;
@@ -232,7 +237,7 @@ export default function CreateNew({
     }
     table.appendChild(newRow);
   };
-  
+
   const addTableColumn = (tableContainer: HTMLElement) => {
     const table = tableContainer.querySelector('table');
     if (!table) return;
@@ -244,7 +249,7 @@ export default function CreateNew({
       row.appendChild(newCell);
     });
   };
-  
+
   const executeCommand = useCallback(
     (action: string) => {
       if (editorMode === 'visual' && editorRef.current) {
@@ -268,7 +273,7 @@ export default function CreateNew({
               const makeCell = (i: number, j: number) => `<td contenteditable>Row ${i + 1}, Col ${j + 1}</td>`;
               const makeRow = (i: number, isHeader = false) =>
                 `<tr>${Array(4).fill(0).map((_, j) => isHeader ? makeHeader(j) : makeCell(i, j)).join('')}</tr>`;
-              
+
               const tableHTML = `
                 <div class="tbl-operator" data-table-id="${tableId}">
                   <table border="1" style="border-collapse:collapse;width:100%">
@@ -307,39 +312,54 @@ export default function CreateNew({
     },
     [editorMode]
   );
-  useEffect(()=>{
-    if (payload.content.trim()=='') {
-      generateAIArticle(record_name)
+
+  // Run AI generation only once on mount if content is empty
+  useEffect(() => {
+    if (payload.content.trim() === '' && record_name) {
+      generateAIArticle(record_name);
     }
-  },[record_name])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [record_name]);
+
   useEffect(() => {
     if (activeAction) executeCommand(activeAction);
   }, [activeAction, executeCommand]);
-  
+
   const handlePublish = useCallback(() => {
     if (onPublish) onPublish();
     else console.log('Publishing...', payload);
   }, [onPublish, payload]);
-  
-  const handleToolbarAction = useCallback((action: string) => {
-    if (action && action !== activeAction) setActiveAction(action);
-  }, [activeAction]);
-  const handleEditorContentChangeCode = (value, evt) => {
-    setPayload((prev) => ({ ...prev, content: value }))
-  }
-  const handleSwMode = useCallback((mode: string) => {
-    if (mode === 'visual' && editorRef.current) {
-      if (payload.content !== null) editorRef.current.innerHTML = payload.content || '';
-    }
-    setEditorMode(mode as 'visual' | 'code');
-  }, [payload.content]);
-  
+
+  const handleToolbarAction = useCallback(
+    (action: string) => {
+      if (action && action !== activeAction) setActiveAction(action);
+    },
+    [activeAction]
+  );
+
+  const handleEditorContentChangeCode = useCallback(
+    (value?: string) => {
+      setPayload(prev => ({ ...prev, content: value || '' }));
+    },
+    []
+  );
+
+  const handleSwMode = useCallback(
+    (mode: string) => {
+      if (mode === 'visual' && editorRef.current) {
+        editorRef.current.innerHTML = payload.content || '';
+      }
+      setEditorMode(mode as 'visual' | 'code');
+    },
+    [payload.content]
+  );
+
   const handleEditorContentChange = useCallback(() => {
     if (editorRef.current) {
-      setPayload(prev => ({ ...prev, content: editorRef.current?.innerHTML || '' }));
+      setPayload(prev => ({ ...prev, content: editorRef.current.innerHTML || '' }));
     }
   }, []);
-  
+
   return (
     <div className="w-full h-full flex flex-col">
       {/* Header */}
@@ -429,7 +449,7 @@ export default function CreateNew({
         <Editor
           height="400px"
           defaultLanguage="html"
-          defaultValue={payload.content || '//Write your code....'}
+          value={payload.content || '// Write your code...'}
           onMount={handleEditorDidMount}
           className="flex-1 p-4 overflow-auto w-full bg-white min-h-[300px] border-none outline-none"
           onChange={handleEditorContentChangeCode}
