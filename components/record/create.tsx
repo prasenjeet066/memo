@@ -399,7 +399,7 @@ export default function CreateNew({
                 return (
                   <Select key={`toolbar-select-${index}`}>
                     <SelectTrigger className="max-w-[180px] w-auto h-10 border-none">
-                      <SelectValue><Fai icon= {block.icon}/></SelectValue>
+                      <SelectValue placeholder = {<Fai icon= {block.icon} />}/>
                     </SelectTrigger>
                     <SelectContent>
                       {block.items.map((item: any, itemIndex: number) => (
