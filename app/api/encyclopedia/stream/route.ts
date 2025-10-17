@@ -23,26 +23,9 @@ type EncyclopediaRequest = z.infer<typeof EncyclopediaRequestSchema>;
 
 // Model Configuration with Fallbacks
 const MODEL_CONFIG = [
-  {
-    name: 'openai/gpt-4o',
-    maxTokens: 16000,
-    temperature: 0.7,
-  },
-  {
-    name: 'openai/gpt-4o-mini',
-    maxTokens: 8000,
-    temperature: 0.7,
-  },
-  {
-    name: 'anthropic/claude-3.5-sonnet',
-    maxTokens: 8000,
-    temperature: 0.7,
-  },
-  {
-    name: 'mistralai/mistral-7b-instruct:free',
-    maxTokens: 4000,
-    temperature: 0.7,
-  },
+  { name: 'deepseek/deepseek-r1:free', maxTokens: 4000, temperature: 0.7 },
+  { name: 'mistralai/mistral-7b-instruct:free', maxTokens: 4000, temperature: 0.7 },
+  // local model endpoint fallback (if you host one)
 ];
 
 // Generate System Prompt
