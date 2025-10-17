@@ -40,7 +40,7 @@ export default function IconSelectBox({
       >
         <HStack spacing={2}>
           {selected.icon && <Fai icon={selected.icon} style="fas" />}
-          <Text fontSize="sm">{selected.label}</Text>
+
         </HStack>
       </MenuButton>
 
