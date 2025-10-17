@@ -3,10 +3,9 @@
 import {
   HStack,
   IconButton,
-  Portal,
-  createListCollection,
+  Portal
 } from "@chakra-ui/react"
-import { Select } from "@chakra-ui/react"
+import { Select , createListCollection} from "@chakra-ui/react"
 import { Fai } from '@/components/Fontawesome'
 import { useState } from "react"
 
