@@ -46,9 +46,9 @@ export default function IconSelectBox({
   block,
   handleToolbarAction,
 }: IconSelectBoxProps) {
-  const collection = createListCollection({
+ /** const collection = createListCollection({
     items: block.items,
-  })
+  })**/
   
   const handleSelect = (values: string[]) => {
     const selectedValue = values[0]
@@ -60,7 +60,7 @@ export default function IconSelectBox({
   
   return (
     <Select.Root
-      collection={collection}
+      //collection={collection}
       positioning={{ sameWidth: false }}
       size="sm"
       width="auto"
