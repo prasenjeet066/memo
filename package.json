@@ -71,7 +71,7 @@
     "react-advanced-cropper": "latest",
     "openai": "latest",
     "react-day-picker": "latest",
-    "@mdxeditor/editor": "latest",
+    "@monaco-editor/react" : "latest",
     "react-dom": "^18",
     "react-hook-form": "latest",
     "react-i18next": "^13.0.0",
