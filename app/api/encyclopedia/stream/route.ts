@@ -1,4 +1,5 @@
 // app/api/encyclopedia/stream/route.ts
+// Two-step Wikipedia-style article generation: Content → HTML
 
 import { NextRequest } from 'next/server';
 import OpenAI from 'openai';
@@ -22,188 +23,311 @@ const EncyclopediaRequestSchema = z.object({
 type EncyclopediaRequest = z.infer<typeof EncyclopediaRequestSchema>;
 
 // Model Configuration with Fallbacks
-const MODEL_CONFIG = [
-  { name: 'deepseek/deepseek-r1:free', maxTokens: 4000, temperature: 0.7 },
-  { name: 'mistralai/mistral-7b-instruct:free', maxTokens: 4000, temperature: 0.7 },
-  // local model endpoint fallback (if you host one)
-];
+const CONTENT_MODEL = 'deepseek/deepseek-r1:free'; // For article content
+const HTML_MODEL = 'mistralai/mistral-7b-instruct:free'; // For HTML conversion
 
-// Generate System Prompt (HTML version)
-function generateSystemPrompt(style: string): string {
-  const styleGuides = {
-    academic: 'Write in a formal, scholarly tone suitable for academic publications. Use precise terminology and maintain objectivity.',
-    casual: 'Write in an accessible, conversational tone while maintaining accuracy. Make complex topics easy to understand.',
-    technical: 'Write with technical precision using domain-specific terminology. Assume the reader has advanced knowledge.',
-    simple: 'Write in simple, clear language suitable for general audiences. Avoid jargon and explain all technical terms.',
-  };
-
-  return `You are an expert encyclopedia writer specializing in creating comprehensive, well-researched articles.
-
-Style Guide: ${styleGuides[style as keyof typeof styleGuides]}
-
-Requirements:
-1. Structure the article with clear <section>, <h2>, and <p> elements.
-2. Start with a concise <h1> introduction or overview.
-3. Use semantic HTML (headings, paragraphs, lists, emphasis).
-4. Include relevant examples and context.
-5. Maintain factual accuracy and neutrality.
-6. Cite sources when possible.
-7. End with a conclusion or summary section.
-8. Add a "Related Topics" or "Further Reading" section if relevant.
-
-⚠️ Output valid, clean, semantic **HTML** only — no Markdown or plaintext.`;
-}
-
-// Generate Article Prompt
-function generateArticlePrompt(request: EncyclopediaRequest): string {
+// STEP 1: Generate Article Content
+function generateContentPrompt(request: EncyclopediaRequest): string {
   const depthGuides = {
-    brief: 'Write a concise article (500-800 words) covering the essential information.',
-    standard: 'Write a comprehensive article (1200-2000 words) with detailed coverage of key aspects.',
-    comprehensive: 'Write an in-depth article (2500-4000 words) with extensive details, examples, and analysis.',
+    brief: 'Write a concise encyclopedia article (500-800 words) covering essential information.',
+    standard: 'Write a comprehensive encyclopedia article (1200-2000 words) with detailed coverage.',
+    comprehensive: 'Write an in-depth encyclopedia article (2500-4000 words) with extensive details, examples, and analysis.',
   };
 
-  let prompt = `Write an encyclopedia article about: "${request.topic}"
+  const styleGuides = {
+    academic: 'Use formal, scholarly language with precise terminology and objectivity.',
+    casual: 'Use accessible, conversational language while maintaining accuracy.',
+    technical: 'Use technical precision with domain-specific terminology.',
+    simple: 'Use simple, clear language suitable for general audiences.',
+  };
 
+  let prompt = `You are writing a Wikipedia-style encyclopedia article about: "${request.topic}"
+
+REQUIREMENTS:
 ${depthGuides[request.depth]}
+${styleGuides[request.style]}
+
+STRUCTURE YOUR ARTICLE WITH THESE SECTIONS:
+
+1. **Lead/Introduction** (2-3 paragraphs)
+   - Define the topic clearly
+   - Provide context and significance
+   - Summarize key points
+
+2. **Main Content Sections**`;
+
+  if (request.sections && request.sections.length > 0) {
+    prompt += `
+   Include these specific sections:
+${request.sections.map(s => `   - ${s}`).join('\n')}`;
+  } else {
+    prompt += `
+   - History/Background
+   - Key Concepts/Components
+   - Applications/Impact
+   - Current State/Developments`;
+  }
+
+  prompt += `
+
+3. **Additional Sections** (as relevant)
+   - Notable Examples
+   - Controversies/Challenges
+   - Future Outlook
 
 `;
 
-  if (request.sections && request.sections.length > 0) {
-    prompt += `\nInclude these specific sections:\n${request.sections.map(s => `- ${s}`).join('\n')}\n`;
-  }
-
   if (request.includeReferences) {
-    prompt += '\nInclude a <section> for "References" or "Further Reading" at the end.\n';
+    prompt += `4. **References**
+   - Include 5-10 credible sources
+   - Format: Author/Organization, "Title", Publication, Year
+
+`;
   }
 
-  prompt += '\nEnsure all output is valid, structured HTML with no Markdown syntax.';
+  prompt += `5. **See Also** (Related Topics)
+   - List 3-5 related articles
+
+WRITING GUIDELINES:
+- Use clear section headings marked with ##
+- Write in third person, neutral tone
+- Include specific facts, dates, and data
+- Use examples to illustrate concepts
+- Cite sources naturally in text
+- Add relevant statistics or quotes
+- Include key terminology and definitions
+- Use bullet points for lists where appropriate
+
+OUTPUT FORMAT:
+Write the complete article in plain text/markdown format with clear section markers (##).
+Focus on content quality, accuracy, and encyclopedic tone.
+Do NOT output HTML - just the article content.`;
 
   return prompt;
 }
 
-// Stream Article Generation
+// STEP 2: Convert to Wikipedia-Style HTML
+function generateHTMLPrompt(articleContent: string): string {
+  return `Convert the following encyclopedia article into semantic, Wikipedia-style HTML.
+
+ARTICLE CONTENT:
+${articleContent}
+
+HTML STRUCTURE REQUIREMENTS:
+
+1. **Container**: Wrap in <article class="wikipedia-article">
+
+2. **Lead Section**: 
+   <div class="lead-section">
+     <p class="lead-paragraph">First paragraph</p>
+     <p>Subsequent lead paragraphs</p>
+   </div>
+
+3. **Table of Contents** (auto-generate from sections):
+   <nav class="toc">
+     <div class="toc-title">Contents</div>
+     <ol class="toc-list">
+       <li><a href="#section-1">Section Name</a></li>
+     </ol>
+   </nav>
+
+4. **Content Sections**:
+   <section id="section-name" class="article-section">
+     <h2 class="section-heading">Section Title</h2>
+     <p>Content...</p>
+   </section>
+
+5. **Infobox** (if topic has key facts):
+   <aside class="infobox">
+     <div class="infobox-title">Topic Name</div>
+     <table class="infobox-table">
+       <tr><th>Label</th><td>Value</td></tr>
+     </table>
+   </aside>
+
+6. **References Section**:
+   <section id="references" class="references-section">
+     <h2>References</h2>
+     <ol class="reference-list">
+       <li id="cite-1"><span class="reference-text">Citation</span></li>
+     </ol>
+   </section>
+
+7. **See Also Section**:
+   <section id="see-also" class="see-also-section">
+     <h2>See also</h2>
+     <ul class="see-also-list">
+       <li><a href="#">Related Topic</a></li>
+     </ul>
+   </section>
+
+CSS CLASSES TO USE:
+- .wikipedia-article (main container)
+- .lead-section (introductory paragraphs)
+- .lead-paragraph (first paragraph, bold)
+- .toc (table of contents)
+- .toc-title, .toc-list
+- .article-section (each content section)
+- .section-heading (h2 headings)
+- .infobox (sidebar info box if applicable)
+- .infobox-title, .infobox-table
+- .figure (for diagrams/images placeholders)
+- .figure-caption
+- .reference-list (numbered citations)
+- .reference-text
+- .see-also-list
+- .subsection (h3 for subsections)
+- .note-box (for important notes)
+- .quote-box (for notable quotes)
+
+IMPORTANT RULES:
+1. Generate proper semantic HTML5
+2. Use ONLY the CSS classes listed above
+3. Create an infobox if the topic has key facts (dates, location, type, etc.)
+4. Convert markdown lists to proper <ul> or <ol>
+5. Make section IDs kebab-case (e.g., id="early-history")
+6. Add Wikipedia-style inline citations like <sup class="reference">[1]</sup>
+7. Keep the exact content but structure it properly
+8. Add meta descriptions where helpful
+
+OUTPUT:
+Return ONLY the complete HTML code, no explanations or markdown.
+Start with <article class="wikipedia-article"> and end with </article>.`;
+}
+
+// Stream Article Generation (Two-Step Process)
 async function streamArticle(
   request: EncyclopediaRequest,
   encoder: TextEncoder,
   controller: ReadableStreamDefaultController
 ) {
-  const systemPrompt = generateSystemPrompt(request.style);
-  const userPrompt = generateArticlePrompt(request);
+  try {
+    // ============= STEP 1: Generate Article Content =============
+    controller.enqueue(
+      encoder.encode(
+        `data: ${JSON.stringify({
+          type: 'status',
+          message: 'Step 1/2: Generating article content...',
+          step: 1
+        })}\n\n`
+      )
+    );
 
-  let lastError: Error | null = null;
-  let modelUsed = '';
+    const contentPrompt = generateContentPrompt(request);
+    let articleContent = '';
 
-  // Send initial <article> start tag
-  controller.enqueue(
-    encoder.encode(
-      `data: ${JSON.stringify({ type: 'content', content: '<article>' })}\n\n`
-    )
-  );
+    const contentStream = await openai.chat.completions.create({
+      model: CONTENT_MODEL,
+      messages: [
+        { role: 'system', content: 'You are an expert encyclopedia writer specializing in comprehensive, well-researched articles.' },
+        { role: 'user', content: contentPrompt }
+      ],
+      max_tokens: 4000,
+      temperature: 0.7,
+      stream: true,
+    });
 
-  // Try each model in sequence
-  for (const model of MODEL_CONFIG) {
-    try {
-      modelUsed = model.name;
+    // Collect the full article content
+    for await (const chunk of contentStream) {
+      const content = chunk.choices[0]?.delta?.content;
+      if (content) {
+        articleContent += content;
+        // Optionally stream progress
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({
+              type: 'progress',
+              step: 1,
+              content: content
+            })}\n\n`
+          )
+        );
+      }
+    }
 
-      // Send metadata
-      controller.enqueue(
-        encoder.encode(
-          `data: ${JSON.stringify({
-            type: 'metadata',
-            model: model.name,
+    controller.enqueue(
+      encoder.encode(
+        `data: ${JSON.stringify({
+          type: 'status',
+          message: 'Step 1 complete. Article content generated.',
+          step: 1,
+          complete: true
+        })}\n\n`
+      )
+    );
+
+    // ============= STEP 2: Convert to HTML =============
+    controller.enqueue(
+      encoder.encode(
+        `data: ${JSON.stringify({
+          type: 'status',
+          message: 'Step 2/2: Converting to Wikipedia-style HTML...',
+          step: 2
+        })}\n\n`
+      )
+    );
+
+    const htmlPrompt = generateHTMLPrompt(articleContent);
+
+    controller.enqueue(
+      encoder.encode(
+        `data: ${JSON.stringify({ type: 'content', content: '' })}\n\n`
+      )
+    );
+
+    const htmlStream = await openai.chat.completions.create({
+      model: HTML_MODEL,
+      messages: [
+        { role: 'system', content: 'You are an expert at converting encyclopedia articles into semantic, Wikipedia-style HTML. Output only HTML code with proper structure and CSS classes.' },
+        { role: 'user', content: htmlPrompt }
+      ],
+      max_tokens: 4000,
+      temperature: 0.3, // Lower temperature for more consistent formatting
+      stream: true,
+    });
+
+    // Stream the HTML output
+    for await (const chunk of htmlStream) {
+      const content = chunk.choices[0]?.delta?.content;
+      if (content) {
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({
+              type: 'content',
+              content
+            })}\n\n`
+          )
+        );
+      }
+    }
+
+    // Send completion
+    controller.enqueue(
+      encoder.encode(
+        `data: ${JSON.stringify({
+          type: 'done',
+          models: { content: CONTENT_MODEL, html: HTML_MODEL },
+          success: true,
+          metadata: {
             topic: request.topic,
             depth: request.depth,
             style: request.style,
-          })}\n\n`
-        )
-      );
+            steps: 2
+          }
+        })}\n\n`
+      )
+    );
 
-      const stream = await openai.chat.completions.create({
-        model: model.name,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        max_tokens: model.maxTokens,
-        temperature: model.temperature,
-        stream: true,
-      });
-
-      // Stream content chunks
-      for await (const chunk of stream) {
-        const content = chunk.choices[0]?.delta?.content;
-        if (content) {
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({
-                type: 'content',
-                content,
-              })}\n\n`
-            )
-          );
-        }
-      }
-
-      // Send closing </article> and completion notice
-      controller.enqueue(
-        encoder.encode(
-          `data: ${JSON.stringify({
-            type: 'content',
-            content: '</article>',
-          })}\n\n`
-        )
-      );
-
-      controller.enqueue(
-        encoder.encode(
-          `data: ${JSON.stringify({
-            type: 'done',
-            model: modelUsed,
-            success: true,
-          })}\n\n`
-        )
-      );
-
-      return; // success — stop trying more models
-    } catch (error) {
-      lastError = error as Error;
-      console.error(`Model ${model.name} failed:`, error);
-
-      // Send error notification
-      controller.enqueue(
-        encoder.encode(
-          `data: ${JSON.stringify({
-            type: 'model_failed',
-            model: model.name,
-            error: error instanceof Error ? error.message : 'Unknown error',
-          })}\n\n`
-        )
-      );
-
-      // Wait before trying next model
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
+  } catch (error) {
+    controller.enqueue(
+      encoder.encode(
+        `data: ${JSON.stringify({
+          type: 'error',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        })}\n\n`
+      )
+    );
   }
-
-  // All models failed
-  controller.enqueue(
-    encoder.encode(
-      `data: ${JSON.stringify({
-        type: 'error',
-        error: `All models failed. Last error: ${lastError?.message || 'Unknown error'}`,
-      })}\n\n`
-    )
-  );
-
-  // Close <article> if not closed
-  controller.enqueue(
-    encoder.encode(
-      `data: ${JSON.stringify({
-        type: 'content',
-        content: '</article>',
-      })}\n\n`
-    )
-  );
 }
 
 // Main Route Handler
@@ -270,11 +394,15 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET handler for testing
+// GET handler
 export async function GET() {
   return new Response(
     JSON.stringify({
-      message: 'Encyclopedia Article Streaming API (HTML Output)',
+      message: 'Wikipedia-Style Encyclopedia API (Two-Step Generation)',
+      process: [
+        'Step 1: Generate comprehensive article content',
+        'Step 2: Convert to semantic HTML with Wikipedia styling'
+      ],
       usage: 'POST to this endpoint with JSON body',
       example: {
         topic: 'Quantum Computing',
