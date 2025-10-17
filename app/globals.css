@@ -28,7 +28,13 @@ body{
   border-top-right-radius: 0px;
   border-top-left-radius: 0px;
 }
-
+.table-controls{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap:2px ;
+  padding: 2px 2px 2px 2px;
+}
 .table-controls button {
   padding: 4;
   cursor: pointer;
@@ -41,7 +47,10 @@ body{
   border-radius: 10px;
   border-bottom-left-radius:0px  ;
 }
-
+.tbl-operator table thead{
+  padding: 8px;
+  
+}
 .tbl-operator td {
   border: 1px solid #fff;
   padding: 8px;

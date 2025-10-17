@@ -98,6 +98,7 @@ export default function CreateNew({
   const [activeAction, setActiveAction] = useState < string | null > (null);
   const editorRef = useRef < HTMLDivElement > (null);
   const textareaRef = useRef < HTMLTextAreaElement > (null);
+  
   // Create a flattened version once
   const flattenedBlocks = toolbarBlocks.flatMap(block => [block, ...(block.items || []), ...(block.editor || [])]
     .flatMap(item => [item, ...(item.items || []), ...(item.editor || [])])
@@ -121,85 +122,234 @@ export default function CreateNew({
       setEditorMode(editor_mode);
     }
   }, [editor_mode, editorMode]);
+  // Types for better type safety
+  interface TemplateImage {
+    url: string;
+    height ? : number;
+    width ? : number;
+    alt ? : string;
+    caption ? : string;
+  }
   
-  const buildTemplate = (arg ? : {
+  interface TemplateField {
+    label: string;
+    value: any;
+    type ? : 'text' | 'link' | 'coordinates' | 'signature' | 'image';
+    className ? : string;
+  }
+  
+  interface TemplateSection {
+    header: string;
+    fields ? : TemplateField[];
+  }
+  
+  interface TemplateInfoBox {
+    image ? : TemplateImage;
+    title ? : string;
+    subtitle ? : string;
+    sections ? : TemplateSection[];
+  }
+  
+  interface TemplateConfig {
     name ? : string;
-    parameters ? : Array < {
-      id: string;
-      value: string;
-    } > ;
-  }): string => {
-    let infobox = `
-  <div class='tpl-${arg?.name || ''}'>`;
+    parameters ? : Array < { id: string;value: string } > ;
+  }
+  
+  // Field value processors for better separation of concerns
+  const fieldProcessors = {
+    text: (value: any): string => `<span>${escapeHtml(value)}</span>`,
     
-    if (InfoBox.length) {
-      InfoBox.forEach((ibox) => {
-        infobox += `<div class='x-tpl-${arg?.name || ''}'>`;
-        
-        if (ibox.image) {
-          infobox += `<img src='${ibox.image.url}' height='${ibox.image.height}' width='${ibox.image.width}' alt='${ibox.image.alt}'/>`;
-          if (ibox.image.caption) {
-            infobox += `<caption>${ibox.image.caption}</caption>`;
-          }
-        }
-        
-        if (ibox.title) {
-          infobox += `<h2 class='heading-tpl'>${ibox.title}</h2>`;
-          if (ibox.subtitle) {
-            infobox += `<h4>${ibox.subtitle}</h4>`;
-          }
-        }
-        
-        // Add sections processing
-        if (ibox.sections && ibox.sections.length) {
-          ibox.sections.forEach((section) => {
-            infobox += `<div class="section">`;
-            infobox += `<h3>${section.header}</h3>`;
-            
-            if (section.fields && section.fields.length) {
-              section.fields.forEach((field) => {
-                infobox += `<div class="field ${field.className || ''}">`;
-                infobox += `<strong>${field.label}:</strong> `;
-                
-                if (field.type === "text") {
-                  infobox += `<span>${field.value}</span>`;
-                } else if (field.type === "link" && Array.isArray(field.value)) {
-                  infobox += `<ul>`;
-                  (field.value as string[]).forEach(item => {
-                    infobox += `<li>${item}</li>`;
-                  });
-                  infobox += `</ul>`;
-                } else if (field.type === "coordinates") {
-                  infobox += `<span class="coordinates">${field.value}</span>`;
-                } else if (field.type === "signature") {
-                  infobox += `<span class="signature">${field.value}</span>`;
-                } else if (field.type === "image" && typeof field.value === 'object' && field.value.image) {
-                  infobox += `<img src="${field.value.image.url}" alt="${field.value.image.alt}" width="${field.value.image.width}">`;
-                } else if (typeof field.value === 'object' && field.value.text) {
-                  infobox += `<a href="${field.value.href}">${field.value.text}</a>`;
-                  if (field.value.subtext) {
-                    infobox += `<small>${field.value.subtext}</small>`;
-                  }
-                } else {
-                  infobox += `<span>${field.value}</span>`;
-                }
-                
-                infobox += `</div>`;
-              });
-            }
-            
-            infobox += `</div>`;
-          });
-        }
-        
-        infobox += '</div>';
-      });
+    link: (value: any): string => {
+      if (!Array.isArray(value)) return fieldProcessors.text(value);
+      
+      const items = value.map(item => `<li>${escapeHtml(item)}</li>`).join('');
+      return `<ul>${items}</ul>`;
+    },
+    
+    coordinates: (value: any): string =>
+      `<span class="coordinates">${escapeHtml(value)}</span>`,
+    
+    signature: (value: any): string =>
+      `<span class="signature">${escapeHtml(value)}</span>`,
+    
+    image: (value: any): string => {
+      if (typeof value !== 'object' || !value?.image?.url) {
+        return fieldProcessors.text(value);
+      }
+      
+      const { image } = value;
+      const alt = image.alt ? ` alt="${escapeHtml(image.alt)}"` : '';
+      const width = image.width ? ` width="${image.width}"` : '';
+      
+      return `<img src="${image.url}"${alt}${width}>`;
+    },
+    
+    default: (value: any): string => {
+      if (typeof value === 'object' && value.href) {
+        const link = `<a href="${escapeHtml(value.href)}">${escapeHtml(value.text || '')}</a>`;
+        const subtext = value.subtext ? `<small>${escapeHtml(value.subtext)}</small>` : '';
+        return link + subtext;
+      }
+      
+      return `<span>${escapeHtml(value)}</span>`;
+    }
+  };
+  
+  // HTML escaping utility
+  const escapeHtml = (unsafe: any): string => {
+    if (unsafe === null || unsafe === undefined) return '';
+    
+    const str = String(unsafe);
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  };
+  
+  // Individual component builders
+  const buildImage = (image: TemplateImage): string => {
+    if (!image?.url) return '';
+    
+    const { url, height, width, alt = '', caption } = image;
+    const heightAttr = height ? ` height="${height}"` : '';
+    const widthAttr = width ? ` width="${width}"` : '';
+    
+    return `
+    <img src="${url}"${heightAttr}${widthAttr} alt="${escapeHtml(alt)}"/>
+    ${caption ? `<caption>${escapeHtml(caption)}</caption>` : ''}
+  `.trim();
+  };
+  
+  const buildTitle = (title: string, subtitle ? : string): string => {
+    if (!title) return '';
+    
+    return `
+    <h2 class='heading-tpl'>${escapeHtml(title)}</h2>
+    ${subtitle ? `<h4>${escapeHtml(subtitle)}</h4>` : ''}
+  `.trim();
+  };
+  
+  const buildField = (field: TemplateField): string => {
+    if (!field?.label || field.value === undefined) return '';
+    
+    const processor = fieldProcessors[field.type as keyof typeof fieldProcessors] || fieldProcessors.default;
+    const classAttr = field.className ? ` class="${escapeHtml(field.className)}"` : '';
+    
+    return `
+    <div class="field"${classAttr}>
+      <strong>${escapeHtml(field.label)}:</strong>
+      ${processor(field.value)}
+    </div>
+  `.trim();
+  };
+  
+  const buildSection = (section: TemplateSection): string => {
+    if (!section?.header) return '';
+    
+    const fields = (section.fields || [])
+      .map(buildField)
+      .filter(Boolean)
+      .join('');
+    
+    return `
+    <div class="section">
+      <h3>${escapeHtml(section.header)}</h3>
+      ${fields}
+    </div>
+  `.trim();
+  };
+  
+  const buildInfoBox = (ibox: TemplateInfoBox, templateName: string): string => {
+    const sections = (ibox.sections || [])
+      .map(buildSection)
+      .filter(Boolean)
+      .join('');
+    
+    return `
+    <div class='x-tpl-${templateName}'>
+      ${buildImage(ibox.image || {})}
+      ${buildTitle(ibox.title || '', ibox.subtitle)}
+      ${sections}
+    </div>
+  `.trim();
+  };
+  
+  // Main template builder
+  const buildTemplate = (arg ? : TemplateConfig): string => {
+    const templateName = arg?.name || 'default';
+    
+    // Validate and process InfoBox data
+    if (!Array.isArray(InfoBox) || InfoBox.length === 0) {
+      return `<div class='tpl-${templateName}'></div>`;
     }
     
-    infobox += `</div>`;
+    const infoBoxes = InfoBox
+      .map(ibox => buildInfoBox(ibox, templateName))
+      .filter(Boolean)
+      .join('');
     
-    return infobox;
+    return `
+    <div class='tpl-${templateName}'>
+      ${infoBoxes}
+    </div>
+  `.trim();
   };
+  
+  // Template insertion handler
+  const insertTemplate = (editorRef: React.RefObject < HTMLElement > ): boolean => {
+    if (!editorRef.current) {
+      console.warn('Editor reference not available');
+      return false;
+    }
+    
+    try {
+      editorRef.current.focus();
+      
+      const template = `
+      <br/>
+      ${buildTemplate({ name: 'infobox', parameters: [] })}
+      <br/>
+    `.trim();
+      
+      // Use modern clipboard API as fallback
+      if (!document.execCommand('insertHTML', false, template)) {
+        // Fallback for modern browsers
+        const selection = window.getSelection();
+        if (selection && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          range.deleteContents();
+          
+          const templateNode = document.createRange().createContextualFragment(template);
+          range.insertNode(templateNode);
+          
+          // Move cursor after inserted content
+          range.setStartAfter(templateNode.lastChild || templateNode);
+          range.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Failed to insert template:', error);
+      
+      // Ultimate fallback
+      try {
+        document.execCommand('insertHTML', false, '<br/><div class="tpl-infobox">Infobox Template</div><br/>');
+      } catch (fallbackError) {
+        console.error('Fallback insertion also failed:', fallbackError);
+      }
+      
+      return false;
+    }
+  };
+  
+  // Usage in your component
+  
+  
   // Function to attach event listeners to table buttons
   function attachTableEventListeners(tableId) {
     const tableContainer = document.querySelector(`[data-table-id="${tableId}"]`);
@@ -297,14 +447,7 @@ export default function CreateNew({
             document.execCommand('strikeThrough', false);
             break;
           case 'template':
-            editorRef.current.focus()
-            let template = `<br/> ${buildTemplate({
-              name: 'infobox',
-              parameters:[]
-            })} <br/>
-            `
-            document.execCommand('insertHTML', false, template)
-            
+            insertTemplate(editorRef)
             break;
           default:
             console.log(`Executing command: ${action}`);
