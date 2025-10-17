@@ -76,6 +76,7 @@ export default function CreateNew({
   
   // --- ADD THIS FUNCTION ---
   const generateAIArticle = useCallback(async (topic: string) => {
+    alert('')
     if (!topic.trim()) return alert('Please provide a topic.');
     setIsGenerating(true);
     setGenerationError(null);
