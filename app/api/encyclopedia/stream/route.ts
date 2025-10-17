@@ -23,8 +23,8 @@ const EncyclopediaRequestSchema = z.object({
 type EncyclopediaRequest = z.infer < typeof EncyclopediaRequestSchema > ;
 
 // Model Configuration with Fallbacks
-const CONTENT_MODEL = 'deepseek/deepseek-r1:free'; // For article content
-const HTML_MODEL = 'mistralai/mistral-7b-instruct:free'; // For HTML conversion
+const CONTENT_MODEL = 'alibaba/tongyi-deepresearch-30b-a3b:free'; // For article content
+const HTML_MODEL = 'qwen/qwen3-coder:free'; // For HTML conversion
 
 // STEP 1: Generate Article Content
 function generateContentPrompt(request: EncyclopediaRequest): string {
