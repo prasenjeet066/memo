@@ -475,8 +475,20 @@ export default function CreateNew({
   }, [activeAction]);
   
   const handleSwMode = useCallback((mode: string) => {
-    if (mode === 'visual' || mode === 'code') {
-      setEditorMode(mode);
+    if (mode === 'visual') {
+      if (editorRef.current) {
+        if (payload.content !== null) {
+          editorRef.current.innerHTML = payload.content;
+          setEditorMode(mode)
+        }
+      }
+    } else if (mode === 'code') {
+      if (editorRef.current) {
+        setPayload((prev) => ({
+          ...prev,
+          content: textareaRef.current.value || ''
+        }))
+      }
     }
   }, []);
   
