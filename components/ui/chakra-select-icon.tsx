@@ -4,11 +4,11 @@ import {
   HStack,
   IconButton,
   Portal,
-  createListCollection
+  Select,
+  createListCollection,
+  useSelectContext,
 } from "@chakra-ui/react"
-import { Select } from "@chakra-ui/react"
-import { Fai } from '@/components/Fontawesome'
-import { useState } from "react"
+import { Fai } from "@/components/Fontawesome"
 
 interface SelectItem {
   label: string
@@ -17,43 +17,43 @@ interface SelectItem {
   action: string
 }
 
-const SelectTrigger = ({ iconBase }: { iconBase: React.ReactNode }) => {
+interface IconSelectBoxProps {
+  block: {
+    icon: React.ReactNode
+    items: SelectItem[]
+  }
+  activeAction: string | null
+  handleToolbarAction: (action: string) => void
+}
+
+const SelectTrigger = () => {
+  const select = useSelectContext()
+  const items = select.selectedItems as SelectItem[]
+  
   return (
-    <Select.Trigger asChild>
-      <IconButton
-        px="2"
-        variant="outline"
-        size="sm"
-      >
-        <Fai icon={iconBase} />
-      </IconButton>
-    </Select.Trigger>
+    <IconButton
+      px="2"
+      variant="outline"
+      size="sm"
+      {...select.getTriggerProps()}
+    >
+      {select.hasSelectedItems ? <Fai icon={items[0].icon} /> : null}
+    </IconButton>
   )
 }
 
 export default function IconSelectBox({
   block,
-  activeAction,
   handleToolbarAction,
-}: {
-  block: any
-  activeAction: string | null
-  handleToolbarAction: (action: string) => void
-}) {
-  const [selected, setSelected] = useState(block.items[0].value)
-  
-  // Create collection from block items
+}: IconSelectBoxProps) {
   const collection = createListCollection({
     items: block.items,
   })
   
-  const handleSelect = (details: any) => {
-    const selectedValue = details.value[0]
-    const selectedItem = block.items.find(
-      (item: SelectItem) => item.value === selectedValue
-    )
+  const handleSelect = (values: string[]) => {
+    const selectedValue = values[0]
+    const selectedItem = block.items.find(item => item.value === selectedValue)
     if (selectedItem) {
-      setSelected(selectedValue)
       handleToolbarAction(selectedItem.action)
     }
   }
@@ -64,23 +64,22 @@ export default function IconSelectBox({
       positioning={{ sameWidth: false }}
       size="sm"
       width="auto"
-      value={[selected]}
+      defaultValue={[block.items[0].value]}
       onValueChange={handleSelect}
     >
+      <Select.HiddenSelect />
       <Select.Control>
-        <SelectTrigger iconBase={block.icon} />
+        <SelectTrigger />
       </Select.Control>
       <Portal>
         <Select.Positioner>
           <Select.Content minW="32">
-            {block.items.map((item: SelectItem) => (
-              <Select.Item key={item.value} item={item}>
-                <Select.ItemText>
-                  <HStack gap={3}>
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </HStack>
-                </Select.ItemText>
+            {block.items.map(item => (
+              <Select.Item item={item} key={item.value}>
+                <HStack gap={3}>
+                  {item.icon}
+                  {item.label}
+                </HStack>
                 <Select.ItemIndicator />
               </Select.Item>
             ))}
