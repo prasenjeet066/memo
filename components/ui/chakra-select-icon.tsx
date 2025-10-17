@@ -11,7 +11,7 @@ import {
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import { Fai } from '@/components/Fontawesome';
 
-function IconSelectBox({
+export default function IconSelectBox({
   block,
   activeAction,
   handleToolbarAction,
