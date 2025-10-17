@@ -347,7 +347,7 @@ export default function CreateNew({
         <Editor
           height="400px"
           defaultLanguage="html"
-          defaultValue="// TypeScript code here"
+          defaultValue={payload.content || '//Write your code....'}
           onMount={handleEditorDidMount}
           className="flex-1 p-4 overflow-auto w-full bg-white min-h-[300px] border-none outline-none"
           onChange={handleEditorContentChangeCode}
