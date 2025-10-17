@@ -154,7 +154,7 @@ export default function CreateNew({
     if (!record_name?.trim()) console.warn('Record name is empty or undefined');
   }, [record_name]);
   useEffect(()=>{
-    if (generationError!==null || generationError.trim()!=='') {
+    if (generationError!==null ) {
       setPayload((prev)=>({...prev,content: `${payload.content} \n //Error : ${generationError}`}))
     }
   },[generationError])
