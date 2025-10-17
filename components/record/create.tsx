@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useSession } from 'next-auth/react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Fai } from '@/components/Fontawesome';
 import InfoBox from '@/lib/editor/templates/infobox'
@@ -51,6 +52,7 @@ export default function CreateNew({
     title: '',
     content: ''
   });
+  const { data: session, status } = useSession()
   /**
     useEffect(() => {
       if (ActiveEditionPoint !== null) {
@@ -553,6 +555,7 @@ export default function CreateNew({
         <h1 className="text-xl font-bold text-gray-900">
           {record_name?.trim() || 'Untitled Document'}
         </h1>
+        {session?.user &&  session?.user.role ==='ADMIN' && (
         <Select
   defaultValue={editorMode}
   onValueChange={(value) => handleSwMode(value)}
@@ -564,7 +567,7 @@ export default function CreateNew({
     <SelectItem value="visual">Visual</SelectItem>
     <SelectItem value="code">Code</SelectItem>
   </SelectContent>
-</Select>
+</Select>)}
       </div>
 
       {/* Toolbar */}
