@@ -1,14 +1,14 @@
 "use client"
 
+import * as React from "react"
+import { Button } from "@/components/ui/button"
 import {
-  HStack,
-  IconButton,
-  Portal,
-  Select,
-  createListCollection,
-  useSelectContext,
-} from "@chakra-ui/react"
-import { Fai } from "@/components/Fontawesome"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { HStack } from "@chakra-ui/react" // or replace with a Tailwind div if you want
 
 interface SelectItem {
   label: string
@@ -26,66 +26,38 @@ interface IconSelectBoxProps {
   handleToolbarAction: (action: string) => void
 }
 
-const SelectTrigger = () => {
-  const select = useSelectContext()
-  const items = select.selectedItems as SelectItem[]
-  
-  return (
-    <IconButton
-      px="2"
-      variant="outline"
-      size="sm"
-      {...select.getTriggerProps()}
-    >
-      {select.hasSelectedItems ? <Fai icon={items[0].icon} /> : null}
-    </IconButton>
-  )
-}
-
 export default function IconSelectBox({
   block,
   handleToolbarAction,
 }: IconSelectBoxProps) {
- /** const collection = createListCollection({
-    items: block.items,
-  })**/
+  const [selectedValue, setSelectedValue] = React.useState(block.items[0].value)
   
-  const handleSelect = (values: string[]) => {
-    const selectedValue = values[0]
-    const selectedItem = block.items.find(item => item.value === selectedValue)
-    if (selectedItem) {
-      handleToolbarAction(selectedItem.action)
-    }
+  const handleSelect = (item: SelectItem) => {
+    setSelectedValue(item.value)
+    handleToolbarAction(item.action)
   }
   
+  const selectedItem = block.items.find(item => item.value === selectedValue)
+  
   return (
-    <Select.Root
-      //collection={collection}
-      positioning={{ sameWidth: false }}
-      size="sm"
-      width="auto"
-      defaultValue={[block.items[0].value]}
-      onValueChange={handleSelect}
-    >
-      <Select.HiddenSelect />
-      <Select.Control>
-        <SelectTrigger />
-      </Select.Control>
-      <Portal>
-        <Select.Positioner>
-          <Select.Content minW="32">
-            {block.items.map(item => (
-              <Select.Item item={item} key={item.value}>
-                <HStack gap={3}>
-                  {item.icon}
-                  {item.label}
-                </HStack>
-                <Select.ItemIndicator />
-              </Select.Item>
-            ))}
-          </Select.Content>
-        </Select.Positioner>
-      </Portal>
-    </Select.Root>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="px-2">
+          {selectedItem?.icon}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-[8rem]">
+        {block.items.map(item => (
+          <DropdownMenuItem
+            key={item.value}
+            onClick={() => handleSelect(item)}
+            className="flex items-center gap-3"
+          >
+            {item.icon}
+            {item.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
