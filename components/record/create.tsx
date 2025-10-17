@@ -80,7 +80,7 @@ export default function CreateNew({
   useEffect(() => {
     if (!record_name?.trim()) console.warn('Record name is empty or undefined');
   }, [record_name]);
-
+  
   const escapeHtml = (unsafe: any): string => {
     if (unsafe === null || unsafe === undefined) return '';
     const str = String(unsafe);
@@ -127,7 +127,7 @@ export default function CreateNew({
       return false;
     }
   };
-
+  
   const attachTableEventListeners = (tableId: string) => {
     const tableContainer = document.querySelector(`[data-table-id="${tableId}"]`);
     if (!tableContainer) return;
@@ -242,13 +242,15 @@ export default function CreateNew({
   const handleToolbarAction = useCallback((action: string) => {
     if (action && action !== activeAction) setActiveAction(action);
   }, [activeAction]);
-
+  const handleEditorContentChangeCode = (value , evt)=>{
+    setPayload((prev)=>({...prev, content: value}))
+  }
   const handleSwMode = useCallback((mode: string) => {
     if (mode === 'visual' && editorRef.current) {
       if (payload.content !== null) editorRef.current.innerHTML = payload.content || '';
     }
     setEditorMode(mode as 'visual' | 'code');
-  }, [payload]);
+  }, [payload.content]);
 
   const handleEditorContentChange = useCallback(() => {
     if (editorRef.current) {
@@ -348,7 +350,8 @@ export default function CreateNew({
           defaultValue="// TypeScript code here"
           onMount={handleEditorDidMount}
           className="flex-1 p-4 overflow-auto w-full bg-white min-h-[300px] border-none outline-none"
-          theme="vs-dark"
+          onChange={handleEditorContentChangeCode}
+          theme="github-light"
           options={{
             selectOnLineNumbers: true,
             roundedSelection: false,
