@@ -54,7 +54,7 @@
     "i18next": "^23.0.0",
     "i18next-browser-languagedetector": "^7.0.0",
     "i18next-http-backend": "^2.0.0",
-
+    
     "input-otp": "latest",
     "lodash": "latest",
     "lucide-react": "^0.454.0",
@@ -71,9 +71,13 @@
     "react-advanced-cropper": "latest",
     "openai": "latest",
     "react-day-picker": "latest",
-    "@monaco-editor/react" : "latest",
-    "@chakra-ui/react": "latest",
-    "@chakra-ui/icons":"latest",
+    "@monaco-editor/react": "latest",
+    
+    "@chakra-ui/react": "^2.8.2",
+    "@chakra-ui/icons": "^2.2.2",
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "framer-motion": "^11.11.6",
     "react-dom": "^18",
     "react-hook-form": "latest",
     "react-i18next": "^13.0.0",
