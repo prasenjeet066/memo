@@ -76,12 +76,12 @@ export default function MainPage() {
         </button>
       </div>
     </div>
-    <div className = 'text-center w-full flex-warp text-sm text-gray-700 items-center gap-4'>
+    <div className = 'text-center w-full flex-warp text-sm text-gray-700 items-center'>
       {
         footerList.map((list, index)=>{
-          if (list.label && !isMobile ) {
+          if (list.label && isMobile ) {
             return (
-              <a href = ''>{list.label}</a>
+              <a href = '' className='px-4 after:content-[\f090] after:font-["Font Awesome 6 Pro"]'>{list.label}</a>
             )
           }
         })
