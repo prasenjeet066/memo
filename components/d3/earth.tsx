@@ -51,7 +51,7 @@ const GlobeChart: React.FC<GlobeChartProps> = ({ width = 928, rotationSpeed = 0.
     svg
       .append("path")
       .datum({ type: "Sphere" })
-      .attr("fill", "#a8d0e6") // ocean blue
+      .attr("fill", "none") // ocean blue
       .attr("stroke", "#333")
       .attr("stroke-width", 0.2)
       .attr("d", path as any);
