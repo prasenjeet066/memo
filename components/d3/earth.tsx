@@ -27,8 +27,8 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
   const ZOOM_SCALE_FACTOR = 2.8;
 
   const COLORS = {
-    border: "#4a7a9a",
-    highlight: "#00d4ff",
+    border: "#111111",
+    highlight: "blue",
   };
 
   // --- Rotation Controls ---
