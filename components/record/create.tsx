@@ -348,7 +348,7 @@ export default function CreateNew({
       setActiveAction(action);
     }
   }, []);
-
+  
   const handleEditorContentChangeCode = useCallback((value?: string) => {
     setPayload((prev) => ({ ...prev, content: value || '' }));
   }, []);
@@ -513,12 +513,12 @@ export default function CreateNew({
           suppressContentEditableWarning
           aria-label="Editor content area"
           onInput={handleEditorContentChange}
-        />
+        >{payload.content}</div>
       )}
 
       {/* AI Generation Status */}
       {isGenerating && (
-        <div className="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg">
+        <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-full">
           Generating AI content...
         </div>
       )}
