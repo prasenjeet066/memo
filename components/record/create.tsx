@@ -414,7 +414,7 @@ export default function CreateNew({
         <h1 className="text-xl font-bold text-gray-900">
           {record_name?.trim() || 'Untitled Document'}
         </h1>
-
+        <div className = 'flex items-center justify-end'>
         {hasRegisteredRole && (
           <Select value={editorMode} onValueChange={handleSwMode}>
             <SelectTrigger className="max-w-[140px] w-auto h-10 border-none bg-white rounded-full">
@@ -426,6 +426,11 @@ export default function CreateNew({
             </SelectContent>
           </Select>
         )}
+        <button className = 'border-none rounded-full p-2 px-4 bg-white text-black'>
+          <Fai icon = 'gear' className = 'mr-1'/>
+          {'Settings'}
+        </button>
+        </div>
       </div>
 
       {/* Toolbar */}
