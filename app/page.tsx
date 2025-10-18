@@ -52,7 +52,7 @@ export default function MainPage() {
       <Header navlist={NavList} />
 
       <div className="w-full flex-1 h-full flex flex-col items-end justify-end">
-        <div className='flex flex-col items-center justify-center'>
+        <div className='flex flex-col items-center justify-center h-full'>
           
         
         <GlobeChart SearchCountry={searchQuery} />
@@ -79,7 +79,7 @@ export default function MainPage() {
         </div>
         </div>
         {/* ✅ Fixed footer layout (centers last item properly) */}
-        <footer className="w-full px-6 py-4 text-center text-xs text-gray-700">
+        <footer className={`w-full px-6 py-4 text-center text-xs text-gray-700 ${!isMobile &&  'border-t border-gray-200'}`}>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-y-2 justify-items-center">
             {footerList.map((list, index) => (
               <a
