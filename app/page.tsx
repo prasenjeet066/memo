@@ -3,6 +3,7 @@
 
 import { Fai } from '@/components/Fontawesome';
 import Header from '@/components/header'
+import GlobeChart from '@/components/d3/earth'
 import { useMobile } from "@/lib/units/use-mobile"
 import { Home, Compass, HandHeart, Settings } from 'lucide-react'
 import { useState } from 'react'
@@ -43,6 +44,7 @@ export default function MainPage() {
     <Header navlist={NavList}/>
     <div className="w-full flex-1 flex flex-col items-center justify-center">
     <div className='p-4 space-y-2 w-full max-w-md'>
+      <GlobeChart/>
       <h1 className='text-center  text-2xl'>Find Anything.</h1>
       <div className={`w-full flex items-center justify-between gap-2 rounded-full p-2 bg-white`}>
         <input type='text' className='outline-none border-none pl-2 bg-transparent w-full' placeholder='About Bangladesh' />
