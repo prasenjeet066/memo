@@ -81,19 +81,7 @@ export default function CreateNew({
     });
   }, []);
 
-  // Flatten toolbar blocks for searching
-  const flattenedBlocks = useCallback(() => {
-    const flatten = (blocks: any[]): any[] => {
-      return blocks.flatMap((block) => [
-        block,
-        ...(block.items ? flatten(block.items) : []),
-        ...(block.editor ? flatten(block.editor) : []),
-      ]);
-    };
-    return flatten(toolbarBlocks).filter(Boolean);
-  }, []);
-
-  // AI Article Generation
+  // AI Article Generation - FIXED: API থেকে 'progress' type আসে, 'content' না
   const generateAIArticle = useCallback(async (topic: string) => {
     if (!topic?.trim()) {
       alert('Please provide a topic.');
@@ -102,6 +90,7 @@ export default function CreateNew({
 
     setIsGenerating(true);
     setGenerationError(null);
+    setPromptAiTask({ content: '' }); // Reset previous content
 
     try {
       const response = await fetch('/api/encyclopedia/stream', {
@@ -109,7 +98,6 @@ export default function CreateNew({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           topic,
-          depth: 'standard',
           style: 'academic',
           includeReferences: true,
         }),
@@ -136,7 +124,8 @@ export default function CreateNew({
             try {
               const data = JSON.parse(part.replace(/^data:\s*/, ''));
               
-              if (data.type === 'content') {
+              // FIXED: API 'progress' type পাঠায়, 'content' না
+              if (data.type === 'progress' && data.content) {
                 startTransition(() => {
                   setPromptAiTask((prev) => ({
                     content: prev.content + data.content,
@@ -144,6 +133,8 @@ export default function CreateNew({
                 });
               } else if (data.type === 'error') {
                 setGenerationError(data.error);
+              } else if (data.type === 'done') {
+                console.log('AI generation completed');
               }
             } catch (err) {
               console.error('Invalid JSON in stream:', part);
@@ -255,6 +246,7 @@ export default function CreateNew({
         
         await generateAIArticle(value);
         
+        // FIXED: AI content insert করার আগে check করুন content আছে কিনা
         if (promptAiTask.content) {
           const container = document.createElement('div');
           container.id = 'ai_generated';
@@ -350,21 +342,35 @@ export default function CreateNew({
     }
   }, [onPublish, payload]);
 
+  // FIXED: Select item থেকে action trigger করার জন্য onValueChange ব্যবহার করুন
   const handleToolbarAction = useCallback((action: string) => {
-    if (action && action !== activeAction) {
+    if (action) {
       setActiveAction(action);
     }
-  }, [activeAction]);
+  }, []);
 
   const handleEditorContentChangeCode = useCallback((value?: string) => {
     setPayload((prev) => ({ ...prev, content: value || '' }));
   }, []);
 
+  // FIXED: Mode switch করার সময় content properly sync করুন
   const handleSwMode = useCallback((mode: string) => {
-    if (mode === 'visual' && editorRef.current) {
-      editorRef.current.innerHTML = payload.content || '';
+    const newMode = mode as 'visual' | 'code';
+    
+    if (newMode === 'visual') {
+      // Code mode থেকে Visual mode এ যাওয়ার সময়
+      if (editorRef.current) {
+        editorRef.current.innerHTML = payload.content || '';
+      }
+    } else if (newMode === 'code') {
+      // Visual mode থেকে Code mode এ যাওয়ার সময়
+      if (editorRef.current) {
+        const currentContent = editorRef.current.innerHTML;
+        setPayload((prev) => ({ ...prev, content: currentContent }));
+      }
     }
-    setEditorMode(mode as 'visual' | 'code');
+    
+    setEditorMode(newMode);
   }, [payload.content]);
 
   const handleEditorContentChange = useCallback(() => {
@@ -384,7 +390,7 @@ export default function CreateNew({
     if (generationError) {
       setPayload((prev) => ({
         ...prev,
-        content: `${prev.content}\n // Error: ${generationError}`,
+        content: `${prev.content}\n<!-- Error: ${generationError} -->`,
       }));
     }
   }, [generationError]);
@@ -400,13 +406,13 @@ export default function CreateNew({
   return (
     <div className="w-full h-full flex flex-col">
       {/* Header */}
-      <div className="px-4 py-3">
+      <div className="px-4 py-3 flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900">
           {record_name?.trim() || 'Untitled Document'}
         </h1>
 
         {hasRegisteredRole && (
-          <Select defaultValue={editorMode} onValueChange={handleSwMode}>
+          <Select value={editorMode} onValueChange={handleSwMode}>
             <SelectTrigger className="max-w-[140px] w-auto h-10 border-none bg-white rounded-full">
               <SelectValue placeholder={editorMode} />
             </SelectTrigger>
@@ -425,7 +431,10 @@ export default function CreateNew({
             {toolbarBlocks.map((block: ToolbarBlock, index: number) => {
               if (block.items && Array.isArray(block.items)) {
                 return (
-                  <Select key={`toolbar-select-${index}`}>
+                  <Select 
+                    key={`toolbar-select-${index}`}
+                    onValueChange={handleToolbarAction}
+                  >
                     <SelectTrigger className="max-w-[180px] w-auto h-10 border-none">
                       <SelectValue placeholder={<Fai icon={block.icon} />} />
                     </SelectTrigger>
@@ -435,10 +444,7 @@ export default function CreateNew({
                           key={`item-${index}-${itemIndex}`}
                           value={item.action || item.label}
                         >
-                          <div
-                            className="flex items-center gap-2"
-                            onClick={() => handleToolbarAction(item.action)}
-                          >
+                          <div className="flex items-center gap-2">
                             <Fai icon={item.icon} style="fas" />
                             <span>{item.label}</span>
                           </div>
@@ -487,7 +493,7 @@ export default function CreateNew({
         <Editor
           height="400px"
           defaultLanguage="html"
-          value={payload.content || '// Write your code...'}
+          value={payload.content || '<!-- Write your code... -->'}
           onMount={handleEditorDidMount}
           className="flex-1 p-4 overflow-auto w-full bg-white min-h-[300px] border-none outline-none"
           onChange={handleEditorContentChangeCode}
@@ -508,6 +514,13 @@ export default function CreateNew({
           aria-label="Editor content area"
           onInput={handleEditorContentChange}
         />
+      )}
+
+      {/* AI Generation Status */}
+      {isGenerating && (
+        <div className="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg">
+          Generating AI content...
+        </div>
       )}
     </div>
   );
