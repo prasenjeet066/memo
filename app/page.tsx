@@ -44,6 +44,23 @@ export default function MainPage() {
       setSearchQuery(e.target.value)
     }
   }
+  const footerList = [
+    {
+      label: ' Terms & Conditions'
+    },
+    {
+      label: 'Content Security'
+    },
+    {
+      label: 'Developers'
+    },
+    {
+      label: 'About us'
+    },
+    {
+      label : 'APIs'
+    }
+  ]
   return (
   <main className="min-h-screen w-full bg-gray-50 flex flex-col">
     <Header navlist={NavList}/>
@@ -59,8 +76,16 @@ export default function MainPage() {
         </button>
       </div>
     </div>
-    <div className = 'text-center w-full'>
-      
+    <div className = 'text-center w-full flex-warp text-sm text-gray-700 items-center gap-4'>
+      {
+        footerList.map((list, index)=>{
+          if (list.label && !isMobile ) {
+            return (
+              <a href = ''>{list.label}</a>
+            )
+          }
+        })
+      }
     </div>
   </div>
 </main>)
