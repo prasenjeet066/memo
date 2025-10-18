@@ -51,7 +51,7 @@ export default function MainPage() {
     <main className="min-h-screen w-full bg-gray-50 flex flex-col h-screen">
       <Header navlist={NavList} />
 
-      <div className="w-full flex-1 h-full flex flex-col items-end justify-center">
+      <div className="w-full flex-1 h-full flex flex-col items-end justify-end">
         <div className='flex flex-col items-center justify-center'>
           
         
