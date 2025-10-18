@@ -1,5 +1,5 @@
 // app/api/encyclopedia/stream/route.ts
-// Two-step Wikipedia-style article generation: Content → HTML
+// Simplified one-step: brief encyclopedia summary (no HTML)
 
 import { NextRequest } from 'next/server';
 import OpenAI from 'openai';
@@ -14,355 +14,160 @@ const openai = new OpenAI({
 // Request Schema
 const EncyclopediaRequestSchema = z.object({
   topic: z.string().min(1).max(500),
-  depth: z.enum(['brief', 'standard', 'comprehensive']).default('standard'),
   style: z.enum(['academic', 'casual', 'technical', 'simple']).default('academic'),
-  includeReferences: z.boolean().default(true),
-  sections: z.array(z.string()).optional(),
+  includeReferences: z.boolean().default(false),
 });
 
-type EncyclopediaRequest = z.infer < typeof EncyclopediaRequestSchema > ;
+type EncyclopediaRequest = z.infer<typeof EncyclopediaRequestSchema>;
 
-// Model Configuration with Fallbacks
-const CONTENT_MODEL = 'alibaba/tongyi-deepresearch-30b-a3b:free'; // For article content
-const HTML_MODEL = 'qwen/qwen3-coder:free'; // For HTML conversion
+// Model Configuration
+const CONTENT_MODEL = 'alibaba/tongyi-deepresearch-30b-a3b:free'; // main model
 
-// STEP 1: Generate Article Content
-function generateContentPrompt(request: EncyclopediaRequest): string {
-  const depthGuides = {
-    brief: 'Write a concise encyclopedia article (500-800 words) covering essential information.',
-    standard: 'Write a comprehensive encyclopedia article (1200-2000 words) with detailed coverage.',
-    comprehensive: 'Write an in-depth encyclopedia article (2500-4000 words) with extensive details, examples, and analysis.',
-  };
-  
+// Generate Prompt (short summary)
+function generateShortPrompt(request: EncyclopediaRequest): string {
   const styleGuides = {
-    academic: 'Use formal, scholarly language with precise terminology and objectivity.',
-    casual: 'Use accessible, conversational language while maintaining accuracy.',
-    technical: 'Use technical precision with domain-specific terminology.',
-    simple: 'Use simple, clear language suitable for general audiences.',
+    academic: 'Use formal, scholarly tone with neutral language.',
+    casual: 'Use accessible, conversational tone suitable for general readers.',
+    technical: 'Use precise, domain-specific language for experts.',
+    simple: 'Use simple and clear language for beginners or children.',
   };
-  
-  let prompt = `You are writing a Wikipedia-style encyclopedia article about: "${request.topic}"
+
+  let prompt = `
+You are a concise encyclopedia writer.
+
+Write a short, Wikipedia-style summary about the topic: "${request.topic}"
 
 REQUIREMENTS:
-${depthGuides[request.depth]}
-${styleGuides[request.style]}
-
-STRUCTURE YOUR ARTICLE WITH THESE SECTIONS:
-
-1. **Lead/Introduction** (2-3 paragraphs)
-   - Define the topic clearly
-   - Provide context and significance
-   - Summarize key points
-
-2. **Main Content Sections**`;
-  
-  if (request.sections && request.sections.length > 0) {
-    prompt += `
-   Include these specific sections:
-${request.sections.map(s => `   - ${s}`).join('\n')}`;
-  } else {
-    prompt += `
-   - History/Background
-   - Key Concepts/Components
-   - Applications/Impact
-   - Current State/Developments`;
-  }
-  
-  prompt += `
-
-3. **Additional Sections** (as relevant)
-   - Notable Examples
-   - Controversies/Challenges
-   - Future Outlook
-
+- Length: 100–300 words
+- Avoid repetition or filler
 `;
-  
+
   if (request.includeReferences) {
-    prompt += `4. **References**
-   - Include 5-10 credible sources
-   - Format: Author/Organization, "Title", Publication, Year
-
+    prompt += `
+At the end, include a brief "References" section (2–3 short citations in plain text).
+Example:
+References:
+- NASA, "Mars Exploration Program", 2023
+- Britannica, "Quantum Mechanics", 2022
 `;
   }
-  
-  prompt += `5. **See Also** (Related Topics)
-   - List 3-5 related articles
 
-WRITING GUIDELINES:
-- Use clear section headings marked with ##
-- Write in third person, neutral tone
-- Include specific facts, dates, and data
-- Use examples to illustrate concepts
-- Cite sources naturally in text
-- Add relevant statistics or quotes
-- Include key terminology and definitions
-- Use bullet points for lists where appropriate
-
-OUTPUT FORMAT:
-Write the complete article in plain text/markdown format with clear section markers (##).
-Focus on content quality, accuracy, and encyclopedic tone.
-Do NOT output HTML - just the article content.`;
-  
   return prompt;
 }
 
-// STEP 2: Convert to Wikipedia-Style HTML
-function generateHTMLPrompt(articleContent: string): string {
-  return `Convert the following encyclopedia article into semantic, Wikipedia-style HTML.
-
-ARTICLE CONTENT:
-${articleContent}
-
-HTML STRUCTURE REQUIREMENTS:
-
-1. **Container**: Wrap in <article class="wikipedia-article">
-
-2. **Lead Section**: 
-   <div class="lead-section">
-     <p class="lead-paragraph">First paragraph</p>
-     <p>Subsequent lead paragraphs</p>
-   </div>
-
-3. **Table of Contents** (auto-generate from sections):
-   <nav class="toc">
-     <div class="toc-title">Contents</div>
-     <ol class="toc-list">
-       <li><a href="#section-1">Section Name</a></li>
-     </ol>
-   </nav>
-
-4. **Content Sections**:
-   <section id="section-name" class="article-section">
-     <h2 class="section-heading">Section Title</h2>
-     <p>Content...</p>
-   </section>
-
-5. **Infobox** (if topic has key facts):
-   <aside class="infobox">
-     <div class="infobox-title">Topic Name</div>
-     <table class="infobox-table">
-       <tr><th>Label</th><td>Value</td></tr>
-     </table>
-   </aside>
-
-6. **References Section**:
-   <section id="references" class="references-section">
-     <h2>References</h2>
-     <ol class="reference-list">
-       <li id="cite-1"><span class="reference-text">Citation</span></li>
-     </ol>
-   </section>
-
-7. **See Also Section**:
-   <section id="see-also" class="see-also-section">
-     <h2>See also</h2>
-     <ul class="see-also-list">
-       <li><a href="#">Related Topic</a></li>
-     </ul>
-   </section>
-
-CSS CLASSES TO USE:
-- .wikipedia-article (main container)
-- .lead-section (introductory paragraphs)
-- .lead-paragraph (first paragraph, bold)
-- .toc (table of contents)
-- .toc-title, .toc-list
-- .article-section (each content section)
-- .section-heading (h2 headings)
-- .infobox (sidebar info box if applicable)
-- .infobox-title, .infobox-table
-- .figure (for diagrams/images placeholders)
-- .figure-caption
-- .reference-list (numbered citations)
-- .reference-text
-- .see-also-list
-- .subsection (h3 for subsections)
-- .note-box (for important notes)
-- .quote-box (for notable quotes)
-
-IMPORTANT RULES:
-1. Generate proper semantic HTML5
-2. Use ONLY the CSS classes listed above
-3. Create an infobox if the topic has key facts (dates, location, type, etc.)
-4. Convert markdown lists to proper <ul> or <ol>
-5. Make section IDs kebab-case (e.g., id="early-history")
-6. Add Wikipedia-style inline citations like <sup class="reference">[1]</sup>
-7. Keep the exact content but structure it properly
-8. Add meta descriptions where helpful
-
-OUTPUT:
-Return ONLY the complete HTML code, no explanations or markdown.
-Start with <article class="wikipedia-article"> and end with </article>.`;
-}
-
-// Stream Article Generation (Two-Step Process)
+// Stream generation (single-step)
 async function streamArticle(
   request: EncyclopediaRequest,
   encoder: TextEncoder,
   controller: ReadableStreamDefaultController
 ) {
   try {
-    // ============= STEP 1: Generate Article Content =============
+    // Status update
     controller.enqueue(
       encoder.encode(
         `data: ${JSON.stringify({
           type: 'status',
-          message: 'Step 1/2: Generating article content...',
-          step: 1
+          message: 'Generating short encyclopedia summary...',
+          step: 1,
         })}\n\n`
       )
     );
-    
-    const contentPrompt = generateContentPrompt(request);
-    let articleContent = '';
-    
+
+    const prompt = generateShortPrompt(request);
+    let contentAccumulator = '';
+
     const contentStream = await openai.chat.completions.create({
       model: CONTENT_MODEL,
       messages: [
-        { role: 'system', content: 'You are an expert encyclopedia writer.' },
-        { role: 'user', content: contentPrompt }
+        { role: 'system', content: 'You are an expert at writing concise encyclopedia summaries.' },
+        { role: 'user', content: prompt },
       ],
-      max_tokens: 2000, // safer token limit
-      temperature: 0.7,
+      max_tokens: 500, // short output
+      temperature: 0.5,
       stream: true,
     });
-    
+
     try {
       for await (const chunk of contentStream) {
-        // Check if provider returned an error in chunk
         if ('error' in chunk) {
-          throw new Error(chunk.error?.message || 'Unknown OpenRouter error (content step)');
+          throw new Error(chunk.error?.message || 'OpenRouter streaming error');
         }
-        
+
         const content = chunk.choices[0]?.delta?.content;
         if (content) {
-          articleContent += content;
-          
+          contentAccumulator += content;
+
           controller.enqueue(
             encoder.encode(
               `data: ${JSON.stringify({
                 type: 'progress',
-                step: 1,
-                content
+                content,
               })}\n\n`
             )
           );
+
+          // Optional safeguard: stop if >300 words
+          if (contentAccumulator.split(/\s+/).length > 320) break;
         }
       }
-    } catch (streamError) {
-      throw new Error(`Error during content streaming: ${streamError instanceof Error ? streamError.message : streamError}`);
+    } catch (err) {
+      throw new Error(`Error during content streaming: ${err instanceof Error ? err.message : err}`);
     }
-    
-    controller.enqueue(
-      encoder.encode(
-        `data: ${JSON.stringify({
-          type: 'status',
-          message: 'Step 1 complete. Article content generated.',
-          step: 1,
-          complete: true
-        })}\n\n`
-      )
-    );
-    
-    // ============= STEP 2: Convert to HTML =============
-    controller.enqueue(
-      encoder.encode(
-        `data: ${JSON.stringify({
-          type: 'status',
-          message: 'Step 2/2: Converting to Wikipedia-style HTML...',
-          step: 2
-        })}\n\n`
-      )
-    );
-    
-    const htmlPrompt = generateHTMLPrompt(articleContent);
-    
-    const htmlStream = await openai.chat.completions.create({
-      model: HTML_MODEL,
-      messages: [
-        { role: 'system', content: 'You are an expert at converting encyclopedia articles into semantic HTML.' },
-        { role: 'user', content: htmlPrompt }
-      ],
-      max_tokens: 2000,
-      temperature: 0.3,
-      stream: true,
-    });
-    
-    try {
-      for await (const chunk of htmlStream) {
-        if ('error' in chunk) {
-          throw new Error(chunk.error?.message || 'Unknown OpenRouter error (HTML step)');
-        }
-        
-        const content = chunk.choices[0]?.delta?.content;
-        if (content) {
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({
-                type: 'content',
-                content
-              })}\n\n`
-            )
-          );
-        }
-      }
-    } catch (streamError) {
-      throw new Error(`Error during HTML streaming: ${streamError instanceof Error ? streamError.message : streamError}`);
-    }
-    
-    // Final completion
+
+    // Done
     controller.enqueue(
       encoder.encode(
         `data: ${JSON.stringify({
           type: 'done',
-          models: { content: CONTENT_MODEL, html: HTML_MODEL },
           success: true,
+          models: { content: CONTENT_MODEL },
           metadata: {
             topic: request.topic,
-            depth: request.depth,
-            style: request.style,
-            steps: 2
-          }
+            summary: true,
+            maxWords: 300,
+          },
         })}\n\n`
       )
     );
-    
   } catch (error) {
     controller.enqueue(
       encoder.encode(
         `data: ${JSON.stringify({
           type: 'error',
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         })}\n\n`
       )
     );
   }
 }
 
-// Main Route Handler
+// POST handler — main endpoint
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const validationResult = EncyclopediaRequestSchema.safeParse(body);
-    
-    if (!validationResult.success) {
+    const validation = EncyclopediaRequestSchema.safeParse(body);
+
+    if (!validation.success) {
       return new Response(
         JSON.stringify({
           error: 'Invalid request',
-          details: validationResult.error.errors,
-        }), { status: 400, headers: { 'Content-Type': 'application/json' } }
+          details: validation.error.errors,
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
-    
-    const request = validationResult.data;
-    
+
+    const request = validation.data;
+
     if (!process.env.OPENROUTER_API_KEY) {
       return new Response(
-        JSON.stringify({ error: 'OPENROUTER_API_KEY not configured' }), { status: 500, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'OPENROUTER_API_KEY not configured' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
-    
+
     const encoder = new TextEncoder();
+
     const stream = new ReadableStream({
       async start(controller) {
         try {
@@ -381,7 +186,7 @@ export async function POST(req: NextRequest) {
         }
       },
     });
-    
+
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
@@ -395,28 +200,26 @@ export async function POST(req: NextRequest) {
       JSON.stringify({
         error: 'Internal server error',
         message: error instanceof Error ? error.message : 'Unknown error',
-      }), { status: 500, headers: { 'Content-Type': 'application/json' } }
+      }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }
 
-// GET handler
+// GET handler — info/help
 export async function GET() {
   return new Response(
     JSON.stringify({
-      message: 'Wikipedia-Style Encyclopedia API (Two-Step Generation)',
-      process: [
-        'Step 1: Generate comprehensive article content',
-        'Step 2: Convert to semantic HTML with Wikipedia styling'
-      ],
-      usage: 'POST to this endpoint with JSON body',
+      message: 'Encyclopedia Summary API (Short Form)',
+      description:
+        'Generates a 100–300 word summary of a given topic in plain text (no HTML).',
+      usage: 'POST to this endpoint with JSON body.',
       example: {
-        topic: 'Quantum Computing',
-        depth: 'standard',
+        topic: 'Artificial Intelligence',
         style: 'academic',
         includeReferences: true,
-        sections: ['History', 'Principles', 'Applications', 'Future'],
       },
-    }), { headers: { 'Content-Type': 'application/json' } }
+    }),
+    { headers: { 'Content-Type': 'application/json' } }
   );
 }
