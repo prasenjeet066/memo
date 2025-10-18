@@ -27,13 +27,8 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
   const ZOOM_SCALE_FACTOR = 2.8;
 
   const COLORS = {
-    ocean: "#0a1929",
-    sphere: "#1e3a5f",
-    land: "#2d5a7b",
-    landHover: "#3d6a8b",
     border: "#4a7a9a",
     highlight: "#00d4ff",
-    highlightGlow: "#0099cc",
   };
 
   // --- Rotation Controls ---
@@ -90,20 +85,15 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
       })
       .on("start", () => {
         sphere.transition().duration(800).attr("opacity", 1);
-        borders.transition().duration(800).attr("opacity", 0.5);
-        countries
-          .transition()
-          .duration(800)
-          .attr("opacity", 1)
-          .attr("fill", COLORS.land)
-          .attr("filter", null);
+        borders.transition().duration(800).attr("opacity", 1);
+        countries.transition().duration(800).attr("opacity", 1).attr("stroke", COLORS.border);
       })
       .on("end", () => {
         startRotation(projection, svg, path);
       });
 
     currentCountryRef.current = null;
-  }, [width, startRotation, stopRotation]);
+  }, [width, startRotation, stopRotation, COLORS.border]);
 
   // --- Initialize Globe ---
   useEffect(() => {
@@ -147,34 +137,14 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
           .style("display", "block")
           .style("overflow", "visible");
 
-        const defs = svg.append("defs");
-
-        // Gradient for ocean
-        const oceanGradient = defs.append("radialGradient").attr("id", "ocean-gradient");
-        oceanGradient.append("stop").attr("offset", "0%").attr("stop-color", COLORS.sphere);
-        oceanGradient.append("stop").attr("offset", "100%").attr("stop-color", COLORS.ocean);
-
-        // Glow filter
-        const glowFilter = defs
-          .append("filter")
-          .attr("id", "glow")
-          .attr("x", "-50%")
-          .attr("y", "-50%")
-          .attr("width", "200%")
-          .attr("height", "200%");
-        glowFilter.append("feGaussianBlur").attr("stdDeviation", "3").attr("result", "coloredBlur");
-        const feMerge = glowFilter.append("feMerge");
-        feMerge.append("feMergeNode").attr("in", "coloredBlur");
-        feMerge.append("feMergeNode").attr("in", "SourceGraphic");
-
         const globeGroup = svg.append("g").attr("class", "globe-group");
 
-        // Ocean
+        // Sphere (ocean) with no fill
         globeGroup
           .append("path")
           .datum({ type: "Sphere" })
           .attr("class", "sphere")
-          .attr("fill", "url(#ocean-gradient)")
+          .attr("fill", "none")
           .attr("stroke", COLORS.border)
           .attr("stroke-width", 1.5)
           .attr("d", path as any);
@@ -186,25 +156,15 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
           .data(countries.features)
           .join("path")
           .attr("class", "country")
-          .attr("fill", COLORS.land)
+          .attr("fill", "none")
           .attr("stroke", COLORS.border)
           .attr("stroke-width", 0.5)
           .attr("d", path as any)
           .style("cursor", "pointer")
-          .on("mouseenter", function () {
-            if (!SearchCountry) {
-              d3.select(this).transition().duration(200).attr("fill", COLORS.landHover);
-            }
-          })
-          .on("mouseleave", function (event, d) {
-            if (!SearchCountry || d.properties.name.toLowerCase() !== SearchCountry.toLowerCase()) {
-              d3.select(this).transition().duration(200).attr("fill", COLORS.land);
-            }
-          })
           .append("title")
           .text((d) => d.properties.name);
 
-        // Borders
+        // Country mesh/borders
         globeGroup
           .append("path")
           .datum(countrymesh)
@@ -225,7 +185,7 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
     return () => {
       stopRotation();
     };
-  }, [width, startRotation, stopRotation]);
+  }, [width, startRotation, stopRotation, COLORS.border]);
 
   // --- Handle Country Search ---
   useEffect(() => {
@@ -269,23 +229,18 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
     const countries = svg.selectAll<SVGPathElement, CountryFeature>(".country");
 
     // Fade and zoom animation
-    sphere.transition().duration(800).ease(d3.easeCubicOut).attr("opacity", 0.3);
-    borders.transition().duration(800).ease(d3.easeCubicOut).attr("opacity", 0.1);
+    sphere.transition().duration(800).ease(d3.easeCubicOut).attr("opacity", 1);
+    borders.transition().duration(800).ease(d3.easeCubicOut).attr("opacity", 1);
 
     countries
       .transition()
       .duration(800)
       .ease(d3.easeCubicOut)
       .attr("opacity", (d) =>
-        d.properties.name.toLowerCase() === SearchCountry.toLowerCase() ? 1 : 0.1
+        d.properties.name.toLowerCase() === SearchCountry.toLowerCase() ? 1 : 0.3
       )
-      .attr("fill", (d) =>
-        d.properties.name.toLowerCase() === SearchCountry.toLowerCase()
-          ? COLORS.highlight
-          : COLORS.land
-      )
-      .attr("filter", (d) =>
-        d.properties.name.toLowerCase() === SearchCountry.toLowerCase() ? "url(#glow)" : null
+      .attr("stroke", (d) =>
+        d.properties.name.toLowerCase() === SearchCountry.toLowerCase() ? COLORS.highlight : COLORS.border
       );
 
     // Rotate and zoom to selected country
@@ -298,7 +253,7 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
           svg.selectAll("path").attr("d", path as any);
         };
       });
-  }, [SearchCountry, width, resetGlobeView, startRotation, stopRotation]);
+  }, [SearchCountry, width, resetGlobeView, startRotation, stopRotation, COLORS.border, COLORS.highlight]);
 
   return (
     <div
