@@ -76,7 +76,7 @@ export default function MainPage() {
         </button>
       </div>
     </div>
-    <div className = 'text-center w-full grid grid-cols-3 gap-4 text-sm text-gray-700'>
+    <div className = 'text-center w-full px-6 grid grid-cols-3 gap-4 text-xs text-gray-700'>
       {
         footerList.map((list, index)=>{
           if (list.label && isMobile ) {
