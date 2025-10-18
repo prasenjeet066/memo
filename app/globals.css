@@ -161,7 +161,7 @@ body {
 /* ==================== TABLE STYLES ==================== */
 .tbl-operator {
   margin: 16px 0;
-  background: #f9fafb;
+  background: #f1f1f1;
   border-radius: 12px;
   overflow: hidden;
   
@@ -181,7 +181,6 @@ body {
 
 .tbl-operator th {
   padding: 12px;
-  border: 1px solid #e5e7eb;
   font-weight: 600;
   color: #374151;
   min-width: 120px;
@@ -189,14 +188,11 @@ body {
 
 .tbl-operator td {
   padding: 12px;
-  border: 1px solid #e5e7eb;
   min-width: 120px;
   color: #1f2937;
 }
 
 .tbl-operator td:focus {
-  outline: 2px solid #3b82f6;
-  outline-offset: -2px;
   background: #f0f9ff;
 }
 
@@ -207,7 +203,6 @@ body {
   gap: 8px;
   padding: 8px;
   background: #f9fafb;
-  border-top: 1px solid #e5e7eb;
 }
 
 .table-controls button {

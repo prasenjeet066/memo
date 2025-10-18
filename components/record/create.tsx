@@ -287,6 +287,7 @@ export default function CreateNew({
           break;
           
         case 'table': {
+          alert('tble')
           const tableId = `table-${Date.now()}`;
           const makeHeader = (j: number) => `<th contenteditable>Header ${j + 1}</th>`;
           const makeCell = (i: number, j: number) => `<td contenteditable>Row ${i + 1}, Col ${j + 1}</td>`;
