@@ -7,7 +7,7 @@ type CountryFeature = GeoJSON.Feature<GeoJSON.Geometry, { name: string }>;
 
 type GlobeChartProps = {
   width?: number;
-  rotationSpeed?: number; // degrees per second
+  rotationSpeed?: number;
   SearchCountry?: string;
 };
 
@@ -18,8 +18,8 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
 }) => {
   const ref = useRef<SVGSVGElement | null>(null);
   const projectionRef = useRef<d3.GeoProjection | null>(null);
-  const timerRef = useRef<d3.Timer | null>(null);
   const pathRef = useRef<d3.GeoPath<any, d3.GeoPermissibleObjects> | null>(null);
+  const timerRef = useRef<d3.Timer | null>(null);
   const currentCountryRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -36,7 +36,6 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
 
     const countrymesh = mesh(world as any, (world as any).objects.countries, (a, b) => a !== b);
 
-    // Setup projection
     const projection = d3
       .geoOrthographic()
       .fitExtent(
@@ -59,55 +58,40 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
       .attr("viewBox", `0 0 ${width} ${height}`)
       .attr("style", "max-width: 100%; height: auto; display: block;");
 
-    // Add subtle glow filter for highlight
-    const defs = svg.append("defs");
-    const glow = defs
-      .append("filter")
-      .attr("id", "glow")
-      .attr("x", "-50%")
-      .attr("y", "-50%")
-      .attr("width", "200%")
-      .attr("height", "200%");
-    glow
-      .append("feGaussianBlur")
-      .attr("stdDeviation", "3")
-      .attr("result", "coloredBlur");
-    const feMerge = glow.append("feMerge");
-    feMerge.append("feMergeNode").attr("in", "coloredBlur");
-    feMerge.append("feMergeNode").attr("in", "SourceGraphic");
+    // Grouping layers
+    const globeGroup = svg.append("g").attr("class", "globe-group");
+    const countriesGroup = globeGroup.append("g").attr("class", "countries");
 
-    // Globe outline
-    svg
+    // Sphere (the Earth outline)
+    globeGroup
       .append("path")
       .datum({ type: "Sphere" })
-      .attr("fill", "none")
-      .attr("stroke", "#333")
-      .attr("stroke-width", 0.3)
+      .attr("class", "earth")
+      .attr("fill", "#00111a")
+      .attr("stroke", "#222")
+      .attr("stroke-width", 0.2)
       .attr("d", path as any);
 
     // Countries
-    svg
-      .append("g")
-      .attr("class", "countries")
+    countriesGroup
       .selectAll("path")
       .data(countries.features)
       .join("path")
+      .attr("class", "country")
       .attr("fill", "#444")
       .attr("stroke", "white")
       .attr("stroke-width", 0.4)
-      .attr("class", "country")
       .attr("d", path as any)
       .append("title")
       .text((d) => d.properties.name);
 
     // Borders
-    svg
+    globeGroup
       .append("path")
       .datum(countrymesh)
       .attr("fill", "none")
-      .attr("stroke", "none")
-      .attr("stroke-width", 0.6)
-      .attr("opacity", 0.9)
+      .attr("stroke", "#333")
+      .attr("stroke-width", 0.3)
       .attr("d", path as any);
 
     // Continuous rotation
@@ -118,12 +102,12 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
       projection.rotate(rotation);
       svg.selectAll("path").attr("d", path as any);
     });
-
     timerRef.current = timer;
+
     return () => timer.stop();
   }, [width, rotationSpeed]);
 
-  // Handle search & animation
+  // Search & zoom logic
   useEffect(() => {
     const svg = d3.select(ref.current);
     const projection = projectionRef.current;
@@ -131,11 +115,10 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
     if (!projection || !path) return;
 
     const baseScale = width / 3.3;
-    const highlightColor = "#00bfff";
+    const earth = svg.select(".earth");
+    const countries = svg.selectAll<SVGPathElement, CountryFeature>(".country");
 
-    const allCountries = svg.selectAll<SVGPathElement, CountryFeature>(".countries path");
-
-    const resetRotation = () => {
+    const resumeRotation = () => {
       timerRef.current?.restart((elapsed) => {
         const rotation = projection.rotate();
         rotation[0] = (rotation[0] + (rotationSpeed * elapsed) / 1000) % 360;
@@ -144,44 +127,40 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
       });
     };
 
-    // If no search, zoom out and resume rotation
+    // Reset to normal globe
     if (!SearchCountry) {
       currentCountryRef.current = null;
       d3.transition()
         .duration(1500)
         .tween("zoomOut", () => {
-          const interp = d3.interpolate(projection.scale(), baseScale);
+          const interpScale = d3.interpolate(projection.scale(), baseScale);
           return (t) => {
-            projection.scale(interp(t));
+            projection.scale(interpScale(t));
             svg.selectAll("path").attr("d", path as any);
           };
         })
-        .on("end", () => {
-          allCountries
-            .attr("filter", null)
+        .on("start", () => {
+          earth.transition().duration(1000).attr("opacity", 1);
+          countries
             .transition()
-            .duration(500)
+            .duration(1000)
             .attr("opacity", 1)
             .attr("fill", "#444");
-          resetRotation();
-        });
+        })
+        .on("end", resumeRotation);
       return;
     }
 
-    // If new country is same as current, do nothing
-    if (currentCountryRef.current === SearchCountry.toLowerCase()) return;
-
-    // Stop rotation while focusing
+    // Stop rotation
     timerRef.current?.stop();
 
     import("@/lib/countries-110m.json").then((worldData) => {
-      const countries = feature(worldData as any, (worldData as any).objects.countries)
+      const countryData = feature(worldData as any, (worldData as any).objects.countries)
         .features as CountryFeature[];
 
-      const match = countries.find(
+      const match = countryData.find(
         (d) => d.properties.name.toLowerCase() === SearchCountry.toLowerCase()
       );
-
       if (!match) return;
 
       const centroid = d3.geoCentroid(match);
@@ -189,50 +168,30 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
       const targetRotate: [number, number, number] = [-centroid[0], -centroid[1], 0];
       const r = d3.interpolate(currentRotate, targetRotate);
 
-      // Step 1: Zoom out before rotating to next country
-      d3.transition()
+      // Step 1: fade out everything
+      earth.transition().duration(800).attr("opacity", 0);
+      countries
+        .transition()
         .duration(800)
-        .tween("zoomOutBeforeSwitch", () => {
-          const interpScale = d3.interpolate(projection.scale(), baseScale);
+        .attr("opacity", (d) =>
+          d.properties.name.toLowerCase() === SearchCountry.toLowerCase() ? 1 : 0
+        )
+        .attr("fill", (d) =>
+          d.properties.name.toLowerCase() === SearchCountry.toLowerCase() ? "#00bfff" : "#444"
+        );
+
+      // Step 2: rotate and zoom in on selected country
+      const zoomIn = d3.interpolate(projection.scale(), baseScale * 2.4); // much closer zoom
+      d3.transition()
+        .duration(2000)
+        .tween("focus", () => {
           return (t) => {
-            projection.scale(interpScale(t));
+            projection.rotate(r(t)).scale(zoomIn(t));
             svg.selectAll("path").attr("d", path as any);
           };
-        })
-        .on("end", () => {
-          // Step 2: Rotate + zoom into target country
-          const zoomIn = d3.interpolate(projection.scale(), baseScale * 1.4);
-          d3.transition()
-            .duration(2000)
-            .tween("focus", () => {
-              return (t) => {
-                projection.rotate(r(t)).scale(zoomIn(t));
-                svg.selectAll("path").attr("d", path as any);
-              };
-            })
-            .on("start", () => {
-              // Highlight effect
-              allCountries
-                .transition()
-                .duration(600)
-                .attr("opacity", (d) =>
-                  d.properties.name.toLowerCase() === SearchCountry.toLowerCase() ? 1 : 0.3
-                )
-                .attr("fill", (d) =>
-                  d.properties.name.toLowerCase() === SearchCountry.toLowerCase()
-                    ? highlightColor
-                    : "#444"
-                )
-                .attr("filter", (d) =>
-                  d.properties.name.toLowerCase() === SearchCountry.toLowerCase()
-                    ? "url(#glow)"
-                    : null
-                );
-            })
-            .on("end", () => {
-              currentCountryRef.current = SearchCountry.toLowerCase();
-            });
         });
+
+      currentCountryRef.current = SearchCountry.toLowerCase();
     });
   }, [SearchCountry, width, rotationSpeed]);
 
