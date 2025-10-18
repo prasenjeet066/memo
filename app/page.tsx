@@ -30,39 +30,37 @@ const HeaderNavs = () => {
 export default function MainPage() {
   const isMobile = useMobile()
   const [isExpanded, setIsExpanded] = useState(true)
-  const [searchQuery , setSearchQuery] = useState(null)
+  const [searchQuery, setSearchQuery] = useState(null)
   const NavList = [
     { name: 'Home', icon: Home, href: '/' },
     { name: 'Explore', icon: Compass, href: '/explore' },
     { name: 'Contribute', icon: HandHeart, href: '/contribute' },
     { name: 'Settings', icon: Settings, href: '/settings' },
   ]
-  const handleSearchSubmit = () =>{}
-  const handleSearch = (e)=>{
-    if (e.target.value || e.target.value.trim()!==''
-    ) {
+  const handleSearchSubmit = () => {}
+  const handleSearch = (e) => {
+    if (e.target.value || e.target.value.trim() !== '') {
       setSearchQuery(e.target.value)
     }
   }
   const footerList = [
-    {
-      label: ' Terms & Conditions'
-    },
-    {
-      label: 'Content Security'
-    },
-    {
-      label: 'Developers'
-    },
-    {
-      label: 'About us'
-    },
-    {
-      label : 'APIs'
-    }
-  ]
+  {
+    label: ' Terms & Conditions'
+  },
+  {
+    label: 'Content Security'
+  },
+  {
+    label: 'Developers'
+  },
+  {
+    label: 'About us'
+  },
+  {
+    label: 'APIs'
+  }]
   return (
-  <main className="min-h-screen w-full bg-gray-50 flex flex-col">
+    <main className="min-h-screen w-full bg-gray-50 flex flex-col">
     <Header navlist={NavList}/>
     <div className="w-full flex-1 flex flex-col items-center justify-center">
       <GlobeChart SearchCountry= {searchQuery}/>
@@ -76,23 +74,20 @@ export default function MainPage() {
         </button>
       </div>
     </div>
-<div className="text-center w-full px-6 grid grid-cols-3 gap-4 text-xs text-gray-700">
-  {footerList.map((list, index) => {
-    if (list.label && isMobile) {
-      return (
-        <a
-          key={index}
-          href={list.href || '#'}
-          className="p-2 hover:text-blue-600 after:content-['_↗'] transition-colors"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {list.label}
-        </a>
-      );
-    }
-    return null;
-  })}
+<div className="w-full px-6 py-4 text-center text-xs text-gray-700">
+  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 place-items-center">
+    {footerList.map((list, index) => (
+      <a
+        key={index}
+        href={list.href || '#'}
+        className="p-2 hover:text-blue-600 after:content-['_↗'] transition-colors"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {list.label}
+      </a>
+    ))}
+  </div>
 </div>
   </div>
 </main>)
