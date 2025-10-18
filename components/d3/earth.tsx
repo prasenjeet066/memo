@@ -43,9 +43,9 @@ const GlobeChart: React.FC < GlobeChartProps > = ({
   };
   
   const COLORS = {
-    border: "#111111",
+    border: "none",
     highlight: "#ff6b35",
-    sphere: "#f0f0f0",
+    sphere: "#ffffff",
   };
   
   // Function to get bivariate color based on two normalized values [0-1]
