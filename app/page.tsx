@@ -45,7 +45,7 @@ export default function MainPage() {
     <div className="w-full flex-1 flex flex-col items-center justify-center">
     <div className='p-4 space-y-2 w-full max-w-md'>
       <GlobeChart/>
-      <h1 className='text-center  text-2xl'>Find Anything.</h1>
+      <h1 className='text-center  text-2xl mt-4'>Find Anything.</h1>
       <div className={`w-full flex items-center justify-between gap-2 rounded-full p-2 bg-white`}>
         <input type='text' className='outline-none border-none pl-2 bg-transparent w-full' placeholder='About Bangladesh' />
         <button className='bg-gray-800 text-white p-2 rounded-full px-4' onClick = {handleSearch}>

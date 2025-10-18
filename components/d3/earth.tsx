@@ -45,7 +45,7 @@ const GlobeChart: React.FC<GlobeChartProps> = ({ width = 928, rotationSpeed = 0.
       .attr("width", width)
       .attr("height", height)
       .attr("viewBox", `0 0 ${width} ${height}`)
-      .attr("style", "max-width: 100%; height: auto; display: block; background: #e6f2ff;");
+      .attr("style", "max-width: 100%; height: auto; display: block;");
 
     // Draw sphere (ocean)
     svg
