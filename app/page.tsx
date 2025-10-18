@@ -76,17 +76,24 @@ export default function MainPage() {
         </button>
       </div>
     </div>
-    <div className = 'text-center w-full px-6 grid grid-cols-3 gap-4 text-xs text-gray-700'>
-      {
-        footerList.map((list, index)=>{
-          if (list.label && isMobile ) {
-            return (
-              <a href = '' className="p-2 after:content-['_↗']">{list.label}</a>
-            )
-          }
-        })
-      }
-    </div>
+<div className="text-center w-full px-6 grid grid-cols-3 gap-4 text-xs text-gray-700">
+  {footerList.map((list, index) => {
+    if (list.label && isMobile) {
+      return (
+        <a
+          key={index}
+          href={list.href || '#'}
+          className="p-2 hover:text-blue-600 after:content-['_↗'] transition-colors"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {list.label}
+        </a>
+      );
+    }
+    return null;
+  })}
+</div>
   </div>
 </main>)
 }
