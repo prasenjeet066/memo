@@ -47,12 +47,12 @@ export default function MainPage() {
   return (
   <main className="min-h-screen w-full bg-gray-50 flex flex-col">
     <Header navlist={NavList}/>
-    <div className="w-full flex-1 flex flex-col items-center justify-center bg-white">
+    <div className="w-full flex-1 flex flex-col items-center justify-center">
       <GlobeChart SearchCountry= {searchQuery}/>
     <div className='p-4 space-y-2 w-full max-w-md'>
       
       <h1 className='text-center  text-2xl mt-4'>Find Anything.</h1>
-      <div className={`w-full flex items-center justify-between gap-2 rounded-full p-2 bg-gray-50 backdrop:blur-md`}>
+      <div className={`w-full flex items-center justify-between gap-2 rounded-full p-2 bg-white/50 backdrop:blur-md`}>
         <input type='text' className='outline-none border-none pl-2 bg-transparent w-full' placeholder='About Bangladesh'  onInput = {handleSearch}/>
         <button className='bg-gray-800 text-white p-2 rounded-full px-4' onClick = {handleSearchSubmit}>
           <Fai icon={'arrow-right'}/>
