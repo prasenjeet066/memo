@@ -9,12 +9,12 @@ import InfoBox from '@/lib/editor/templates/infobox';
 import { toolbarBlocks } from '@/lib/editor/toolbarConfig';
 
 interface EditorProps {
-  editor_mode?: 'visual' | 'code';
-  record_name?: string;
-  onPublish?: () => void;
-  sideBarTools?: () => void;
-  ExpandedIs?: boolean;
-  IsExpandedSet?: (value: boolean) => void;
+  editor_mode ? : 'visual' | 'code';
+  record_name ? : string;
+  onPublish ? : () => void;
+  sideBarTools ? : () => void;
+  ExpandedIs ? : boolean;
+  IsExpandedSet ? : (value: boolean) => void;
 }
 
 interface TableEditorOption {
@@ -26,10 +26,10 @@ interface TableEditorField {
   type: string;
   label: string;
   name: string;
-  options?: TableEditorOption[];
-  min?: number;
-  max?: number;
-  step?: number;
+  options ? : TableEditorOption[];
+  min ? : number;
+  max ? : number;
+  step ? : number;
 }
 
 interface TableEditorConfig {
@@ -47,8 +47,8 @@ interface ToolbarBlock {
   icon: string;
   action: string;
   label: string;
-  items?: ToolbarBlock[];
-  editor?: TableEditorField[];
+  items ? : ToolbarBlock[];
+  editor ? : TableEditorField[];
 }
 
 export default function CreateNew({
@@ -57,18 +57,18 @@ export default function CreateNew({
   onPublish,
   IsExpandedSet,
 }: EditorProps) {
-  const [editorMode, setEditorMode] = useState<'visual' | 'code'>(editor_mode);
+  const [editorMode, setEditorMode] = useState < 'visual' | 'code' > (editor_mode);
   const [payload, setPayload] = useState({ title: '', content: '' });
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationError, setGenerationError] = useState<string | null>(null);
-  const [activeAction, setActiveAction] = useState<string | null>(null);
-  const [promptAiTask, setPromptAiTask] = useState<AiTaskState>({ content: '' });
+  const [generationError, setGenerationError] = useState < string | null > (null);
+  const [activeAction, setActiveAction] = useState < string | null > (null);
+  const [promptAiTask, setPromptAiTask] = useState < AiTaskState > ({ content: '' });
   
   const { data: session } = useSession();
-  const editorRef = useRef<HTMLDivElement>(null);
-  const monacoEditorRef = useRef<any>(null);
+  const editorRef = useRef < HTMLDivElement > (null);
+  const monacoEditorRef = useRef < any > (null);
   const [, startTransition] = useTransition();
-
+  
   // Monaco editor configuration
   const handleEditorDidMount = useCallback((editor: any) => {
     monacoEditorRef.current = editor;
@@ -80,18 +80,18 @@ export default function CreateNew({
       scrollBeyondLastLine: false,
     });
   }, []);
-
+  
   // AI Article Generation - FIXED: API থেকে 'progress' type আসে, 'content' না
   const generateAIArticle = useCallback(async (topic: string) => {
     if (!topic?.trim()) {
       alert('Please provide a topic.');
       return;
     }
-
+    
     setIsGenerating(true);
     setGenerationError(null);
     setPromptAiTask({ content: '' }); // Reset previous content
-
+    
     try {
       const response = await fetch('/api/encyclopedia/stream', {
         method: 'POST',
@@ -102,15 +102,15 @@ export default function CreateNew({
           includeReferences: true,
         }),
       });
-
+      
       if (!response.ok || !response.body) {
         throw new Error('Failed to connect to AI stream.');
       }
-
+      
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
-
+      
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -118,7 +118,7 @@ export default function CreateNew({
         buffer += decoder.decode(value, { stream: true });
         const parts = buffer.split('\n\n');
         buffer = parts.pop() || '';
-
+        
         for (const part of parts) {
           if (part.startsWith('data:')) {
             try {
@@ -149,7 +149,7 @@ export default function CreateNew({
       setIsGenerating(false);
     }
   }, []);
-
+  
   // Template building
   const buildTemplate = useCallback((): string => {
     if (!Array.isArray(InfoBox) || InfoBox.length === 0) {
@@ -157,11 +157,11 @@ export default function CreateNew({
     }
     return InfoBox.map(() => `<div class='tpl-infobox'></div>`).join('');
   }, []);
-
+  
   // Insert template into editor
-  const insertTemplate = useCallback((ref: React.RefObject<HTMLDivElement>): boolean => {
+  const insertTemplate = useCallback((ref: React.RefObject < HTMLDivElement > ): boolean => {
     if (!ref.current) return false;
-
+    
     try {
       ref.current.focus();
       const template = `<br/>${buildTemplate()}<br/>`.trim();
@@ -183,7 +183,7 @@ export default function CreateNew({
       return false;
     }
   }, [buildTemplate]);
-
+  
   // Table operations
   const addTableRow = useCallback((tableContainer: HTMLElement) => {
     const table = tableContainer.querySelector('table');
@@ -202,7 +202,7 @@ export default function CreateNew({
     
     table.querySelector('tbody')?.appendChild(newRow);
   }, []);
-
+  
   const addTableColumn = useCallback((tableContainer: HTMLElement) => {
     const table = tableContainer.querySelector('table');
     if (!table) return;
@@ -214,26 +214,26 @@ export default function CreateNew({
       row.appendChild(newCell);
     });
   }, []);
-
+  
   const attachTableEventListeners = useCallback((tableId: string) => {
     const tableContainer = document.querySelector(`[data-table-id="${tableId}"]`);
     if (!tableContainer) return;
-
+    
     const addRowBtn = tableContainer.querySelector('.add-row-btn');
     const addColBtn = tableContainer.querySelector('.add-col-btn');
-
+    
     addRowBtn?.addEventListener('click', () => addTableRow(tableContainer as HTMLElement));
     addColBtn?.addEventListener('click', () => addTableColumn(tableContainer as HTMLElement));
   }, [addTableRow, addTableColumn]);
-
+  
   // AI Task execution
   const setupAiTaskListeners = useCallback((className: string) => {
     const aiprompt = document.querySelector(`.${className}`);
     if (!aiprompt) return;
-
+    
     const input = aiprompt.querySelector('input') as HTMLInputElement;
     const btn = aiprompt.querySelector('button') as HTMLButtonElement;
-
+    
     if (input && btn) {
       btn.onclick = async (e) => {
         e.preventDefault();
@@ -256,11 +256,11 @@ export default function CreateNew({
       };
     }
   }, [generateAIArticle, promptAiTask.content]);
-
+  
   // Execute editor commands
   const executeCommand = useCallback((action: string) => {
     if (editorMode !== 'visual' || !editorRef.current) return;
-
+    
     try {
       switch (action) {
         case 'aiTask': {
@@ -287,13 +287,13 @@ export default function CreateNew({
           break;
           
         case 'table': {
-        
+          
           const tableId = `table-${Date.now()}`;
           const makeHeader = (j: number) => `<th contenteditable>Header ${j + 1}</th>`;
           const makeCell = (i: number, j: number) => `<td contenteditable>Row ${i + 1}, Col ${j + 1}</td>`;
           const makeRow = (i: number, isHeader = false) =>
             `<tr>${Array.from({ length: 4 }, (_, j) => isHeader ? makeHeader(j) : makeCell(i, j)).join('')}</tr>`;
-
+          
           const tableHTML = `
             <div class="tbl-operator" data-table-id="${tableId}">
               <table border="1" style="border-collapse:collapse;width:100%">
@@ -335,7 +335,7 @@ export default function CreateNew({
       setActiveAction(null);
     }
   }, [editorMode, attachTableEventListeners, insertTemplate, setupAiTaskListeners]);
-
+  
   // Event handlers
   const handlePublish = useCallback(() => {
     if (onPublish) {
@@ -344,7 +344,7 @@ export default function CreateNew({
       console.log('Publishing...', payload);
     }
   }, [onPublish, payload]);
-
+  
   // FIXED: Select item থেকে action trigger করার জন্য onValueChange ব্যবহার করুন
   const handleToolbarAction = useCallback((action: string) => {
     if (action) {
@@ -352,10 +352,10 @@ export default function CreateNew({
     }
   }, []);
   
-  const handleEditorContentChangeCode = useCallback((value?: string) => {
+  const handleEditorContentChangeCode = useCallback((value ? : string) => {
     setPayload((prev) => ({ ...prev, content: value || '' }));
   }, []);
-
+  
   // FIXED: Mode switch করার সময় content properly sync করুন
   const handleSwMode = useCallback((mode: string) => {
     const newMode = mode as 'visual' | 'code';
@@ -363,7 +363,8 @@ export default function CreateNew({
     if (newMode === 'visual') {
       // Code mode থেকে Visual mode এ যাওয়ার সময়
       if (editorRef.current) {
-        editorRef.current.innerHTML = payload.content || '';
+        //editorRef.current.innerHTML = ''; // clear
+        editorRef.current.insertAdjacentHTML('beforeend', payload.content || '');
       }
     } else if (newMode === 'code') {
       // Visual mode থেকে Code mode এ যাওয়ার সময়
@@ -375,20 +376,20 @@ export default function CreateNew({
     
     setEditorMode(newMode);
   }, [payload.content]);
-
+  
   const handleEditorContentChange = useCallback(() => {
     if (editorRef.current) {
       setPayload((prev) => ({ ...prev, content: editorRef.current?.innerHTML || '' }));
     }
   }, []);
-
+  
   // Effects
   useEffect(() => {
     if (!record_name?.trim()) {
       console.warn('Record name is empty or undefined');
     }
   }, [record_name]);
-
+  
   useEffect(() => {
     if (generationError) {
       setPayload((prev) => ({
@@ -397,15 +398,15 @@ export default function CreateNew({
       }));
     }
   }, [generationError]);
-
+  
   useEffect(() => {
     if (activeAction) {
       executeCommand(activeAction);
     }
   }, [activeAction, executeCommand]);
-
+  
   const hasRegisteredRole = Array.isArray(session?.user?.role) && session.user.role.includes('REG');
-
+  
   return (
     <div className="w-full h-full flex flex-col">
       {/* Header */}
@@ -516,8 +517,8 @@ export default function CreateNew({
           suppressContentEditableWarning
           aria-label="Editor content area"
           onInput={handleEditorContentChange}
-          dangerouslySetInnerHTML={{ __html: payload.content }}
-        ></div>
+          
+       />
       )}
 
       {/* AI Generation Status */}
