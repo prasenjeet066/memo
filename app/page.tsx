@@ -76,7 +76,7 @@ export default function MainPage() {
         </button>
       </div>
     </div>
-    <div className = 'text-center w-full flex-warp text-sm text-gray-700 items-center space-x-4'>
+    <div className = 'text-center w-full flex-warp text-sm text-gray-700 items-center space-x-4 px-6 mt-4'>
       {
         footerList.map((list, index)=>{
           if (list.label && isMobile ) {
