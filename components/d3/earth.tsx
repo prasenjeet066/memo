@@ -2,35 +2,75 @@ import React, { useEffect, useRef, useCallback } from "react";
 import * as d3 from "d3";
 import { feature, mesh } from "topojson-client";
 
-type CountryFeature = GeoJSON.Feature<GeoJSON.Geometry, { name: string }>;
+type CountryFeature = GeoJSON.Feature < GeoJSON.Geometry, { name: string } > ;
 
 type GlobeChartProps = {
-  width?: number;
-  rotationSpeed?: number;
-  SearchCountry?: string;
+  width ? : number;
+  rotationSpeed ? : number;
+  SearchCountry ? : string;
 };
 
-const GlobeChart: React.FC<GlobeChartProps> = ({
+const GlobeChart: React.FC < GlobeChartProps > = ({
   width = 928,
   rotationSpeed = 0.3,
   SearchCountry,
 }) => {
-  const svgRef = useRef<SVGSVGElement | null>(null);
-  const projectionRef = useRef<d3.GeoProjection | null>(null);
-  const pathRef = useRef<d3.GeoPath<any, d3.GeoPermissibleObjects> | null>(null);
-  const timerRef = useRef<d3.Timer | null>(null);
-  const currentCountryRef = useRef<string | null>(null);
-  const worldDataRef = useRef<any>(null);
-
+  const svgRef = useRef < SVGSVGElement | null > (null);
+  const projectionRef = useRef < d3.GeoProjection | null > (null);
+  const pathRef = useRef < d3.GeoPath < any,
+    d3.GeoPermissibleObjects > | null > (null);
+  const timerRef = useRef < d3.Timer | null > (null);
+  const currentCountryRef = useRef < string | null > (null);
+  const worldDataRef = useRef < any > (null);
+  
   const MARGIN_TOP = 46;
   const BASE_SCALE_FACTOR = 3.3;
   const ZOOM_SCALE_FACTOR = 2.8;
-
+  
+  // Bivariate choropleth color scheme (3x3 matrix)
+  // Inspired by Joshua Stevens' pink-teal scheme
+  // Format: [x-axis (teal), y-axis (pink)]
+  const BIVARIATE_COLORS = {
+    "1-1": "#e8e8e8", // low x, low y (light gray)
+    "2-1": "#ace4e4", // mid x, low y (light teal)
+    "3-1": "#5ac8c8", // high x, low y (teal)
+    "1-2": "#dfb0d6", // low x, mid y (light pink)
+    "2-2": "#a5add3", // mid x, mid y (purple blend)
+    "3-2": "#5698b9", // high x, mid y (teal-purple)
+    "1-3": "#be64ac", // low x, high y (pink)
+    "2-3": "#8c62aa", // mid x, high y (purple)
+    "3-3": "#3b4994", // high x, high y (dark blue-purple)
+  };
+  
   const COLORS = {
     border: "#111111",
-    highlight: "blue",
+    highlight: "#ff6b35",
+    sphere: "#f0f0f0",
   };
-
+  
+  // Function to get bivariate color based on two normalized values [0-1]
+  const getBivariateColor = (value1: number, value2: number): string => {
+    // Classify values into 3 classes (1, 2, 3)
+    const getClass = (v: number) => {
+      if (v < 0.33) return 1;
+      if (v < 0.67) return 2;
+      return 3;
+    };
+    
+    const xClass = getClass(value1);
+    const yClass = getClass(value2);
+    return BIVARIATE_COLORS[`${xClass}-${yClass}`];
+  };
+  
+  // Generate random bivariate data for demonstration
+  const getCountryBivariateData = (countryName: string) => {
+    // Use country name to generate pseudo-random but consistent values
+    const hash = countryName.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const value1 = (hash % 100) / 100;
+    const value2 = ((hash * 7) % 100) / 100;
+    return { value1, value2 };
+  };
+  
   // --- Rotation Controls ---
   const stopRotation = useCallback(() => {
     if (timerRef.current) {
@@ -38,11 +78,11 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
       timerRef.current = null;
     }
   }, []);
-
+  
   const startRotation = useCallback(
     (
       projection: d3.GeoProjection,
-      svg: d3.Selection<SVGSVGElement | null, unknown, null, undefined>,
+      svg: d3.Selection < SVGSVGElement | null, unknown, null, undefined > ,
       path: d3.GeoPath
     ) => {
       stopRotation();
@@ -55,25 +95,26 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
     },
     [rotationSpeed, stopRotation]
   );
-
+  
   // --- Reset Globe View Helper ---
   const resetGlobeView = useCallback(() => {
     if (!projectionRef.current || !pathRef.current) return;
-
+    
     const projection = projectionRef.current;
     const path = pathRef.current;
     const svg = d3.select(svgRef.current);
     const baseScale = width / BASE_SCALE_FACTOR;
-
+    
     const sphere = svg.select(".sphere");
     const borders = svg.select(".borders");
-    const countries = svg.selectAll<SVGPathElement, CountryFeature>(".country");
-
+    const countries = svg.selectAll < SVGPathElement,
+      CountryFeature > (".country");
+    
     stopRotation();
-
+    
     const currentScale = projection.scale();
     const scaleInterpolator = d3.interpolate(currentScale, baseScale);
-
+    
     d3.transition()
       .duration(1500)
       .ease(d3.easeCubicInOut)
@@ -86,21 +127,26 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
       .on("start", () => {
         sphere.transition().duration(800).attr("opacity", 1);
         borders.transition().duration(800).attr("opacity", 1);
-        countries.transition().duration(800).attr("opacity", 1).attr("stroke", COLORS.border);
+        countries
+          .transition()
+          .duration(800)
+          .attr("opacity", 1)
+          .attr("stroke", COLORS.border)
+          .attr("stroke-width", 0.5);
       })
       .on("end", () => {
         startRotation(projection, svg, path);
       });
-
+    
     currentCountryRef.current = null;
   }, [width, startRotation, stopRotation, COLORS.border]);
-
+  
   // --- Initialize Globe ---
   useEffect(() => {
     const height = width / 2 + MARGIN_TOP;
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
-
+    
     fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
       .then((res) => res.json())
       .then((world) => {
@@ -110,24 +156,23 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
           features: CountryFeature[];
         };
         const countrymesh = mesh(world, world.objects.countries, (a, b) => a !== b);
-
+        
         const projection = d3
           .geoOrthographic()
           .fitExtent(
             [
               [2, MARGIN_TOP + 2],
               [width - 2, height - 2],
-            ],
-            { type: "Sphere" }
+            ], { type: "Sphere" }
           )
           .rotate([0, -10])
           .scale(width / BASE_SCALE_FACTOR)
           .translate([width / 2, height / 2]);
-
+        
         projectionRef.current = projection;
         const path = d3.geoPath(projection);
         pathRef.current = path;
-
+        
         svg
           .attr("width", width)
           .attr("height", height)
@@ -136,34 +181,40 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
           .style("height", "auto")
           .style("display", "block")
           .style("overflow", "visible");
-
+        
         const globeGroup = svg.append("g").attr("class", "globe-group");
-
-        // Sphere (ocean) with no fill
+        
+        // Sphere (ocean)
         globeGroup
           .append("path")
           .datum({ type: "Sphere" })
           .attr("class", "sphere")
-          .attr("fill", "none")
+          .attr("fill", COLORS.sphere)
           .attr("stroke", COLORS.border)
           .attr("stroke-width", 1.5)
           .attr("d", path as any);
-
-        // Countries
+        
+        // Countries with bivariate colors
         const countriesGroup = globeGroup.append("g").attr("class", "countries");
         countriesGroup
           .selectAll("path")
           .data(countries.features)
           .join("path")
           .attr("class", "country")
-          .attr("fill", "none")
+          .attr("fill", (d) => {
+            const data = getCountryBivariateData(d.properties.name);
+            return getBivariateColor(data.value1, data.value2);
+          })
           .attr("stroke", COLORS.border)
           .attr("stroke-width", 0.5)
           .attr("d", path as any)
           .style("cursor", "pointer")
           .append("title")
-          .text((d) => d.properties.name);
-
+          .text((d) => {
+            const data = getCountryBivariateData(d.properties.name);
+            return `${d.properties.name}\nValue 1: ${(data.value1 * 100).toFixed(0)}%\nValue 2: ${(data.value2 * 100).toFixed(0)}%`;
+          });
+        
         // Country mesh/borders
         globeGroup
           .append("path")
@@ -174,64 +225,65 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
           .attr("stroke-width", 0.5)
           .attr("stroke-opacity", 0.5)
           .attr("d", path as any);
-
+        
         // Start rotation
         startRotation(projection, svg, path);
       })
       .catch((err) => {
         console.error("Failed to load world data:", err);
       });
-
+    
     return () => {
       stopRotation();
     };
-  }, [width, startRotation, stopRotation, COLORS.border]);
-
+  }, [width, startRotation, stopRotation, COLORS.border, COLORS.sphere]);
+  
   // --- Handle Country Search ---
   useEffect(() => {
     if (!worldDataRef.current || !projectionRef.current || !pathRef.current) return;
-
+    
     const svg = d3.select(svgRef.current);
     const projection = projectionRef.current;
     const path = pathRef.current;
     const baseScale = width / BASE_SCALE_FACTOR;
-
+    
     if (!SearchCountry) {
       resetGlobeView();
       return;
     }
-
+    
     const countryData = feature(worldDataRef.current, worldDataRef.current.objects.countries)
       .features as CountryFeature[];
     const match = countryData.find(
       (d) => d.properties.name.toLowerCase() === SearchCountry.toLowerCase()
     );
-
+    
     if (!match) {
       console.warn(`"${SearchCountry}" not found. Resetting view.`);
       resetGlobeView();
       return;
     }
-
+    
     if (currentCountryRef.current === SearchCountry.toLowerCase()) return;
     currentCountryRef.current = SearchCountry.toLowerCase();
-
+    
     stopRotation();
-
+    
     const centroid = d3.geoCentroid(match);
     const currentRotate = projection.rotate();
     const targetRotate: [number, number, number] = [-centroid[0], -centroid[1], 0];
     const rotateInterpolator = d3.interpolate(currentRotate, targetRotate);
     const scaleInterpolator = d3.interpolate(projection.scale(), baseScale * ZOOM_SCALE_FACTOR);
-
+    
     const sphere = svg.select(".sphere");
     const borders = svg.select(".borders");
-    const countries = svg.selectAll<SVGPathElement, CountryFeature>(".country");
-
+    const countries = svg.selectAll < SVGPathElement,
+      CountryFeature > (".country");
+    
     // Fade and zoom animation
     sphere.transition().duration(800).ease(d3.easeCubicOut).attr("opacity", 1);
     borders.transition().duration(800).ease(d3.easeCubicOut).attr("opacity", 1);
-
+    
     countries
       .transition()
       .duration(800)
@@ -240,9 +292,14 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
         d.properties.name.toLowerCase() === SearchCountry.toLowerCase() ? 1 : 0.3
       )
       .attr("stroke", (d) =>
-        d.properties.name.toLowerCase() === SearchCountry.toLowerCase() ? COLORS.highlight : COLORS.border
+        d.properties.name.toLowerCase() === SearchCountry.toLowerCase() ?
+        COLORS.highlight :
+        COLORS.border
+      )
+      .attr("stroke-width", (d) =>
+        d.properties.name.toLowerCase() === SearchCountry.toLowerCase() ? 2 : 0.5
       );
-
+    
     // Rotate and zoom to selected country
     d3.transition()
       .duration(2000)
@@ -254,20 +311,14 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
         };
       });
   }, [SearchCountry, width, resetGlobeView, startRotation, stopRotation, COLORS.border, COLORS.highlight]);
-
+  
   return (
-    <div
+    <div style={{ width: "100%", maxWidth: `${width}px` }}>
+      <div className="mb-4">
+        <svg ref={svgRef} />
+      </div> 
+      </div>
     
-      style={{
-      
-        width: "100%",
-        maxWidth: `${width}px`,
-        overflow: "visible",
-      }}
-      className = 'mb-4'
-    >
-      <svg ref={svgRef} />
-    </div>
   );
 };
 
