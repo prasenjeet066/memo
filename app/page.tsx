@@ -76,12 +76,12 @@ export default function MainPage() {
         </button>
       </div>
     </div>
-    <div className = 'text-center w-full flex-warp text-sm text-gray-700 items-center space-x-4 px-6 mt-4'>
+    <div className = 'text-center w-full grid grid-cols-3 gap-4 text-sm text-gray-700'>
       {
         footerList.map((list, index)=>{
           if (list.label && isMobile ) {
             return (
-              <a href = '' className="p-2 px-4 after:content-['_↗']">{list.label}</a>
+              <a href = '' className="p-2 after:content-['_↗']">{list.label}</a>
             )
           }
         })
