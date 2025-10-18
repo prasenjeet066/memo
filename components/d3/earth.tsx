@@ -16,7 +16,6 @@ const GlobeChart: React.FC<GlobeChartProps> = ({ width = 928 }) => {
     const marginTop = 46;
     const height = width / 2 + marginTop;
 
-    // Clear previous render
     const svg = d3.select(ref.current);
     svg.selectAll("*").remove();
 
@@ -41,7 +40,6 @@ const GlobeChart: React.FC<GlobeChartProps> = ({ width = 928 }) => {
 
     const path = d3.geoPath(projection);
 
-    // SVG setup
     svg
       .attr("width", width)
       .attr("height", height)
@@ -56,14 +54,17 @@ const GlobeChart: React.FC<GlobeChartProps> = ({ width = 928 }) => {
       .attr("stroke", "currentColor")
       .attr("d", path as any);
 
-    // Countries (neutral fill)
+    // Create color scale with many distinct colors
+    const color = d3.scaleOrdinal(d3.schemeTableau10.concat(d3.schemeSet3, d3.schemePaired));
+
+    // Countries (each with a unique color)
     svg
       .append("g")
       .selectAll("path")
       .data(countries.features)
       .join("path")
-      .attr("fill", "#e0e0e0")
-      .attr("stroke", "#999")
+      .attr("fill", (_, i) => color(i.toString()))
+      .attr("stroke", "#333")
       .attr("stroke-width", 0.3)
       .attr("d", path as any)
       .append("title")
@@ -75,7 +76,7 @@ const GlobeChart: React.FC<GlobeChartProps> = ({ width = 928 }) => {
       .datum(countrymesh)
       .attr("fill", "none")
       .attr("stroke", "#000")
-      .attr("stroke-width", 0.5)
+      .attr("stroke-width", 0.4)
       .attr("d", path as any);
   }, [width]);
 
