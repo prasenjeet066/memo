@@ -287,7 +287,7 @@ export default function CreateNew({
           break;
           
         case 'table': {
-          alert('tble')
+        
           const tableId = `table-${Date.now()}`;
           const makeHeader = (j: number) => `<th contenteditable>Header ${j + 1}</th>`;
           const makeCell = (i: number, j: number) => `<td contenteditable>Row ${i + 1}, Col ${j + 1}</td>`;
@@ -307,8 +307,10 @@ export default function CreateNew({
               </div>
             </div><br>
           `;
+          
           document.execCommand('insertHTML', false, tableHTML);
           setTimeout(() => attachTableEventListeners(tableId), 100);
+          
           break;
         }
         
@@ -514,7 +516,8 @@ export default function CreateNew({
           suppressContentEditableWarning
           aria-label="Editor content area"
           onInput={handleEditorContentChange}
-        >{payload.content}</div>
+          dangerouslySetInnerHTML={{ __html: payload.content }}
+        ></div>
       )}
 
       {/* AI Generation Status */}
