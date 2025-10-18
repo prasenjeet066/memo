@@ -277,6 +277,7 @@ export default function CreateNew({
           aiPrompt.contentEditable = 'false';
           aiPrompt.innerHTML = `<input type="text" class="prompt-input" placeholder="Write anything..." /><button class="fas fa-arrow-right"></button>`;
           editorRef.current.appendChild(aiPrompt);
+          
           setTimeout(() => setupAiTaskListeners('ai-task-div'), 300);
           break;
         }
