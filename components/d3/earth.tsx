@@ -257,12 +257,14 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
 
   return (
     <div
+    
       style={{
+      
         width: "100%",
         maxWidth: `${width}px`,
-        margin: "0 auto",
         overflow: "visible",
       }}
+      className = 'mb-4'
     >
       <svg ref={svgRef} />
     </div>
