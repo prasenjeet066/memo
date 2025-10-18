@@ -81,7 +81,7 @@ const GlobeChart: React.FC<GlobeChartProps> = ({ width = 928, rotationSpeed = 0.
       .attr("fill", "none")
       .attr("stroke", "black")
       .attr("stroke-width", 0.6)
-      .attr("opacity", 0.7)
+      .attr("opacity", 0.9)
       .attr("d", path as any);
 
     // Animation
