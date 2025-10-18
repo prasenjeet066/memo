@@ -1,7 +1,6 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import * as d3 from "d3";
 import { feature, mesh } from "topojson-client";
-import world from "@/lib/countries-110m.json";
 
 type CountryFeature = GeoJSON.Feature<GeoJSON.Geometry, { name: string }>;
 
@@ -16,186 +15,314 @@ const GlobeChart: React.FC<GlobeChartProps> = ({
   rotationSpeed = 0.3,
   SearchCountry,
 }) => {
-  const ref = useRef<SVGSVGElement | null>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
   const projectionRef = useRef<d3.GeoProjection | null>(null);
   const pathRef = useRef<d3.GeoPath<any, d3.GeoPermissibleObjects> | null>(null);
   const timerRef = useRef<d3.Timer | null>(null);
   const currentCountryRef = useRef<string | null>(null);
+  const worldDataRef = useRef<any>(null);
 
-  useEffect(() => {
-    const marginTop = 46;
-    const height = width / 2 + marginTop;
+  const MARGIN_TOP = 46;
+  const BASE_SCALE_FACTOR = 3.3;
+  const ZOOM_SCALE_FACTOR = 2.8;
+  
+  // Color scheme
+  const COLORS = {
+    ocean: "#0a1929",
+    sphere: "#1e3a5f",
+    land: "#2d5a7b",
+    landHover: "#3d6a8b",
+    border: "#4a7a9a",
+    highlight: "#00d4ff",
+    highlightGlow: "#0099cc",
+  };
 
-    const svg = d3.select(ref.current);
-    svg.selectAll("*").remove();
+  const stopRotation = useCallback(() => {
+    if (timerRef.current) {
+      timerRef.current.stop();
+      timerRef.current = null;
+    }
+  }, []);
 
-    const countries = feature(world as any, (world as any).objects.countries) as {
-      type: "FeatureCollection";
-      features: CountryFeature[];
-    };
-
-    const countrymesh = mesh(world as any, (world as any).objects.countries, (a, b) => a !== b);
-
-    const projection = d3
-      .geoOrthographic()
-      .fitExtent(
-        [
-          [2, marginTop + 2],
-          [width - 2, height],
-        ],
-        { type: "Sphere" }
-      )
-      .rotate([0, -10])
-      .scale(width / 3.3);
-
-    projectionRef.current = projection;
-    const path = d3.geoPath(projection);
-    pathRef.current = path;
-
-    svg
-      .attr("width", width)
-      .attr("height", height)
-      .attr("viewBox", `0 0 ${width} ${height}`)
-      .attr("style", "max-width: 100%; height: auto; display: block;");
-
-    // Grouping layers
-    const globeGroup = svg.append("g").attr("class", "globe-group");
-    const countriesGroup = globeGroup.append("g").attr("class", "countries");
-
-    // Sphere (the Earth outline)
-    globeGroup
-      .append("path")
-      .datum({ type: "Sphere" })
-      .attr("class", "earth")
-      .attr("fill", "#00111a")
-      .attr("stroke", "#222")
-      .attr("stroke-width", 0.2)
-      .attr("d", path as any);
-
-    // Countries
-    countriesGroup
-      .selectAll("path")
-      .data(countries.features)
-      .join("path")
-      .attr("class", "country")
-      .attr("fill", "#444")
-      .attr("stroke", "white")
-      .attr("stroke-width", 0.4)
-      .attr("d", path as any)
-      .append("title")
-      .text((d) => d.properties.name);
-
-    // Borders
-    globeGroup
-      .append("path")
-      .datum(countrymesh)
-      .attr("fill", "none")
-      .attr("stroke", "#333")
-      .attr("stroke-width", 0.3)
-      .attr("d", path as any);
-
-    // Continuous rotation
-    const velocity = rotationSpeed;
-    const timer = d3.timer((elapsed) => {
+  const startRotation = useCallback((projection: d3.GeoProjection, svg: d3.Selection<SVGSVGElement | null, unknown, null, undefined>, path: d3.GeoPath) => {
+    stopRotation();
+    
+    timerRef.current = d3.timer((elapsed) => {
       const rotation = projection.rotate();
-      rotation[0] = (rotation[0] + (velocity * elapsed) / 1000) % 360;
+      rotation[0] = (rotation[0] + (rotationSpeed * elapsed) / 1000) % 360;
       projection.rotate(rotation);
       svg.selectAll("path").attr("d", path as any);
     });
-    timerRef.current = timer;
+  }, [rotationSpeed, stopRotation]);
 
-    return () => timer.stop();
-  }, [width, rotationSpeed]);
-
-  // Search & zoom logic
+  // Initialize globe
   useEffect(() => {
-    const svg = d3.select(ref.current);
+    const height = width / 2 + MARGIN_TOP;
+    const svg = d3.select(svgRef.current);
+    
+    // Clear previous content
+    svg.selectAll("*").remove();
+
+    // Fetch world data
+    fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
+      .then(res => res.json())
+      .then((world) => {
+        worldDataRef.current = world;
+        
+        const countries = feature(world, world.objects.countries) as {
+          type: "FeatureCollection";
+          features: CountryFeature[];
+        };
+
+        const countrymesh = mesh(world, world.objects.countries, (a, b) => a !== b);
+
+        const projection = d3
+          .geoOrthographic()
+          .fitExtent(
+            [
+              [2, MARGIN_TOP + 2],
+              [width - 2, height - 2],
+            ],
+            { type: "Sphere" }
+          )
+          .rotate([0, -10])
+          .scale(width / BASE_SCALE_FACTOR)
+          .translate([width / 2, height / 2]);
+
+        projectionRef.current = projection;
+        const path = d3.geoPath(projection);
+        pathRef.current = path;
+
+        svg
+          .attr("width", width)
+          .attr("height", height)
+          .attr("viewBox", `0 0 ${width} ${height}`)
+          .style("max-width", "100%")
+          .style("height", "auto")
+          .style("display", "block")
+          .style("overflow", "visible");
+
+        // Create defs for gradients and filters
+        const defs = svg.append("defs");
+        
+        // Radial gradient for ocean/sphere
+        const oceanGradient = defs.append("radialGradient")
+          .attr("id", "ocean-gradient");
+        oceanGradient.append("stop")
+          .attr("offset", "0%")
+          .attr("stop-color", COLORS.sphere);
+        oceanGradient.append("stop")
+          .attr("offset", "100%")
+          .attr("stop-color", COLORS.ocean);
+
+        // Glow filter for highlighted country
+        const glowFilter = defs.append("filter")
+          .attr("id", "glow")
+          .attr("x", "-50%")
+          .attr("y", "-50%")
+          .attr("width", "200%")
+          .attr("height", "200%");
+        glowFilter.append("feGaussianBlur")
+          .attr("stdDeviation", "3")
+          .attr("result", "coloredBlur");
+        const feMerge = glowFilter.append("feMerge");
+        feMerge.append("feMergeNode").attr("in", "coloredBlur");
+        feMerge.append("feMergeNode").attr("in", "SourceGraphic");
+
+        // Main globe group
+        const globeGroup = svg.append("g").attr("class", "globe-group");
+
+        // Sphere background (ocean)
+        globeGroup
+          .append("path")
+          .datum({ type: "Sphere" })
+          .attr("class", "sphere")
+          .attr("fill", "url(#ocean-gradient)")
+          .attr("stroke", COLORS.border)
+          .attr("stroke-width", 1.5)
+          .attr("d", path as any);
+
+        // Countries group
+        const countriesGroup = globeGroup.append("g").attr("class", "countries");
+        
+        countriesGroup
+          .selectAll("path")
+          .data(countries.features)
+          .join("path")
+          .attr("class", "country")
+          .attr("fill", COLORS.land)
+          .attr("stroke", COLORS.border)
+          .attr("stroke-width", 0.5)
+          .attr("d", path as any)
+          .style("cursor", "pointer")
+          .on("mouseenter", function() {
+            if (!SearchCountry) {
+              d3.select(this)
+                .transition()
+                .duration(200)
+                .attr("fill", COLORS.landHover);
+            }
+          })
+          .on("mouseleave", function(event, d) {
+            if (!SearchCountry || d.properties.name.toLowerCase() !== SearchCountry.toLowerCase()) {
+              d3.select(this)
+                .transition()
+                .duration(200)
+                .attr("fill", COLORS.land);
+            }
+          })
+          .append("title")
+          .text((d) => d.properties.name);
+
+        // Country borders
+        globeGroup
+          .append("path")
+          .datum(countrymesh)
+          .attr("class", "borders")
+          .attr("fill", "none")
+          .attr("stroke", COLORS.border)
+          .attr("stroke-width", 0.5)
+          .attr("stroke-opacity", 0.5)
+          .attr("d", path as any);
+
+        // Start rotation
+        startRotation(projection, svg, path);
+      })
+      .catch(err => {
+        console.error("Failed to load world data:", err);
+      });
+
+    return () => {
+      stopRotation();
+    };
+  }, [width, startRotation, stopRotation]);
+
+  // Handle country search and zoom
+  useEffect(() => {
+    if (!worldDataRef.current || !projectionRef.current || !pathRef.current) return;
+
+    const svg = d3.select(svgRef.current);
     const projection = projectionRef.current;
     const path = pathRef.current;
-    if (!projection || !path) return;
-
-    const baseScale = width / 3.3;
-    const earth = svg.select(".earth");
+    const baseScale = width / BASE_SCALE_FACTOR;
+    
+    const sphere = svg.select(".sphere");
     const countries = svg.selectAll<SVGPathElement, CountryFeature>(".country");
+    const borders = svg.select(".borders");
 
-    const resumeRotation = () => {
-      timerRef.current?.restart((elapsed) => {
-        const rotation = projection.rotate();
-        rotation[0] = (rotation[0] + (rotationSpeed * elapsed) / 1000) % 360;
-        projection.rotate(rotation);
-        svg.selectAll("path").attr("d", path as any);
-      });
-    };
-
-    // Reset to normal globe
+    // Reset view
     if (!SearchCountry) {
+      if (currentCountryRef.current === null) return;
+      
       currentCountryRef.current = null;
+      stopRotation();
+
+      // Transition back to normal view
+      const currentScale = projection.scale();
+      const scaleInterpolator = d3.interpolate(currentScale, baseScale);
+
       d3.transition()
         .duration(1500)
-        .tween("zoomOut", () => {
-          const interpScale = d3.interpolate(projection.scale(), baseScale);
+        .ease(d3.easeCubicInOut)
+        .tween("reset", () => {
           return (t) => {
-            projection.scale(interpScale(t));
+            projection.scale(scaleInterpolator(t));
             svg.selectAll("path").attr("d", path as any);
           };
         })
         .on("start", () => {
-          earth.transition().duration(1000).attr("opacity", 1);
+          sphere.transition().duration(800).attr("opacity", 1);
+          borders.transition().duration(800).attr("opacity", 0.5);
           countries
             .transition()
-            .duration(1000)
+            .duration(800)
             .attr("opacity", 1)
-            .attr("fill", "#444");
+            .attr("fill", COLORS.land)
+            .attr("filter", null);
         })
-        .on("end", resumeRotation);
+        .on("end", () => {
+          startRotation(projection, svg, path);
+        });
+
       return;
     }
 
-    // Stop rotation
-    timerRef.current?.stop();
+    // Search for country
+    const countryData = feature(worldDataRef.current, worldDataRef.current.objects.countries)
+      .features as CountryFeature[];
 
-    import("@/lib/countries-110m.json").then((worldData) => {
-      const countryData = feature(worldData as any, (worldData as any).objects.countries)
-        .features as CountryFeature[];
+    const match = countryData.find(
+      (d) => d.properties.name.toLowerCase() === SearchCountry.toLowerCase()
+    );
 
-      const match = countryData.find(
-        (d) => d.properties.name.toLowerCase() === SearchCountry.toLowerCase()
+    if (!match) {
+      console.warn(`Country "${SearchCountry}" not found`);
+      return;
+    }
+
+    if (currentCountryRef.current === SearchCountry.toLowerCase()) return;
+    
+    currentCountryRef.current = SearchCountry.toLowerCase();
+    stopRotation();
+
+    const centroid = d3.geoCentroid(match);
+    const currentRotate = projection.rotate();
+    const targetRotate: [number, number, number] = [-centroid[0], -centroid[1], 0];
+    const rotateInterpolator = d3.interpolate(currentRotate, targetRotate);
+    const scaleInterpolator = d3.interpolate(projection.scale(), baseScale * ZOOM_SCALE_FACTOR);
+
+    // Fade out sphere and other countries
+    sphere.transition()
+      .duration(800)
+      .ease(d3.easeCubicOut)
+      .attr("opacity", 0.3);
+
+    borders.transition()
+      .duration(800)
+      .ease(d3.easeCubicOut)
+      .attr("opacity", 0.1);
+
+    countries
+      .transition()
+      .duration(800)
+      .ease(d3.easeCubicOut)
+      .attr("opacity", (d) =>
+        d.properties.name.toLowerCase() === SearchCountry.toLowerCase() ? 1 : 0.1
+      )
+      .attr("fill", (d) =>
+        d.properties.name.toLowerCase() === SearchCountry.toLowerCase() 
+          ? COLORS.highlight 
+          : COLORS.land
+      )
+      .attr("filter", (d) =>
+        d.properties.name.toLowerCase() === SearchCountry.toLowerCase()
+          ? "url(#glow)"
+          : null
       );
-      if (!match) return;
 
-      const centroid = d3.geoCentroid(match);
-      const currentRotate = projection.rotate();
-      const targetRotate: [number, number, number] = [-centroid[0], -centroid[1], 0];
-      const r = d3.interpolate(currentRotate, targetRotate);
+    // Rotate and zoom to country
+    d3.transition()
+      .duration(2000)
+      .ease(d3.easeCubicInOut)
+      .tween("focus", () => {
+        return (t) => {
+          projection.rotate(rotateInterpolator(t)).scale(scaleInterpolator(t));
+          svg.selectAll("path").attr("d", path as any);
+        };
+      });
 
-      // Step 1: fade out everything
-      earth.transition().duration(800).attr("opacity", 0);
-      countries
-        .transition()
-        .duration(800)
-        .attr("opacity", (d) =>
-          d.properties.name.toLowerCase() === SearchCountry.toLowerCase() ? 1 : 0
-        )
-        .attr("fill", (d) =>
-          d.properties.name.toLowerCase() === SearchCountry.toLowerCase() ? "#00bfff" : "#444"
-        );
+  }, [SearchCountry, width, startRotation, stopRotation]);
 
-      // Step 2: rotate and zoom in on selected country
-      const zoomIn = d3.interpolate(projection.scale(), baseScale * 2.4); // much closer zoom
-      d3.transition()
-        .duration(2000)
-        .tween("focus", () => {
-          return (t) => {
-            projection.rotate(r(t)).scale(zoomIn(t));
-            svg.selectAll("path").attr("d", path as any);
-          };
-        });
-
-      currentCountryRef.current = SearchCountry.toLowerCase();
-    });
-  }, [SearchCountry, width, rotationSpeed]);
-
-  return <svg ref={ref} />;
+  return (
+    <div style={{ 
+      width: '100%', 
+      maxWidth: `${width}px`, 
+      margin: '0 auto',
+      overflow: 'hidden'
+    }}>
+      <svg ref={svgRef} />
+    </div>
+  );
 };
 
 export default GlobeChart;
