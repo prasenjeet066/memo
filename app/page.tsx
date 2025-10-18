@@ -30,25 +30,30 @@ const HeaderNavs = () => {
 export default function MainPage() {
   const isMobile = useMobile()
   const [isExpanded, setIsExpanded] = useState(true)
-  
+  const [searchQuery , setSearchQuery] = useState(null)
   const NavList = [
     { name: 'Home', icon: Home, href: '/' },
     { name: 'Explore', icon: Compass, href: '/explore' },
     { name: 'Contribute', icon: HandHeart, href: '/contribute' },
     { name: 'Settings', icon: Settings, href: '/settings' },
   ]
-  const handleSearch = () =>{}
-  
+  const handleSearchSubmit = () =>{}
+  const handleSearch = (e)=>{
+    if (e.target.value || e.target.value.trim()!==''
+    ) {
+      setSearchQuery(e.target.value)
+    }
+  }
   return (
   <main className="min-h-screen w-full bg-gray-50 flex flex-col">
     <Header navlist={NavList}/>
     <div className="w-full flex-1 flex flex-col items-center justify-center bg-white">
     <div className='p-4 space-y-2 w-full max-w-md'>
-      <GlobeChart/>
+      <GlobeChart SearchCountry= {searchQuery}/>
       <h1 className='text-center  text-2xl mt-4'>Find Anything.</h1>
       <div className={`w-full flex items-center justify-between gap-2 rounded-full p-2 bg-gray-50`}>
-        <input type='text' className='outline-none border-none pl-2 bg-transparent w-full' placeholder='About Bangladesh' />
-        <button className='bg-gray-800 text-white p-2 rounded-full px-4' onClick = {handleSearch}>
+        <input type='text' className='outline-none border-none pl-2 bg-transparent w-full' placeholder='About Bangladesh'  onInput = {handleSearch}/>
+        <button className='bg-gray-800 text-white p-2 rounded-full px-4' onClick = {handleSearchSubmit}>
           <Fai icon={'arrow-right'}/>
         </button>
       </div>
