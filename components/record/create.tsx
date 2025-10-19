@@ -51,23 +51,7 @@ const applyTextFormat = (format: 'bold' | 'italic' | 'underline' | 'strikethroug
     strikethrough: 's',
     p: 'p',
   };
-  
-  const wrapper = document.createElement(tagMap[format]);
-  wrapper.innerHTML = sanitizeHTML(selectedText);
-  
-  try {
-    range.deleteContents();
-    range.insertNode(wrapper);
-    
-    const newRange = document.createRange();
-    newRange.selectNodeContents(wrapper);
-    newRange.collapse(false);
-    
-    selection.removeAllRanges();
-    selection.addRange(newRange);
-  } catch (error) {
-    console.error('Failed to apply text format:', error);
-  }
+  insertHTML(`<${tagMap[format]}>${format}</${tagMap[format]}>`)
 };
 
 // Utility: Insert HTML safely
