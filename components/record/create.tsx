@@ -869,9 +869,30 @@ export default function EnhancedEditor({
           <div className="flex items-center gap-1 overflow-x-auto flex-1">
             {toolbarBlocks.map((block: any, index: number) => {
               if (block.items && Array.isArray(block.items)) {
+              if (index === 0) {
+                return (
+                  
+                  <Select  key={`toolbar-select-${index}`} onValueChange={handleToolbarAction}>
+                    <SelectTrigger className="max-w-[180px] border-l border-r  w-auto h-10 border-none">
+                      <SelectValue placeholder={block.label} iconOnly ={true}/>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {block.items.map((item: any, itemIndex: number) => (
+                        <SelectItem icon={<Fai icon={item.icon} style="fas" />} id = {item.action} key={`item-${index}-${itemIndex}`} value={item.action || item.label}>
+                          <div className="flex items-center gap-2">
+
+                            <span>{item.label}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                
+                )
+              }
                 return (
                   <Select  key={`toolbar-select-${index}`} onValueChange={handleToolbarAction}>
-                    <SelectTrigger className="max-w-[180px] min-w-[80px] border-l border-r  w-auto h-10 border-none">
+                    <SelectTrigger className="max-w-[180px] border-l border-r  w-auto h-10 border-none">
                       <SelectValue placeholder={<Fai icon={block.icon} />} iconOnly ={true}/>
                     </SelectTrigger>
                     <SelectContent>
