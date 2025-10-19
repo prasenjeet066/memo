@@ -36,35 +36,36 @@ const sanitizeHTML = (html: string): string => {
 };
 
 // Utility: Modern text formatting (replaces execCommand)
-const applyTextFormat = (format: 'bold' | 'italic' | 'underline' | 'strikethrough'|'p') => {
+function insertHTML(html: string) {
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0) return;
   
   const range = selection.getRangeAt(0);
-  const selectedText = range.toString();
-  
-  if (!selectedText) return;
-  
-  const tagMap = {
-    bold: 'strong',
-    italic: 'em',
-    p : 'p',
-    underline: 'u',
-    strikethrough: 's'
-  };
-  
-  const element = document.createElement(tagMap[format]);
-  element.textContent = selectedText;
-  
   range.deleteContents();
-  range.insertNode(element);
   
-  // Move cursor after the inserted element
-  range.setStartAfter(element);
-  range.setEndAfter(element);
-  selection.removeAllRanges();
-  selection.addRange(range);
-};
+  // Create a temporary container for the sanitized HTML
+  const sanitized = sanitizeHTML(html);
+  const div = document.createElement("div");
+  div.innerHTML = sanitized;
+  
+  // Use a document fragment for performance
+  const fragment = document.createDocumentFragment();
+  let lastNode: Node | null = null;
+  while (div.firstChild) {
+    lastNode = fragment.appendChild(div.firstChild);
+  }
+  
+  // Insert the fragment
+  range.insertNode(fragment);
+  
+  // Move cursor to the end of the last inserted node
+  if (lastNode) {
+    range.setStartAfter(lastNode);
+    range.setEndAfter(lastNode);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+}
 
 // Utility: Insert HTML safely
 const insertHTML = (html: string) => {
