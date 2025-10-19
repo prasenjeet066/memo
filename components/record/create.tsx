@@ -866,7 +866,7 @@ export default function EnhancedEditor({
               if (block.items && Array.isArray(block.items)) {
                 return (
                   <Select  key={`toolbar-select-${index}`} onValueChange={handleToolbarAction}>
-                    <SelectTrigger className="max-w-[180px] w-auto h-10 border-none">
+                    <SelectTrigger className="max-w-[180px] px-4 border-x  w-auto h-10 border-none">
                       <SelectValue placeholder={<Fai icon={block.icon} />} iconOnly ={true}/>
                     </SelectTrigger>
                     <SelectContent>

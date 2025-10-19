@@ -31,16 +31,17 @@ export const toolbarBlocks = [
   { icon: "bold", action: "bold", label: "Bold (Ctrl+B)" },
   { icon: "italic", action: "italic", label: "Italic (Ctrl+I)" },
   { icon: "underline", action: "underline", label: "Underline (Ctrl+U)" },
-  { icon: "code", action: "inlineCode", label: "Inline Code" },
+  
   
   // === HEADINGS & PARAGRAPH ===      
   {
-    name: "H1",
+    name: "Paragraph",
     icon: "heading",
     items: [
-      { icon: "heading", action: "heading", label: "Heading 2", args: [2] },
-      { icon: "heading", action: "heading", label: "Heading 3", args: [3] },
-      { icon: "heading", action: "heading", label: "Heading 4", args: [4] },
+      { icon: "paragraph", action: "paragraph", label: "Paragraph" },
+      { icon: "heading", action: "heading", label: "Heading", args: [2] },
+      
+      { icon: "code", action: "inlineCode", label: "Inline Code" },
     ],
   },
   
