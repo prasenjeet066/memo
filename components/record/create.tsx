@@ -10,12 +10,12 @@ import { toolbarBlocks } from '@/lib/editor/toolbarConfig';
 import DOMPurify from 'dompurify';
 
 interface EditorProps {
-  editor_mode?: 'visual' | 'code';
-  record_name?: string;
-  onPublish?: () => void;
-  sideBarTools?: () => void;
-  ExpandedIs?: boolean;
-  IsExpandedSet?: (value: boolean) => void;
+  editor_mode ? : 'visual' | 'code';
+  record_name ? : string;
+  onPublish ? : () => void;
+  sideBarTools ? : () => void;
+  ExpandedIs ? : boolean;
+  IsExpandedSet ? : (value: boolean) => void;
 }
 
 interface HistoryState {
@@ -26,11 +26,13 @@ interface HistoryState {
 // Utility: Sanitize HTML
 const sanitizeHTML = (html: string): string => {
   return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'code', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
-                   'ul', 'ol', 'li', 'a', 'img', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 
-                   'div', 'span', 'iframe', 'sup', 'sub', 'hr', 'blockquote'],
-    ALLOWED_ATTR: ['href', 'src', 'alt', 'width', 'height', 'style', 'class', 'contenteditable', 
-                   'data-table-id', 'colspan', 'border', 'frameborder', 'allowfullscreen'],
+    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'code', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'ul', 'ol', 'li', 'a', 'img', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
+      'div', 'span', 'iframe', 'sup', 'sub', 'hr', 'blockquote'
+    ],
+    ALLOWED_ATTR: ['href', 'src', 'alt', 'width', 'height', 'style', 'class', 'contenteditable',
+      'data-table-id', 'colspan', 'border', 'frameborder', 'allowfullscreen'
+    ],
     ALLOW_DATA_ATTR: true,
   });
 };
@@ -88,37 +90,38 @@ export default function EnhancedEditor({
   onPublish,
   IsExpandedSet,
 }: EditorProps) {
-  const [editorMode, setEditorMode] = useState<'visual' | 'code'>(editor_mode);
+  const [editorMode, setEditorMode] = useState < 'visual' | 'code' > (editor_mode);
   const [payload, setPayload] = useState({ title: '', content: '' });
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationError, setGenerationError] = useState<string | null>(null);
-  const [activeAction, setActiveAction] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState < string | null > (null);
+  const [activeAction, setActiveAction] = useState < string | null > (null);
   const [aiGeneratedContent, setAiGeneratedContent] = useState('');
   
-  const [history, setHistory] = useState<HistoryState[]>([]);
+  const [history, setHistory] = useState < HistoryState[] > ([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const maxHistorySize = 50;
   
   const { data: session } = useSession();
-  const editorRef = useRef<HTMLDivElement>(null);
-  const monacoEditorRef = useRef<any>(null);
+  const editorRef = useRef < HTMLDivElement > (null);
+  const monacoEditorRef = useRef < any > (null);
   const [, startTransition] = useTransition();
   
-  const tableListenersRef = useRef<Map<string, Array<{ element: Element; type: string; handler: EventListener }>>>(new Map());
-  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const tableListenersRef = useRef < Map < string,
+    Array < { element: Element;type: string;handler: EventListener } >>> (new Map());
+  const autoSaveTimerRef = useRef < NodeJS.Timeout | null > (null);
   
   // ==================== HISTORY MANAGEMENT ====================
   const saveToHistory = useCallback((content: string) => {
     setHistory(prev => {
-      const trimmedHistory = historyIndex < prev.length - 1 
-        ? prev.slice(0, historyIndex + 1)
-        : prev;
+      const trimmedHistory = historyIndex < prev.length - 1 ?
+        prev.slice(0, historyIndex + 1) :
+        prev;
       
       const newHistory = [...trimmedHistory, { content, timestamp: Date.now() }];
       
-      const finalHistory = newHistory.length > maxHistorySize
-        ? newHistory.slice(newHistory.length - maxHistorySize)
-        : newHistory;
+      const finalHistory = newHistory.length > maxHistorySize ?
+        newHistory.slice(newHistory.length - maxHistorySize) :
+        newHistory;
       
       return finalHistory;
     });
@@ -283,7 +286,7 @@ export default function EnhancedEditor({
     const delRowBtn = tableContainer.querySelector('.del-row-btn');
     const delColBtn = tableContainer.querySelector('.del-col-btn');
     
-    const listeners: Array<{ element: Element; type: string; handler: EventListener }> = [];
+    const listeners: Array < { element: Element;type: string;handler: EventListener } > = [];
     
     const updateContent = () => {
       if (editorRef.current) {
@@ -370,7 +373,7 @@ export default function EnhancedEditor({
   }, [cleanupTableListeners, saveToHistory]);
   
   // ==================== AI GENERATION ====================
-  const generateAIArticle = useCallback(async (topic: string): Promise<string> => {
+  const generateAIArticle = useCallback(async (topic: string): Promise < string > => {
     if (!topic?.trim()) {
       throw new Error('Please provide a topic.');
     }
@@ -438,7 +441,7 @@ export default function EnhancedEditor({
       setIsGenerating(false);
     }
   }, []);
-
+  
   const disableList = useCallback((list: string[]) => {
     if (Array.isArray(list) && list.length) {
       list.forEach((selector) => {
@@ -453,33 +456,35 @@ export default function EnhancedEditor({
   }, []);
   
   // ==================== COMMAND EXECUTION ====================
-  const executeCommand = useCallback((action: string, args?: any[]) => {
+  const executeCommand = useCallback((action: string, args ? : any[]) => {
     if (editorMode !== 'visual' || !editorRef.current) return;
     
     editorRef.current.focus();
     
     try {
       switch (action) {
+        
         case 'bold':
-          applyTextFormat('bold');
+          document.execCommand('bold', false, null);
           break;
           
         case 'italic':
-          applyTextFormat('italic');
+          document.execCommand('italic', false, null);
           break;
           
         case 'underline':
-          applyTextFormat('underline');
+          document.execCommand('underline', false, null);
           break;
           
         case 'strikethrough':
-          applyTextFormat('strikethrough');
+          document.execCommand('strikeThrough', false, null);
           break;
+          
           
         case 'inlineCode':
           insertHTML('<code contenteditable="true">code</code>');
           break;
-        
+          
         case 'heading': {
           const level = Math.min(Math.max(1, args?.[0] || 2), 6);
           const selection = window.getSelection();
@@ -502,7 +507,7 @@ export default function EnhancedEditor({
         case 'refList':
           insertHTML('<ol class="references-list"><li contenteditable="true">Reference 1</li></ol><br>');
           break;
-        
+          
         case 'link': {
           const url = prompt('Enter URL:');
           if (url) {
@@ -548,7 +553,7 @@ export default function EnhancedEditor({
         case 'reference':
           insertHTML('<sup class="reference" contenteditable="true">[1]</sup>');
           break;
-        
+          
         case 'aiTask': {
           const aiPrompt = document.createElement('div');
           aiPrompt.className = 'ai-task-div';
@@ -604,11 +609,11 @@ export default function EnhancedEditor({
           }, 100);
           break;
         }
-
+        
         case 'paragraph':
           applyTextFormat('p');
           break;
-        
+          
         case 'table': {
           const tableHTML = createTable(3, 4);
           insertHTML(tableHTML);
@@ -630,7 +635,7 @@ export default function EnhancedEditor({
           disableList(['#horizontalRule', '#table', '#video', '#template']);
           break;
         }
-          
+        
         default:
           console.log(`Unknown command: ${action}`);
       }
@@ -687,7 +692,7 @@ export default function EnhancedEditor({
     setEditorMode(newMode);
   }, [editorMode, payload.content, saveToHistory]);
   
-  const handleEditorContentChangeCode = useCallback((value?: string) => {
+  const handleEditorContentChangeCode = useCallback((value ? : string) => {
     setPayload(prev => ({ ...prev, content: value || '' }));
   }, []);
   
