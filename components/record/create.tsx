@@ -825,7 +825,7 @@ export default function EnhancedEditor({
           <div className="flex items-center gap-1 overflow-x-auto flex-1">
             {toolbarBlocks.map((block: any, index: number) => {
               if (block.items && Array.isArray(block.items)) {
-                if (block.label === 'paragraph') {
+                if (block.name === 'Paragraph') {
                   return (
                     <Select key={`toolbar-select-${index}`} onValueChange={handleToolbarAction}>
                       <SelectTrigger className="max-w-[180px] border-l border-r w-auto h-10 border-none">
