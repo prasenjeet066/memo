@@ -460,7 +460,20 @@ export default function EnhancedEditor({
       setIsGenerating(false);
     }
   }, []);
-  
+  const disableList = (list:[])=>{
+    if (Array.isArray(list) || list.length) {
+      list.forEach((l)=>{
+        if (l!==null || l.trim()!=='') {
+          let item = document.querySelector(l);
+          if (item) {
+            if (!item.disabled) {
+              item.disabled = true;
+            }
+          }
+        }
+      })
+    }
+  }
   // ==================== COMMAND EXECUTION (FIXED) ====================
   const executeCommand = useCallback((action: string, args?: any[]) => {
     if (editorMode !== 'visual' || !editorRef.current) return;
@@ -623,6 +636,7 @@ export default function EnhancedEditor({
         
         // Table
         case 'table':
+          
           const tableHTML = createTable(3, 4);
           insertHTML(tableHTML);
           
@@ -638,8 +652,10 @@ export default function EnhancedEditor({
         
         // Template
         case 'template':
+          
           const template = buildTemplate();
           insertHTML(template);
+          disableList(['horizontalRule','table','video','template'])
           break;
           
         default:
@@ -849,13 +865,13 @@ export default function EnhancedEditor({
             {toolbarBlocks.map((block: any, index: number) => {
               if (block.items && Array.isArray(block.items)) {
                 return (
-                  <Select key={`toolbar-select-${index}`} onValueChange={handleToolbarAction}>
+                  <Select  key={`toolbar-select-${index}`} onValueChange={handleToolbarAction}>
                     <SelectTrigger className="max-w-[180px] w-auto h-10 border-none">
                       <SelectValue placeholder={<Fai icon={block.icon} />} />
                     </SelectTrigger>
                     <SelectContent>
                       {block.items.map((item: any, itemIndex: number) => (
-                        <SelectItem key={`item-${index}-${itemIndex}`} value={item.action || item.label}>
+                        <SelectItem id = {item.action} key={`item-${index}-${itemIndex}`} value={item.action || item.label}>
                           <div className="flex items-center gap-2">
                             <Fai icon={item.icon} style="fas" />
                             <span>{item.label}</span>
@@ -869,6 +885,7 @@ export default function EnhancedEditor({
               return (
                 <button
                   key={`toolbar-btn-${index}`}
+                  id = {block.action}
                   className={`px-3 py-2 border-0 hover:bg-gray-100 transition-colors rounded ${
                     block.action === activeAction ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
                   }`}
