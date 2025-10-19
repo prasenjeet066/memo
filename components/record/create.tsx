@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Fai } from '@/components/Fontawesome';
 import { InfoBox, InfoBoxItem, InfoBoxField, ComplexValue } from '@/lib/editor/templates/infobox';
 import { toolbarBlocks } from '@/lib/editor/toolbarConfig';
+import DOMPurify from 'dompurify';
 
 interface EditorProps {
   editor_mode?: 'visual' | 'code';
@@ -22,6 +23,69 @@ interface HistoryState {
   timestamp: number;
 }
 
+// Utility: Sanitize HTML
+const sanitizeHTML = (html: string): string => {
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'code', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
+                   'ul', 'ol', 'li', 'a', 'img', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 
+                   'div', 'span', 'iframe', 'sup', 'sub', 'hr', 'blockquote'],
+    ALLOWED_ATTR: ['href', 'src', 'alt', 'width', 'height', 'style', 'class', 'contenteditable', 
+                   'data-table-id', 'colspan', 'border', 'frameborder', 'allowfullscreen'],
+    ALLOW_DATA_ATTR: true,
+  });
+};
+
+// Utility: Modern text formatting (replaces execCommand)
+const applyTextFormat = (format: 'bold' | 'italic' | 'underline' | 'strikethrough') => {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return;
+  
+  const range = selection.getRangeAt(0);
+  const selectedText = range.toString();
+  
+  if (!selectedText) return;
+  
+  const tagMap = {
+    bold: 'strong',
+    italic: 'em',
+    underline: 'u',
+    strikethrough: 's'
+  };
+  
+  const element = document.createElement(tagMap[format]);
+  element.textContent = selectedText;
+  
+  range.deleteContents();
+  range.insertNode(element);
+  
+  // Move cursor after the inserted element
+  range.setStartAfter(element);
+  range.setEndAfter(element);
+  selection.removeAllRanges();
+  selection.addRange(range);
+};
+
+// Utility: Insert HTML safely
+const insertHTML = (html: string) => {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return;
+  
+  const range = selection.getRangeAt(0);
+  range.deleteContents();
+  
+  const sanitized = sanitizeHTML(html);
+  const template = document.createElement('template');
+  template.innerHTML = sanitized;
+  
+  const fragment = template.content;
+  range.insertNode(fragment);
+  
+  // Move cursor to end
+  range.collapse(false);
+  selection.removeAllRanges();
+  selection.addRange(range);
+};
+
 export default function EnhancedEditor({
   editor_mode = 'visual',
   record_name = 'Untitled Document',
@@ -35,33 +99,56 @@ export default function EnhancedEditor({
   const [activeAction, setActiveAction] = useState<string | null>(null);
   const [aiGeneratedContent, setAiGeneratedContent] = useState('');
   
-  // History for Undo/Redo
+  // Fixed History Management
   const [history, setHistory] = useState<HistoryState[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const maxHistorySize = 50;
   
   const { data: session } = useSession();
   const editorRef = useRef<HTMLDivElement>(null);
   const monacoEditorRef = useRef<any>(null);
   const [, startTransition] = useTransition();
   
-  // ==================== HISTORY MANAGEMENT ====================
+  // Track event listeners for cleanup
+  const tableListenersRef = useRef<Map<string, Array<{ element: Element; type: string; handler: EventListener }>>>(new Map());
+  
+  // Auto-save timer
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // ==================== HISTORY MANAGEMENT (FIXED) ====================
   const saveToHistory = useCallback((content: string) => {
     setHistory(prev => {
-      const newHistory = prev.slice(0, historyIndex + 1);
-      newHistory.push({ content, timestamp: Date.now() });
-      // Keep only last 50 states
-      return newHistory.slice(-50);
+      // Remove any future states if we're in the middle of history
+      const trimmedHistory = historyIndex < prev.length - 1 
+        ? prev.slice(0, historyIndex + 1)
+        : prev;
+      
+      // Add new state
+      const newHistory = [...trimmedHistory, { content, timestamp: Date.now() }];
+      
+      // Trim to max size from the beginning (keep recent states)
+      const finalHistory = newHistory.length > maxHistorySize
+        ? newHistory.slice(newHistory.length - maxHistorySize)
+        : newHistory;
+      
+      return finalHistory;
     });
-    setHistoryIndex(prev => Math.min(prev + 1, 49));
-  }, [historyIndex]);
+    
+    setHistoryIndex(prev => {
+      const newIndex = prev + 1;
+      // If we exceed max, stay at max - 1
+      return newIndex >= maxHistorySize ? maxHistorySize - 1 : newIndex;
+    });
+  }, [historyIndex, maxHistorySize]);
   
   const handleUndo = useCallback(() => {
     if (historyIndex > 0) {
       const newIndex = historyIndex - 1;
       setHistoryIndex(newIndex);
       const previousState = history[newIndex];
+      
       if (editorRef.current && editorMode === 'visual') {
-        editorRef.current.innerHTML = previousState.content;
+        editorRef.current.innerHTML = sanitizeHTML(previousState.content);
       }
       setPayload(prev => ({ ...prev, content: previousState.content }));
     }
@@ -72,8 +159,9 @@ export default function EnhancedEditor({
       const newIndex = historyIndex + 1;
       setHistoryIndex(newIndex);
       const nextState = history[newIndex];
+      
       if (editorRef.current && editorMode === 'visual') {
-        editorRef.current.innerHTML = nextState.content;
+        editorRef.current.innerHTML = sanitizeHTML(nextState.content);
       }
       setPayload(prev => ({ ...prev, content: nextState.content }));
     }
@@ -82,20 +170,25 @@ export default function EnhancedEditor({
   // ==================== FIELD VALUE RENDERER ====================
   const renderFieldValue = useCallback((field: InfoBoxField): string => {
     if (typeof field.value === 'string') {
-      return field.value;
+      return sanitizeHTML(field.value);
     }
     if (Array.isArray(field.value)) {
-      return field.value.map(v => `<span class="list-item">${v}</span>`).join(', ');
+      return field.value.map(v => `<span class="list-item">${sanitizeHTML(v)}</span>`).join(', ');
     }
     if (typeof field.value === 'object') {
       const val = field.value as ComplexValue;
       if (val.href) {
-        return `<a href="${val.href}" class="infobox-link">${val.text}</a>${val.subtext ? `<br><small>${val.subtext}</small>` : ''}`;
+        const safeHref = encodeURI(val.href);
+        const safeText = sanitizeHTML(val.text);
+        const safeSubtext = val.subtext ? sanitizeHTML(val.subtext) : '';
+        return `<a href="${safeHref}" class="infobox-link">${safeText}</a>${val.subtext ? `<br><small>${safeSubtext}</small>` : ''}`;
       }
       if (val.image) {
-        return `<img src="${val.image.url}" alt="${val.image.alt}" width="${val.image.width || 100}" class="infobox-field-image" />`;
+        const safeUrl = encodeURI(val.image.url);
+        const safeAlt = sanitizeHTML(val.image.alt);
+        return `<img src="${safeUrl}" alt="${safeAlt}" width="${val.image.width || 100}" class="infobox-field-image" />`;
       }
-      return val.text;
+      return sanitizeHTML(val.text);
     }
     return '';
   }, []);
@@ -103,36 +196,38 @@ export default function EnhancedEditor({
   // ==================== INFOBOX TEMPLATE BUILDER ====================
   const buildTemplate = useCallback((): string => {
     if (!Array.isArray(InfoBox) || InfoBox.length === 0) {
-      return `<div class='tpl-infobox' contenteditable="true"><p>Empty infobox template</p></div>`;
+      return '<div class="tpl-infobox" contenteditable="true"><p>Empty infobox template</p></div>';
     }
     
     return InfoBox.map((box: InfoBoxItem) => {
       const sectionsHTML = box.sections.map(section => {
         const fieldsHTML = section.fields.map(field => `
           <tr>
-            <th contenteditable="true">${field.label}</th>
+            <th contenteditable="true">${sanitizeHTML(field.label)}</th>
             <td contenteditable="true">${renderFieldValue(field)}</td>
           </tr>
         `).join('');
         
         return `
-          ${section.header ? `<tr><th colspan="2" class="section-header" contenteditable="true">${section.header}</th></tr>` : ''}
+          ${section.header ? `<tr><th colspan="2" class="section-header" contenteditable="true">${sanitizeHTML(section.header)}</th></tr>` : ''}
           ${fieldsHTML}
         `;
       }).join('');
       
+      const imageHTML = box.image ? `
+        <div class="infobox-image" style="text-align: center; margin-bottom: 10px;">
+          <img src="${encodeURI(box.image.url)}" alt="${sanitizeHTML(box.image.alt)}" style="max-width: 100%; height: auto;" />
+          ${box.image.caption ? `<p class="caption" style="font-size: 12px; margin-top: 5px;" contenteditable="true">${sanitizeHTML(box.image.caption)}</p>` : ''}
+        </div>
+      ` : '';
+      
       return `
         <div class="tpl-infobox" style="width: 300px; float: right; margin: 10px; border: 1px solid #ccc; padding: 10px; background: #f9f9f9;">
-          ${box.image ? `
-            <div class="infobox-image" style="text-align: center; margin-bottom: 10px;">
-              <img src="${box.image.url}" alt="${box.image.alt}" style="max-width: 100%; height: auto;" />
-              ${box.image.caption ? `<p class="caption" style="font-size: 12px; margin-top: 5px;" contenteditable="true">${box.image.caption}</p>` : ''}
-            </div>
-          ` : ''}
+          ${imageHTML}
           <table class="infobox-table" style="width: 100%; border-collapse: collapse;">
             <caption style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">
-              <strong contenteditable="true">${box.title}</strong>
-              ${box.subtitle ? `<br><small contenteditable="true">${box.subtitle}</small>` : ''}
+              <strong contenteditable="true">${sanitizeHTML(box.title)}</strong>
+              ${box.subtitle ? `<br><small contenteditable="true">${sanitizeHTML(box.subtitle)}</small>` : ''}
             </caption>
             <tbody>${sectionsHTML}</tbody>
           </table>
@@ -141,36 +236,51 @@ export default function EnhancedEditor({
     }).join('');
   }, [renderFieldValue]);
   
-  // ==================== TABLE OPERATIONS ====================
+  // ==================== TABLE OPERATIONS (FIXED) ====================
   const createTable = useCallback((rows: number = 3, cols: number = 4): string => {
-    const tableId = `table-${Date.now()}`;
+    // Validation
+    const safeRows = Math.min(Math.max(1, rows), 100);
+    const safeCols = Math.min(Math.max(1, cols), 50);
+    
+    const tableId = `table-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const makeHeader = (j: number) => `<th contenteditable="true">Header ${j + 1}</th>`;
     const makeCell = (i: number, j: number) => `<td contenteditable="true">Row ${i + 1}, Col ${j + 1}</td>`;
     const makeRow = (i: number, isHeader = false) =>
-      `<tr>${Array.from({ length: cols }, (_, j) => isHeader ? makeHeader(j) : makeCell(i, j)).join('')}</tr>`;
+      `<tr>${Array.from({ length: safeCols }, (_, j) => isHeader ? makeHeader(j) : makeCell(i, j)).join('')}</tr>`;
     
     return `
       <div class="tbl-operator" data-table-id="${tableId}" style="margin: 20px 0;">
         <table border="1" style="border-collapse:collapse; width:100%; border: 1px solid #ddd;">
           <thead>${makeRow(0, true)}</thead>
-          <tbody>${Array.from({ length: rows }, (_, i) => makeRow(i)).join('')}</tbody>
+          <tbody>${Array.from({ length: safeRows }, (_, i) => makeRow(i)).join('')}</tbody>
         </table>
         <div class="table-controls" contenteditable="false" style="display: flex; gap: 10px; margin-top: 5px;">
-          <button class="add-row-btn" data-table="${tableId}" style="padding: 5px 10px; cursor: pointer;">
+          <button class="add-row-btn" data-table="${tableId}" style="padding: 5px 10px; cursor: pointer;" aria-label="Add table row">
             <i class="fas fa-plus"></i> Add Row
           </button>
-          <button class="add-col-btn" data-table="${tableId}" style="padding: 5px 10px; cursor: pointer;">
+          <button class="add-col-btn" data-table="${tableId}" style="padding: 5px 10px; cursor: pointer;" aria-label="Add table column">
             <i class="fas fa-plus"></i> Add Column
           </button>
-          <button class="del-row-btn" data-table="${tableId}" style="padding: 5px 10px; cursor: pointer;">
+          <button class="del-row-btn" data-table="${tableId}" style="padding: 5px 10px; cursor: pointer;" aria-label="Delete last table row">
             <i class="fas fa-minus"></i> Delete Row
           </button>
-          <button class="del-col-btn" data-table="${tableId}" style="padding: 5px 10px; cursor: pointer;">
+          <button class="del-col-btn" data-table="${tableId}" style="padding: 5px 10px; cursor: pointer;" aria-label="Delete last table column">
             <i class="fas fa-minus"></i> Delete Column
           </button>
         </div>
       </div><br>
     `;
+  }, []);
+  
+  // Cleanup function for table event listeners
+  const cleanupTableListeners = useCallback((tableId: string) => {
+    const listeners = tableListenersRef.current.get(tableId);
+    if (listeners) {
+      listeners.forEach(({ element, type, handler }) => {
+        element.removeEventListener(type, handler);
+      });
+      tableListenersRef.current.delete(tableId);
+    }
   }, []);
   
   const attachTableEventListeners = useCallback((tableId: string) => {
@@ -180,61 +290,111 @@ export default function EnhancedEditor({
     const table = tableContainer.querySelector('table');
     if (!table) return;
     
+    // Cleanup existing listeners first
+    cleanupTableListeners(tableId);
+    
     const addRowBtn = tableContainer.querySelector('.add-row-btn');
     const addColBtn = tableContainer.querySelector('.add-col-btn');
     const delRowBtn = tableContainer.querySelector('.del-row-btn');
     const delColBtn = tableContainer.querySelector('.del-col-btn');
     
-    // Add Row
-    addRowBtn?.addEventListener('click', () => {
-      const rows = table.querySelectorAll('tr');
-      const cols = rows[0]?.querySelectorAll('td, th').length || 1;
-      const newRow = document.createElement('tr');
-      
-      for (let i = 0; i < cols; i++) {
-        const newCell = document.createElement('td');
-        newCell.contentEditable = 'true';
-        newCell.textContent = `New Cell ${i + 1}`;
-        newRow.appendChild(newCell);
+    const listeners: Array<{ element: Element; type: string; handler: EventListener }> = [];
+    
+    const updateContent = () => {
+      if (editorRef.current) {
+        const newContent = editorRef.current.innerHTML;
+        setPayload(prev => ({ ...prev, content: newContent }));
+        saveToHistory(newContent);
       }
-      
-      table.querySelector('tbody')?.appendChild(newRow);
-    });
+    };
+    
+    // Add Row
+    if (addRowBtn) {
+      const handler = () => {
+        const rows = table.querySelectorAll('tr');
+        const cols = rows[0]?.querySelectorAll('td, th').length || 1;
+        
+        // Limit check
+        if (rows.length >= 100) {
+          alert('Maximum 100 rows allowed');
+          return;
+        }
+        
+        const newRow = document.createElement('tr');
+        for (let i = 0; i < cols; i++) {
+          const newCell = document.createElement('td');
+          newCell.contentEditable = 'true';
+          newCell.textContent = `New Cell ${i + 1}`;
+          newRow.appendChild(newCell);
+        }
+        table.querySelector('tbody')?.appendChild(newRow);
+        updateContent();
+      };
+      addRowBtn.addEventListener('click', handler);
+      listeners.push({ element: addRowBtn, type: 'click', handler });
+    }
     
     // Add Column
-    addColBtn?.addEventListener('click', () => {
-      table.querySelectorAll('tr').forEach((row, index) => {
-        const isHeader = row.parentElement?.tagName === 'THEAD';
-        const newCell = document.createElement(isHeader ? 'th' : 'td');
-        newCell.contentEditable = 'true';
-        newCell.textContent = isHeader ? 'New Header' : 'New Cell';
-        row.appendChild(newCell);
-      });
-    });
+    if (addColBtn) {
+      const handler = () => {
+        const firstRow = table.querySelector('tr');
+        const currentCols = firstRow?.querySelectorAll('td, th').length || 0;
+        
+        // Limit check
+        if (currentCols >= 50) {
+          alert('Maximum 50 columns allowed');
+          return;
+        }
+        
+        table.querySelectorAll('tr').forEach((row, index) => {
+          const isHeader = row.parentElement?.tagName === 'THEAD';
+          const newCell = document.createElement(isHeader ? 'th' : 'td');
+          newCell.contentEditable = 'true';
+          newCell.textContent = isHeader ? 'New Header' : 'New Cell';
+          row.appendChild(newCell);
+        });
+        updateContent();
+      };
+      addColBtn.addEventListener('click', handler);
+      listeners.push({ element: addColBtn, type: 'click', handler });
+    }
     
     // Delete Row
-    delRowBtn?.addEventListener('click', () => {
-      const tbody = table.querySelector('tbody');
-      if (tbody && tbody.children.length > 1) {
-        tbody.removeChild(tbody.lastElementChild!);
-      }
-    });
+    if (delRowBtn) {
+      const handler = () => {
+        const tbody = table.querySelector('tbody');
+        if (tbody && tbody.children.length > 1) {
+          tbody.removeChild(tbody.lastElementChild!);
+          updateContent();
+        }
+      };
+      delRowBtn.addEventListener('click', handler);
+      listeners.push({ element: delRowBtn, type: 'click', handler });
+    }
     
     // Delete Column
-    delColBtn?.addEventListener('click', () => {
-      table.querySelectorAll('tr').forEach(row => {
-        if (row.children.length > 1) {
-          row.removeChild(row.lastElementChild!);
+    if (delColBtn) {
+      const handler = () => {
+        const canDelete = Array.from(table.querySelectorAll('tr')).every(row => row.children.length > 1);
+        if (canDelete) {
+          table.querySelectorAll('tr').forEach(row => {
+            row.removeChild(row.lastElementChild!);
+          });
+          updateContent();
         }
-      });
-    });
-  }, []);
+      };
+      delColBtn.addEventListener('click', handler);
+      listeners.push({ element: delColBtn, type: 'click', handler });
+    }
+    
+    // Store listeners for cleanup
+    tableListenersRef.current.set(tableId, listeners);
+  }, [cleanupTableListeners, saveToHistory]);
   
-  // ==================== AI GENERATION ====================
-  const generateAIArticle = useCallback(async (topic: string) => {
+  // ==================== AI GENERATION (FIXED) ====================
+  const generateAIArticle = useCallback(async (topic: string): Promise<string> => {
     if (!topic?.trim()) {
-      alert('Please provide a topic.');
-      return;
+      throw new Error('Please provide a topic.');
     }
     
     setIsGenerating(true);
@@ -280,7 +440,7 @@ export default function EnhancedEditor({
                   setAiGeneratedContent(accumulatedContent);
                 });
               } else if (data.type === 'error') {
-                setGenerationError(data.error);
+                throw new Error(data.error);
               } else if (data.type === 'done') {
                 console.log('AI generation completed');
               }
@@ -290,15 +450,18 @@ export default function EnhancedEditor({
           }
         }
       }
+      
+      return accumulatedContent;
     } catch (error: any) {
       console.error('AI generation failed:', error);
       setGenerationError(error.message || 'Unknown error');
+      throw error;
     } finally {
       setIsGenerating(false);
     }
   }, []);
   
-  // ==================== COMMAND EXECUTION ====================
+  // ==================== COMMAND EXECUTION (FIXED) ====================
   const executeCommand = useCallback((action: string, args?: any[]) => {
     if (editorMode !== 'visual' || !editorRef.current) return;
     
@@ -306,54 +469,61 @@ export default function EnhancedEditor({
     
     try {
       switch (action) {
-        // Text Formatting
+        // Text Formatting (Modern API)
         case 'bold':
-          document.execCommand('bold');
+          applyTextFormat('bold');
           break;
           
         case 'italic':
-          document.execCommand('italic');
+          applyTextFormat('italic');
           break;
           
         case 'underline':
-          document.execCommand('underline');
+          applyTextFormat('underline');
           break;
           
         case 'strikethrough':
-          document.execCommand('strikeThrough');
+          applyTextFormat('strikethrough');
           break;
           
         case 'inlineCode':
-          document.execCommand('insertHTML', false, '<code contenteditable="true">code</code>');
+          insertHTML('<code contenteditable="true">code</code>');
           break;
         
         // Headings
         case 'heading': {
-          const level = args?.[0] || 2;
-          document.execCommand('formatBlock', false, `h${level}`);
+          const level = Math.min(Math.max(1, args?.[0] || 2), 6);
+          const selection = window.getSelection();
+          if (selection && selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const selectedText = range.toString() || 'Heading';
+            insertHTML(`<h${level}>${sanitizeHTML(selectedText)}</h${level}>`);
+          }
           break;
         }
         
         // Lists
         case 'unorderedList':
-          document.execCommand('insertUnorderedList');
+          insertHTML('<ul><li contenteditable="true">List item</li></ul>');
           break;
           
         case 'orderedList':
-          document.execCommand('insertOrderedList');
+          insertHTML('<ol><li contenteditable="true">List item</li></ol>');
           break;
           
         case 'refList':
-          document.execCommand('insertHTML', false, '<ol class="references-list"><li contenteditable="true">Reference 1</li></ol><br>');
+          insertHTML('<ol class="references-list"><li contenteditable="true">Reference 1</li></ol><br>');
           break;
         
-        // Links & Media
+        // Links & Media (Sanitized)
         case 'link': {
           const url = prompt('Enter URL:');
           if (url) {
             const selection = window.getSelection();
             const text = selection?.toString() || 'Link';
-            document.execCommand('insertHTML', false, `<a href="${url}" contenteditable="false">${text}</a>`);
+            const safeUrl = encodeURI(url);
+            const safeText = sanitizeHTML(text);
+            insertHTML(`<a href="${safeUrl}" contenteditable="false">${safeText}</a>`);
           }
           break;
         }
@@ -361,7 +531,8 @@ export default function EnhancedEditor({
         case 'image': {
           const url = prompt('Enter image URL:');
           if (url) {
-            document.execCommand('insertHTML', false, `<img src="${url}" alt="Image" style="max-width: 100%; height: auto;" /><br>`);
+            const safeUrl = encodeURI(url);
+            insertHTML(`<img src="${safeUrl}" alt="Image" style="max-width: 100%; height: auto;" /><br>`);
           }
           break;
         }
@@ -369,37 +540,38 @@ export default function EnhancedEditor({
         case 'video': {
           const url = prompt('Enter video URL (YouTube/Vimeo):');
           if (url) {
-            document.execCommand('insertHTML', false, `<iframe width="560" height="315" src="${url}" frameborder="0" allowfullscreen></iframe><br>`);
+            const safeUrl = encodeURI(url);
+            insertHTML(`<iframe width="560" height="315" src="${safeUrl}" frameborder="0" allowfullscreen></iframe><br>`);
           }
           break;
         }
         
         // Blocks
         case 'codeBlock':
-          document.execCommand('insertHTML', false, '<pre contenteditable="true"><code>// Your code here</code></pre><br>');
+          insertHTML('<pre contenteditable="true"><code>// Your code here</code></pre><br>');
           break;
           
         case 'math':
-          document.execCommand('insertHTML', false, '<div class="math-formula" contenteditable="true">E = mc²</div><br>');
+          insertHTML('<div class="math-formula" contenteditable="true">E = mc²</div><br>');
           break;
           
         case 'horizontalRule':
-          document.execCommand('insertHorizontalRule');
+          insertHTML('<hr />');
           break;
           
         case 'reference':
-          document.execCommand('insertHTML', false, '<sup class="reference" contenteditable="true">[1]</sup>');
+          insertHTML('<sup class="reference" contenteditable="true">[1]</sup>');
           break;
         
-        // AI Task
+        // AI Task (Fixed race condition)
         case 'aiTask': {
           const aiPrompt = document.createElement('div');
           aiPrompt.className = 'ai-task-div';
           aiPrompt.contentEditable = 'false';
           aiPrompt.style.cssText = 'margin: 20px 0; padding: 15px; border: 2px dashed #4CAF50; background: #f0f8f0; border-radius: 8px;';
           aiPrompt.innerHTML = `
-            <input type="text" class="prompt-input" placeholder="Enter AI prompt..." style="width: 80%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" />
-            <button class="ai-generate-btn" style="padding: 10px 20px; margin-left: 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            <input type="text" class="prompt-input" placeholder="Enter AI prompt..." style="width: 80%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" aria-label="AI prompt input" />
+            <button class="ai-generate-btn" style="padding: 10px 20px; margin-left: 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;" aria-label="Generate AI content">
               <i class="fas fa-arrow-right"></i> Generate
             </button>
           `;
@@ -419,18 +591,30 @@ export default function EnhancedEditor({
                   return;
                 }
                 
-                await generateAIArticle(value);
+                btn.disabled = true;
+                btn.textContent = 'Generating...';
                 
-                // Wait for content generation
-                setTimeout(() => {
-                  if (aiGeneratedContent) {
+                try {
+                  const content = await generateAIArticle(value);
+                  
+                  if (content) {
                     const container = document.createElement('div');
                     container.id = 'ai_generated';
                     container.style.cssText = 'margin: 20px 0; padding: 15px; background: #fff; border: 1px solid #ddd; border-radius: 4px;';
-                    container.innerHTML = aiGeneratedContent;
+                    container.innerHTML = sanitizeHTML(content);
                     aiPrompt.parentElement?.insertBefore(container, aiPrompt.nextSibling);
+                    
+                    // Update history
+                    if (editorRef.current) {
+                      saveToHistory(editorRef.current.innerHTML);
+                    }
                   }
-                }, 1000);
+                } catch (error) {
+                  console.error('AI generation error:', error);
+                } finally {
+                  btn.disabled = false;
+                  btn.innerHTML = '<i class="fas fa-arrow-right"></i> Generate';
+                }
               };
             }
           }, 100);
@@ -440,7 +624,7 @@ export default function EnhancedEditor({
         // Table
         case 'table':
           const tableHTML = createTable(3, 4);
-          document.execCommand('insertHTML', false, tableHTML);
+          insertHTML(tableHTML);
           
           setTimeout(() => {
             const tables = document.querySelectorAll('[data-table-id]');
@@ -455,7 +639,7 @@ export default function EnhancedEditor({
         // Template
         case 'template':
           const template = buildTemplate();
-          document.execCommand('insertHTML', false, template);
+          insertHTML(template);
           break;
           
         default:
@@ -472,7 +656,7 @@ export default function EnhancedEditor({
     } finally {
       setActiveAction(null);
     }
-  }, [editorMode, createTable, attachTableEventListeners, buildTemplate, generateAIArticle, aiGeneratedContent, saveToHistory]);
+  }, [editorMode, createTable, attachTableEventListeners, buildTemplate, generateAIArticle, saveToHistory]);
   
   // ==================== EVENT HANDLERS ====================
   const handleToolbarAction = useCallback((action: string) => {
@@ -485,25 +669,37 @@ export default function EnhancedEditor({
     if (editorRef.current) {
       const newContent = editorRef.current.innerHTML;
       setPayload(prev => ({ ...prev, content: newContent }));
+      
+      // Auto-save after 2 seconds of no changes
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+      autoSaveTimerRef.current = setTimeout(() => {
+        saveToHistory(newContent);
+      }, 2000);
     }
-  }, []);
+  }, [saveToHistory]);
   
   const handleSwMode = useCallback((mode: string) => {
     const newMode = mode as 'visual' | 'code';
     
+    // Save current state before switching
+    if (editorMode === 'visual' && editorRef.current) {
+      const currentContent = editorRef.current.innerHTML;
+      setPayload(prev => ({ ...prev, content: currentContent }));
+      saveToHistory(currentContent);
+    } else if (editorMode === 'code') {
+      saveToHistory(payload.content);
+    }
+    
     if (newMode === 'visual') {
       if (editorRef.current) {
-        editorRef.current.innerHTML = payload.content || '';
-      }
-    } else if (newMode === 'code') {
-      if (editorRef.current) {
-        const currentContent = editorRef.current.innerHTML;
-        setPayload(prev => ({ ...prev, content: currentContent }));
+        editorRef.current.innerHTML = sanitizeHTML(payload.content || '');
       }
     }
     
     setEditorMode(newMode);
-  }, [payload.content]);
+  }, [editorMode, payload.content, saveToHistory]);
   
   const handleEditorContentChangeCode = useCallback((value?: string) => {
     setPayload(prev => ({ ...prev, content: value || '' }));
@@ -547,11 +743,32 @@ export default function EnhancedEditor({
         e.preventDefault();
         executeCommand('link');
       }
+      
+      // Save shortcut
+      if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        handlePublish();
+      }
     };
     
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [executeCommand, handleUndo, handleRedo]);
+  }, [executeCommand, handleUndo, handleRedo, handlePublish]);
+  
+  // ==================== CLEANUP ON UNMOUNT ====================
+  useEffect(() => {
+    return () => {
+      // Cleanup all table listeners
+      tableListenersRef.current.forEach((_, tableId) => {
+        cleanupTableListeners(tableId);
+      });
+      
+      // Clear auto-save timer
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [cleanupTableListeners]);
   
   // ==================== EFFECTS ====================
   useEffect(() => {
@@ -565,6 +782,14 @@ export default function EnhancedEditor({
       alert(`AI Error: ${generationError}`);
     }
   }, [generationError]);
+  
+  // Initialize history with empty state
+  useEffect(() => {
+    if (history.length === 0) {
+      setHistory([{ content: '', timestamp: Date.now() }]);
+      setHistoryIndex(0);
+    }
+  }, [history.length]);
   
   const hasRegisteredRole = Array.isArray(session?.user?.role) && session.user.role.includes('REG');
   
@@ -582,6 +807,7 @@ export default function EnhancedEditor({
             disabled={historyIndex <= 0}
             className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-30"
             title="Undo (Ctrl+Z)"
+            aria-label="Undo"
           >
             <Fai icon="undo" style="fal" />
           </button>
@@ -590,6 +816,7 @@ export default function EnhancedEditor({
             disabled={historyIndex >= history.length - 1}
             className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-30"
             title="Redo (Ctrl+Y)"
+            aria-label="Redo"
           >
             <Fai icon="redo" style="fal" />
           </button>
@@ -606,7 +833,10 @@ export default function EnhancedEditor({
             </Select>
           )}
           
-          <button className="border-none rounded-full p-2 text-black flex items-center hover:bg-gray-100">
+          <button 
+            className="border-none rounded-full p-2 text-black flex items-center hover:bg-gray-100"
+            aria-label="Settings"
+          >
             <Fai icon="gear" style="fal" />
           </button>
         </div>
@@ -662,6 +892,7 @@ export default function EnhancedEditor({
             onClick={handlePublish}
             aria-label="Publish document"
             type="button"
+            title="Publish (Ctrl+S)"
           >
             Publish
           </button>
@@ -702,6 +933,8 @@ export default function EnhancedEditor({
             suppressContentEditableWarning
             aria-label="Editor content area"
             onInput={handleEditorContentChange}
+            role="textbox"
+            aria-multiline="true"
             style={{
               minHeight: '500px',
               maxWidth: '900px',
@@ -713,7 +946,11 @@ export default function EnhancedEditor({
 
       {/* AI Generation Status */}
       {isGenerating && (
-        <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
+        <div 
+          className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2"
+          role="status"
+          aria-live="polite"
+        >
           <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
           <span>Generating AI content...</span>
         </div>
@@ -723,12 +960,13 @@ export default function EnhancedEditor({
       <div className="fixed bottom-4 left-4 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs hidden group-hover:block">
         <div className="font-semibold mb-2">Keyboard Shortcuts</div>
         <div className="space-y-1">
-          <div><kbd>Ctrl+B</kbd> Bold</div>
-          <div><kbd>Ctrl+I</kbd> Italic</div>
-          <div><kbd>Ctrl+U</kbd> Underline</div>
-          <div><kbd>Ctrl+K</kbd> Insert Link</div>
-          <div><kbd>Ctrl+Z</kbd> Undo</div>
-          <div><kbd>Ctrl+Y</kbd> Redo</div>
+          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+B</kbd> Bold</div>
+          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+I</kbd> Italic</div>
+          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+U</kbd> Underline</div>
+          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+K</kbd> Insert Link</div>
+          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+Z</kbd> Undo</div>
+          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+Y</kbd> Redo</div>
+          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+S</kbd> Publish</div>
         </div>
       </div>
     </div>
