@@ -34,7 +34,37 @@ const sanitizeHTML = (html: string): string => {
     ALLOW_DATA_ATTR: true,
   });
 };
-
+const applyTextFormat = (format: 'bold' | 'italic' | 'underline' | 'strikethrough' | 'p') => {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return;
+  
+  const range = selection.getRangeAt(0);
+  const selectedText = range.toString();
+  if (!selectedText) return;
+  
+  const tagMap = {
+    bold: 'strong',
+    italic: 'em',
+    underline: 'u',
+    strikethrough: 's',
+    p: 'p',
+  };
+  
+  const wrapper = document.createElement(tagMap[format]);
+  wrapper.textContent = selectedText;
+  
+  // Delete and insert new node
+  range.deleteContents();
+  range.insertNode(wrapper);
+  
+  // Move cursor after inserted element
+  const newRange = document.createRange();
+  newRange.setStartAfter(wrapper);
+  newRange.setEndAfter(wrapper);
+  
+  selection.removeAllRanges();
+  selection.addRange(newRange);
+};
 // Utility: Modern text formatting (replaces execCommand)
 function insertHTML(html: string) {
   const selection = window.getSelection();
@@ -68,25 +98,6 @@ function insertHTML(html: string) {
 }
 
 // Utility: Insert HTML safely
-const insertHTML = (html: string) => {
-  const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0) return;
-  
-  const range = selection.getRangeAt(0);
-  range.deleteContents();
-  
-  const sanitized = sanitizeHTML(html);
-  const template = document.createElement('template');
-  template.innerHTML = sanitized;
-  
-  const fragment = template.content;
-  range.insertNode(fragment);
-  
-  // Move cursor to end
-  range.collapse(false);
-  selection.removeAllRanges();
-  selection.addRange(range);
-};
 
 export default function EnhancedEditor({
   editor_mode = 'visual',
