@@ -9,23 +9,28 @@ import { cn } from "@/lib/utils"
 const Select = SelectPrimitive.Root
 const SelectGroup = SelectPrimitive.Group
 
-// ✅ Custom SelectValue that supports icon display
 const SelectValue = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Value>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Value> & {
     icon?: React.ReactNode
+    iconOnly?: boolean
   }
->(({ icon, children, ...props }, ref) => (
-  <div className="flex items-center gap-2">
-    {icon && <span className="flex items-center">{icon}</span>}
-    <SelectPrimitive.Value ref={ref} {...props}>
-      {children}
-    </SelectPrimitive.Value>
-  </div>
-))
+>(({ icon, iconOnly = false, children, ...props }, ref) => {
+  if (iconOnly && icon) {
+    return <span className="flex items-center">{icon}</span>
+  }
+  
+  return (
+    <div className="flex items-center gap-2">
+      {icon && <span className="flex items-center">{icon}</span>}
+      <SelectPrimitive.Value ref={ref} {...props}>
+        {children}
+      </SelectPrimitive.Value>
+    </div>
+  )
+})
 SelectValue.displayName = SelectPrimitive.Value.displayName
 
-// ✅ Updated SelectTrigger
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> & {
@@ -51,7 +56,6 @@ const SelectTrigger = React.forwardRef<
 ))
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName
 
-// Default internal components (same as before)
 const SelectScrollUpButton = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.ScrollUpButton>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollUpButton>
@@ -124,7 +128,6 @@ const SelectLabel = React.forwardRef<
 ))
 SelectLabel.displayName = SelectPrimitive.Label.displayName
 
-// ✅ Updated SelectItem to support icons
 const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> & {

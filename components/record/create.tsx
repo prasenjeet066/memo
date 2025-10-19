@@ -34,6 +34,8 @@ const sanitizeHTML = (html: string): string => {
     ALLOW_DATA_ATTR: true,
   });
 };
+
+// Utility: Apply text formatting
 const applyTextFormat = (format: 'bold' | 'italic' | 'underline' | 'strikethrough' | 'p') => {
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0) return;
@@ -51,21 +53,24 @@ const applyTextFormat = (format: 'bold' | 'italic' | 'underline' | 'strikethroug
   };
   
   const wrapper = document.createElement(tagMap[format]);
-  wrapper.textContent = selectedText;
+  wrapper.innerHTML = sanitizeHTML(selectedText);
   
-  // Delete and insert new node
-  range.deleteContents();
-  range.insertNode(wrapper);
-  
-  // Move cursor after inserted element
-  const newRange = document.createRange();
-  newRange.setStartAfter(wrapper);
-  newRange.setEndAfter(wrapper);
-  
-  selection.removeAllRanges();
-  selection.addRange(newRange);
+  try {
+    range.deleteContents();
+    range.insertNode(wrapper);
+    
+    const newRange = document.createRange();
+    newRange.selectNodeContents(wrapper);
+    newRange.collapse(false);
+    
+    selection.removeAllRanges();
+    selection.addRange(newRange);
+  } catch (error) {
+    console.error('Failed to apply text format:', error);
+  }
 };
-// Utility: Modern text formatting (replaces execCommand)
+
+// Utility: Insert HTML safely
 function insertHTML(html: string) {
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0) return;
@@ -73,22 +78,18 @@ function insertHTML(html: string) {
   const range = selection.getRangeAt(0);
   range.deleteContents();
   
-  // Create a temporary container for the sanitized HTML
   const sanitized = sanitizeHTML(html);
   const div = document.createElement("div");
   div.innerHTML = sanitized;
   
-  // Use a document fragment for performance
   const fragment = document.createDocumentFragment();
   let lastNode: Node | null = null;
   while (div.firstChild) {
     lastNode = fragment.appendChild(div.firstChild);
   }
   
-  // Insert the fragment
   range.insertNode(fragment);
   
-  // Move cursor to the end of the last inserted node
   if (lastNode) {
     range.setStartAfter(lastNode);
     range.setEndAfter(lastNode);
@@ -96,8 +97,6 @@ function insertHTML(html: string) {
     selection.addRange(range);
   }
 }
-
-// Utility: Insert HTML safely
 
 export default function EnhancedEditor({
   editor_mode = 'visual',
@@ -112,7 +111,6 @@ export default function EnhancedEditor({
   const [activeAction, setActiveAction] = useState<string | null>(null);
   const [aiGeneratedContent, setAiGeneratedContent] = useState('');
   
-  // Fixed History Management
   const [history, setHistory] = useState<HistoryState[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const maxHistorySize = 50;
@@ -122,24 +120,18 @@ export default function EnhancedEditor({
   const monacoEditorRef = useRef<any>(null);
   const [, startTransition] = useTransition();
   
-  // Track event listeners for cleanup
   const tableListenersRef = useRef<Map<string, Array<{ element: Element; type: string; handler: EventListener }>>>(new Map());
-  
-  // Auto-save timer
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   
-  // ==================== HISTORY MANAGEMENT (FIXED) ====================
+  // ==================== HISTORY MANAGEMENT ====================
   const saveToHistory = useCallback((content: string) => {
     setHistory(prev => {
-      // Remove any future states if we're in the middle of history
       const trimmedHistory = historyIndex < prev.length - 1 
         ? prev.slice(0, historyIndex + 1)
         : prev;
       
-      // Add new state
       const newHistory = [...trimmedHistory, { content, timestamp: Date.now() }];
       
-      // Trim to max size from the beginning (keep recent states)
       const finalHistory = newHistory.length > maxHistorySize
         ? newHistory.slice(newHistory.length - maxHistorySize)
         : newHistory;
@@ -149,7 +141,6 @@ export default function EnhancedEditor({
     
     setHistoryIndex(prev => {
       const newIndex = prev + 1;
-      // If we exceed max, stay at max - 1
       return newIndex >= maxHistorySize ? maxHistorySize - 1 : newIndex;
     });
   }, [historyIndex, maxHistorySize]);
@@ -249,9 +240,8 @@ export default function EnhancedEditor({
     }).join('');
   }, [renderFieldValue]);
   
-  // ==================== TABLE OPERATIONS (FIXED) ====================
+  // ==================== TABLE OPERATIONS ====================
   const createTable = useCallback((rows: number = 3, cols: number = 4): string => {
-    // Validation
     const safeRows = Math.min(Math.max(1, rows), 100);
     const safeCols = Math.min(Math.max(1, cols), 50);
     
@@ -285,7 +275,6 @@ export default function EnhancedEditor({
     `;
   }, []);
   
-  // Cleanup function for table event listeners
   const cleanupTableListeners = useCallback((tableId: string) => {
     const listeners = tableListenersRef.current.get(tableId);
     if (listeners) {
@@ -303,7 +292,6 @@ export default function EnhancedEditor({
     const table = tableContainer.querySelector('table');
     if (!table) return;
     
-    // Cleanup existing listeners first
     cleanupTableListeners(tableId);
     
     const addRowBtn = tableContainer.querySelector('.add-row-btn');
@@ -321,13 +309,11 @@ export default function EnhancedEditor({
       }
     };
     
-    // Add Row
     if (addRowBtn) {
       const handler = () => {
         const rows = table.querySelectorAll('tr');
         const cols = rows[0]?.querySelectorAll('td, th').length || 1;
         
-        // Limit check
         if (rows.length >= 100) {
           alert('Maximum 100 rows allowed');
           return;
@@ -347,13 +333,11 @@ export default function EnhancedEditor({
       listeners.push({ element: addRowBtn, type: 'click', handler });
     }
     
-    // Add Column
     if (addColBtn) {
       const handler = () => {
         const firstRow = table.querySelector('tr');
         const currentCols = firstRow?.querySelectorAll('td, th').length || 0;
         
-        // Limit check
         if (currentCols >= 50) {
           alert('Maximum 50 columns allowed');
           return;
@@ -372,7 +356,6 @@ export default function EnhancedEditor({
       listeners.push({ element: addColBtn, type: 'click', handler });
     }
     
-    // Delete Row
     if (delRowBtn) {
       const handler = () => {
         const tbody = table.querySelector('tbody');
@@ -385,7 +368,6 @@ export default function EnhancedEditor({
       listeners.push({ element: delRowBtn, type: 'click', handler });
     }
     
-    // Delete Column
     if (delColBtn) {
       const handler = () => {
         const canDelete = Array.from(table.querySelectorAll('tr')).every(row => row.children.length > 1);
@@ -400,11 +382,10 @@ export default function EnhancedEditor({
       listeners.push({ element: delColBtn, type: 'click', handler });
     }
     
-    // Store listeners for cleanup
     tableListenersRef.current.set(tableId, listeners);
   }, [cleanupTableListeners, saveToHistory]);
   
-  // ==================== AI GENERATION (FIXED) ====================
+  // ==================== AI GENERATION ====================
   const generateAIArticle = useCallback(async (topic: string): Promise<string> => {
     if (!topic?.trim()) {
       throw new Error('Please provide a topic.');
@@ -473,21 +454,21 @@ export default function EnhancedEditor({
       setIsGenerating(false);
     }
   }, []);
-  const disableList = (list:[])=>{
-    if (Array.isArray(list) || list.length) {
-      list.forEach((l)=>{
-        if (l!==null || l.trim()!=='') {
-          let item = document.querySelector(l);
-          if (item) {
-            if (!item.disabled) {
-              item.disabled = true;
-            }
+
+  const disableList = useCallback((list: string[]) => {
+    if (Array.isArray(list) && list.length) {
+      list.forEach((selector) => {
+        if (selector && selector.trim() !== '') {
+          const item = document.querySelector(selector) as HTMLButtonElement;
+          if (item && !item.disabled) {
+            item.disabled = true;
           }
         }
-      })
+      });
     }
-  }
-  // ==================== COMMAND EXECUTION (FIXED) ====================
+  }, []);
+  
+  // ==================== COMMAND EXECUTION ====================
   const executeCommand = useCallback((action: string, args?: any[]) => {
     if (editorMode !== 'visual' || !editorRef.current) return;
     
@@ -495,7 +476,6 @@ export default function EnhancedEditor({
     
     try {
       switch (action) {
-        // Text Formatting (Modern API)
         case 'bold':
           applyTextFormat('bold');
           break;
@@ -516,7 +496,6 @@ export default function EnhancedEditor({
           insertHTML('<code contenteditable="true">code</code>');
           break;
         
-        // Headings
         case 'heading': {
           const level = Math.min(Math.max(1, args?.[0] || 2), 6);
           const selection = window.getSelection();
@@ -528,7 +507,6 @@ export default function EnhancedEditor({
           break;
         }
         
-        // Lists
         case 'unorderedList':
           insertHTML('<ul><li contenteditable="true">List item</li></ul>');
           break;
@@ -541,7 +519,6 @@ export default function EnhancedEditor({
           insertHTML('<ol class="references-list"><li contenteditable="true">Reference 1</li></ol><br>');
           break;
         
-        // Links & Media (Sanitized)
         case 'link': {
           const url = prompt('Enter URL:');
           if (url) {
@@ -572,7 +549,6 @@ export default function EnhancedEditor({
           break;
         }
         
-        // Blocks
         case 'codeBlock':
           insertHTML('<pre contenteditable="true"><code>// Your code here</code></pre><br>');
           break;
@@ -589,7 +565,6 @@ export default function EnhancedEditor({
           insertHTML('<sup class="reference" contenteditable="true">[1]</sup>');
           break;
         
-        // AI Task (Fixed race condition)
         case 'aiTask': {
           const aiPrompt = document.createElement('div');
           aiPrompt.className = 'ai-task-div';
@@ -630,7 +605,6 @@ export default function EnhancedEditor({
                     container.innerHTML = sanitizeHTML(content);
                     aiPrompt.parentElement?.insertBefore(container, aiPrompt.nextSibling);
                     
-                    // Update history
                     if (editorRef.current) {
                       saveToHistory(editorRef.current.innerHTML);
                     }
@@ -646,13 +620,12 @@ export default function EnhancedEditor({
           }, 100);
           break;
         }
+
         case 'paragraph':
-          applyTextFormat('p')
+          applyTextFormat('p');
           break;
         
-        // Table
-        case 'table':
-          
+        case 'table': {
           const tableHTML = createTable(3, 4);
           insertHTML(tableHTML);
           
@@ -665,20 +638,19 @@ export default function EnhancedEditor({
             }
           }, 100);
           break;
+        }
         
-        // Template
-        case 'template':
-          
+        case 'template': {
           const template = buildTemplate();
           insertHTML(template);
-          disableList(['horizontalRule','table','video','template'])
+          disableList(['#horizontalRule', '#table', '#video', '#template']);
           break;
+        }
           
         default:
           console.log(`Unknown command: ${action}`);
       }
       
-      // Save to history
       if (editorRef.current) {
         saveToHistory(editorRef.current.innerHTML);
       }
@@ -688,7 +660,7 @@ export default function EnhancedEditor({
     } finally {
       setActiveAction(null);
     }
-  }, [editorMode, createTable, attachTableEventListeners, buildTemplate, generateAIArticle, saveToHistory]);
+  }, [editorMode, createTable, attachTableEventListeners, buildTemplate, generateAIArticle, saveToHistory, disableList]);
   
   // ==================== EVENT HANDLERS ====================
   const handleToolbarAction = useCallback((action: string) => {
@@ -702,7 +674,6 @@ export default function EnhancedEditor({
       const newContent = editorRef.current.innerHTML;
       setPayload(prev => ({ ...prev, content: newContent }));
       
-      // Auto-save after 2 seconds of no changes
       if (autoSaveTimerRef.current) {
         clearTimeout(autoSaveTimerRef.current);
       }
@@ -715,7 +686,6 @@ export default function EnhancedEditor({
   const handleSwMode = useCallback((mode: string) => {
     const newMode = mode as 'visual' | 'code';
     
-    // Save current state before switching
     if (editorMode === 'visual' && editorRef.current) {
       const currentContent = editorRef.current.innerHTML;
       setPayload(prev => ({ ...prev, content: currentContent }));
@@ -748,7 +718,6 @@ export default function EnhancedEditor({
   // ==================== KEYBOARD SHORTCUTS ====================
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Undo/Redo
       if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
         handleUndo();
@@ -758,7 +727,6 @@ export default function EnhancedEditor({
         handleRedo();
       }
       
-      // Formatting
       if (e.ctrlKey && e.key === 'b') {
         e.preventDefault();
         executeCommand('bold');
@@ -776,7 +744,6 @@ export default function EnhancedEditor({
         executeCommand('link');
       }
       
-      // Save shortcut
       if (e.ctrlKey && e.key === 's') {
         e.preventDefault();
         handlePublish();
@@ -790,12 +757,10 @@ export default function EnhancedEditor({
   // ==================== CLEANUP ON UNMOUNT ====================
   useEffect(() => {
     return () => {
-      // Cleanup all table listeners
       tableListenersRef.current.forEach((_, tableId) => {
         cleanupTableListeners(tableId);
       });
       
-      // Clear auto-save timer
       if (autoSaveTimerRef.current) {
         clearTimeout(autoSaveTimerRef.current);
       }
@@ -815,7 +780,6 @@ export default function EnhancedEditor({
     }
   }, [generationError]);
   
-  // Initialize history with empty state
   useEffect(() => {
     if (history.length === 0) {
       setHistory([{ content: '', timestamp: Date.now() }]);
@@ -827,13 +791,11 @@ export default function EnhancedEditor({
   
   return (
     <div className="w-full h-full flex flex-col">
-      {/* Header */}
       <div className="px-4 py-3 flex items-center justify-between border-b">
         <h1 className="text-xl font-bold text-gray-900">
           {record_name?.trim() || 'Untitled Document'}
         </h1>
         <div className="flex items-center justify-end gap-2">
-          {/* Undo/Redo */}
           <button
             onClick={handleUndo}
             disabled={historyIndex <= 0}
@@ -874,43 +836,48 @@ export default function EnhancedEditor({
         </div>
       </div>
 
-      {/* Toolbar */}
       <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2 py-1">
         {editorMode === 'visual' ? (
           <div className="flex items-center gap-1 overflow-x-auto flex-1">
             {toolbarBlocks.map((block: any, index: number) => {
               if (block.items && Array.isArray(block.items)) {
-              if (block.label === 'paragraph') {
+                if (block.label === 'paragraph') {
+                  return (
+                    <Select key={`toolbar-select-${index}`} onValueChange={handleToolbarAction}>
+                      <SelectTrigger className="max-w-[180px] border-l border-r w-auto h-10 border-none">
+                        <SelectValue placeholder={block.label} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {block.items.map((item: any, itemIndex: number) => (
+                          <SelectItem 
+                            icon={<Fai icon={item.icon} style="fas" />} 
+                            id={item.action} 
+                            key={`item-${index}-${itemIndex}`} 
+                            value={item.action || item.label}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span>{item.label}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  );
+                }
                 return (
-                  
-                  <Select  key={`toolbar-select-${index}`} onValueChange={handleToolbarAction}>
-                    <SelectTrigger className="max-w-[180px] border-l border-r  w-auto h-10 border-none">
-                      <SelectValue placeholder={block.label} iconOnly/>
+                  <Select key={`toolbar-select-${index}`} onValueChange={handleToolbarAction}>
+                    <SelectTrigger className="max-w-[180px] border-l border-r w-auto h-10 border-none">
+                      <SelectValue placeholder={<Fai icon={block.icon} />} iconOnly />
                     </SelectTrigger>
                     <SelectContent>
                       {block.items.map((item: any, itemIndex: number) => (
-                        <SelectItem icon={<Fai icon={item.icon} style="fas" />} id = {item.action} key={`item-${index}-${itemIndex}`} value={item.action || item.label}>
+                        <SelectItem 
+                          icon={<Fai icon={item.icon} style="fas" />} 
+                          id={item.action} 
+                          key={`item-${index}-${itemIndex}`} 
+                          value={item.action || item.label}
+                        >
                           <div className="flex items-center gap-2">
-
-                            <span>{item.label}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                
-                )
-              }
-                return (
-                  <Select  key={`toolbar-select-${index}`} onValueChange={handleToolbarAction}>
-                    <SelectTrigger className="max-w-[180px] border-l border-r  w-auto h-10 border-none">
-                      <SelectValue placeholder={<Fai icon={block.icon} />} iconOnly/>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {block.items.map((item: any, itemIndex: number) => (
-                        <SelectItem icon={<Fai icon={item.icon} style="fas" />} id = {item.action} key={`item-${index}-${itemIndex}`} value={item.action || item.label}>
-                          <div className="flex items-center gap-2">
-
                             <span>{item.label}</span>
                           </div>
                         </SelectItem>
@@ -922,7 +889,7 @@ export default function EnhancedEditor({
               return (
                 <button
                   key={`toolbar-btn-${index}`}
-                  id = {block.action}
+                  id={block.action}
                   className={`px-3 py-2 border-0 hover:bg-gray-100 transition-colors rounded ${
                     block.action === activeAction ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
                   }`}
@@ -953,7 +920,6 @@ export default function EnhancedEditor({
         </div>
       </div>
 
-      {/* Editor */}
       <div className="flex-1 overflow-auto bg-white">
         {editorMode === 'code' ? (
           <Editor
@@ -998,7 +964,6 @@ export default function EnhancedEditor({
         )}
       </div>
 
-      {/* AI Generation Status */}
       {isGenerating && (
         <div 
           className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2"
@@ -1010,7 +975,6 @@ export default function EnhancedEditor({
         </div>
       )}
       
-      {/* Keyboard Shortcuts Help */}
       <div className="fixed bottom-4 left-4 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs hidden group-hover:block">
         <div className="font-semibold mb-2">Keyboard Shortcuts</div>
         <div className="space-y-1">
