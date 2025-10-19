@@ -36,7 +36,7 @@ const sanitizeHTML = (html: string): string => {
 };
 
 // Utility: Modern text formatting (replaces execCommand)
-const applyTextFormat = (format: 'bold' | 'italic' | 'underline' | 'strikethrough') => {
+const applyTextFormat = (format: 'bold' | 'italic' | 'underline' | 'strikethrough'|'p') => {
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0) return;
   
@@ -48,6 +48,7 @@ const applyTextFormat = (format: 'bold' | 'italic' | 'underline' | 'strikethroug
   const tagMap = {
     bold: 'strong',
     italic: 'em',
+    p : 'p',
     underline: 'u',
     strikethrough: 's'
   };
@@ -633,6 +634,9 @@ export default function EnhancedEditor({
           }, 100);
           break;
         }
+        case 'paragraph':
+          applyTextFormat('p')
+          break;
         
         // Table
         case 'table':
