@@ -880,7 +880,7 @@ export default function EnhancedEditor({
           <div className="flex items-center gap-1 overflow-x-auto flex-1">
             {toolbarBlocks.map((block: any, index: number) => {
               if (block.items && Array.isArray(block.items)) {
-              if (index === 0) {
+              if (block.label === 'paragraph') {
                 return (
                   
                   <Select  key={`toolbar-select-${index}`} onValueChange={handleToolbarAction}>
