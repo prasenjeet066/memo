@@ -101,10 +101,10 @@ export default function MainPage() {
   return (
     <main className="min-h-screen w-full bg-gray-50 flex flex-col h-screen">
       <Header navlist={NavList} />
-      <div className="w-full flex-1 h-full flex flex-col items-end justify-end">
+      <div className="w-full flex-1 h-full flex flex-row items-center justify-between">
         
         {Sidebar}
-        
+        <div class = 'flex flex-col w-full h-full items-center justify-center'>
         <div className='flex flex-col items-center justify-center h-full'>
           
         
@@ -132,21 +132,7 @@ export default function MainPage() {
         </div>
         </div>
         {/* ✅ Fixed footer layout (centers last item properly) */}
-        <footer className={`w-full px-6 py-4 text-center text-xs text-gray-700 ${!isMobile &&  'border-t border-gray-200'}`}>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-y-2 justify-items-center">
-            {footerList.map((list, index) => (
-              <a
-                key={index}
-                href={list.href || '#'}
-                className="p-2 hover:text-blue-600 after:content-['_↗'] transition-colors"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {list.label}
-              </a>
-            ))}
-          </div>
-        </footer>
+        </div>
       </div>
     </main>
   );
