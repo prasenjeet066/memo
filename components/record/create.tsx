@@ -874,7 +874,7 @@ export default function EnhancedEditor({
                   
                   <Select  key={`toolbar-select-${index}`} onValueChange={handleToolbarAction}>
                     <SelectTrigger className="max-w-[180px] border-l border-r  w-auto h-10 border-none">
-                      <SelectValue placeholder={block.label} iconOnly ={true}/>
+                      <SelectValue placeholder={block.label} iconOnly/>
                     </SelectTrigger>
                     <SelectContent>
                       {block.items.map((item: any, itemIndex: number) => (
@@ -893,7 +893,7 @@ export default function EnhancedEditor({
                 return (
                   <Select  key={`toolbar-select-${index}`} onValueChange={handleToolbarAction}>
                     <SelectTrigger className="max-w-[180px] border-l border-r  w-auto h-10 border-none">
-                      <SelectValue placeholder={<Fai icon={block.icon} />} iconOnly ={true}/>
+                      <SelectValue placeholder={<Fai icon={block.icon} />} iconOnly/>
                     </SelectTrigger>
                     <SelectContent>
                       {block.items.map((item: any, itemIndex: number) => (
