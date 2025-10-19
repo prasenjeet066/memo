@@ -867,11 +867,11 @@ export default function EnhancedEditor({
                 return (
                   <Select  key={`toolbar-select-${index}`} onValueChange={handleToolbarAction}>
                     <SelectTrigger className="max-w-[180px] w-auto h-10 border-none">
-                      <SelectValue placeholder={<Fai icon={block.icon} />} />
+                      <SelectValue placeholder={<Fai icon={block.icon} />} iconOnly />
                     </SelectTrigger>
                     <SelectContent>
                       {block.items.map((item: any, itemIndex: number) => (
-                        <SelectItem id = {item.action} key={`item-${index}-${itemIndex}`} value={item.action || item.label}>
+                        <SelectItem icon={<Fai icon={item.icon} style="fas" />} id = {item.action} key={`item-${index}-${itemIndex}`} value={item.action || item.label}>
                           <div className="flex items-center gap-2">
                             <Fai icon={item.icon} style="fas" />
                             <span>{item.label}</span>
