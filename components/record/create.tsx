@@ -3,19 +3,24 @@
 import { useState, useEffect, useCallback, useRef, useTransition } from 'react';
 import Editor from '@monaco-editor/react';
 import { useSession } from 'next-auth/react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Fai } from '@/components/Fontawesome';
 import { InfoBox, InfoBoxItem, InfoBoxField, ComplexValue } from '@/lib/editor/templates/infobox';
 import { toolbarBlocks } from '@/lib/editor/toolbarConfig';
 import DOMPurify from 'dompurify';
 
 interface EditorProps {
-  editor_mode ? : 'visual' | 'code';
-  record_name ? : string;
-  onPublish ? : () => void;
-  sideBarTools ? : () => void;
-  ExpandedIs ? : boolean;
-  IsExpandedSet ? : (value: boolean) => void;
+  editor_mode?: 'visual' | 'code';
+  record_name?: string;
+  onPublish?: () => void;
+  sideBarTools?: () => void;
+  ExpandedIs?: boolean;
+  IsExpandedSet?: (value: boolean) => void;
 }
 
 interface HistoryState {
@@ -90,25 +95,24 @@ export default function EnhancedEditor({
   onPublish,
   IsExpandedSet,
 }: EditorProps) {
-  const [editorMode, setEditorMode] = useState < 'visual' | 'code' > (editor_mode);
+  const [editorMode, setEditorMode] = useState<'visual' | 'code'>(editor_mode);
   const [payload, setPayload] = useState({ title: '', content: '' });
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationError, setGenerationError] = useState < string | null > (null);
-  const [activeAction, setActiveAction] = useState < string | null > (null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [activeAction, setActiveAction] = useState<string | null>(null);
   const [aiGeneratedContent, setAiGeneratedContent] = useState('');
   
-  const [history, setHistory] = useState < HistoryState[] > ([]);
+  const [history, setHistory] = useState<HistoryState[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const maxHistorySize = 50;
   
   const { data: session } = useSession();
-  const editorRef = useRef < HTMLDivElement > (null);
-  const monacoEditorRef = useRef < any > (null);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const monacoEditorRef = useRef<any>(null);
   const [, startTransition] = useTransition();
   
-  const tableListenersRef = useRef < Map < string,
-    Array < { element: Element;type: string;handler: EventListener } >>> (new Map());
-  const autoSaveTimerRef = useRef < NodeJS.Timeout | null > (null);
+  const tableListenersRef = useRef<Map<string, Array<{ element: Element; type: string; handler: EventListener }>>>(new Map());
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // ==================== HISTORY MANAGEMENT ====================
   const saveToHistory = useCallback((content: string) => {
@@ -286,7 +290,7 @@ export default function EnhancedEditor({
     const delRowBtn = tableContainer.querySelector('.del-row-btn');
     const delColBtn = tableContainer.querySelector('.del-col-btn');
     
-    const listeners: Array < { element: Element;type: string;handler: EventListener } > = [];
+    const listeners: Array<{ element: Element; type: string; handler: EventListener }> = [];
     
     const updateContent = () => {
       if (editorRef.current) {
@@ -373,7 +377,7 @@ export default function EnhancedEditor({
   }, [cleanupTableListeners, saveToHistory]);
   
   // ==================== AI GENERATION ====================
-  const generateAIArticle = useCallback(async (topic: string): Promise < string > => {
+  const generateAIArticle = useCallback(async (topic: string): Promise<string> => {
     if (!topic?.trim()) {
       throw new Error('Please provide a topic.');
     }
@@ -456,7 +460,7 @@ export default function EnhancedEditor({
   }, []);
   
   // ==================== COMMAND EXECUTION ====================
-  const executeCommand = useCallback((action: string, args ? : any[]) => {
+  const executeCommand = useCallback((action: string, args?: any[]) => {
     if (editorMode !== 'visual' || !editorRef.current) return;
     
     editorRef.current.focus();
@@ -641,7 +645,7 @@ export default function EnhancedEditor({
     setEditorMode(newMode);
   }, [editorMode, payload.content, saveToHistory]);
   
-  const handleEditorContentChangeCode = useCallback((value ? : string) => {
+  const handleEditorContentChangeCode = useCallback((value?: string) => {
     setPayload(prev => ({ ...prev, content: value || '' }));
   }, []);
   
@@ -754,15 +758,20 @@ export default function EnhancedEditor({
           </button>
           
           {hasRegisteredRole && (
-            <Select value={editorMode} onValueChange={handleSwMode}>
-              <SelectTrigger className="max-w-[140px] w-auto h-10 border-none bg-white rounded-full">
-                <SelectValue placeholder={editorMode} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="visual">Visual</SelectItem>
-                <SelectItem value="code">Code</SelectItem>
-              </SelectContent>
-            </Select>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="max-w-[140px] w-auto h-10 border-none bg-white rounded-full px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
+                {editorMode === 'visual' ? 'Visual' : 'Code'}
+                <Fai icon="chevron-down" style="fas" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleSwMode('visual')}>
+                  Visual
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSwMode('code')}>
+                  Code
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           
           <button 
@@ -781,47 +790,46 @@ export default function EnhancedEditor({
               if (block.items && Array.isArray(block.items)) {
                 if (block.name === 'Paragraph') {
                   return (
-                    <Select key={`toolbar-select-${index}`} onValueChange={handleToolbarAction}>
-                      <SelectTrigger className="max-w-[180px] border-l border-r w-auto h-10 border-none">
-                        <SelectValue placeholder={block.label} />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <DropdownMenu key={`toolbar-dropdown-${index}`}>
+                      <DropdownMenuTrigger className="max-w-[180px] border-l border-r w-auto h-10 border-none px-3 py-2 hover:bg-gray-100 flex items-center gap-2">
+                        {block.label}
+                        <Fai icon="chevron-down" style="fas" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
                         {block.items.map((item: any, itemIndex: number) => (
-                          <SelectItem 
-                            icon={<Fai icon={item.icon} style="fas" />} 
-                            id={item.action} 
-                            key={`item-${index}-${itemIndex}`} 
-                            value={item.action || item.label}
+                          <DropdownMenuItem 
+                            key={`item-${index}-${itemIndex}`}
+                            onClick={() => handleToolbarAction(item.action || item.label)}
                           >
                             <div className="flex items-center gap-2">
+                              <Fai icon={item.icon} style="fas" />
                               <span>{item.label}</span>
                             </div>
-                          </SelectItem>
+                          </DropdownMenuItem>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   );
                 }
                 return (
-                  <Select key={`toolbar-select-${index}`} onValueChange={handleToolbarAction}>
-                    <SelectTrigger className="max-w-[180px] border-l border-r w-auto h-10 border-none">
-                      <SelectValue placeholder={<Fai icon={block.icon} />} iconOnly />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <DropdownMenu key={`toolbar-dropdown-${index}`}>
+                    <DropdownMenuTrigger className="max-w-[180px] border-l border-r w-auto h-10 border-none px-3 py-2 hover:bg-gray-100">
+                      <Fai icon={block.icon} />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
                       {block.items.map((item: any, itemIndex: number) => (
-                        <SelectItem 
-                          icon={<Fai icon={item.icon} style="fas" />} 
-                          id={item.action} 
-                          key={`item-${index}-${itemIndex}`} 
-                          value={item.action || item.label}
+                        <DropdownMenuItem 
+                          key={`item-${index}-${itemIndex}`}
+                          onClick={() => handleToolbarAction(item.action || item.label)}
                         >
                           <div className="flex items-center gap-2">
+                            <Fai icon={item.icon} style="fas" />
                             <span>{item.label}</span>
                           </div>
-                        </SelectItem>
+                        </DropdownMenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 );
               }
               return (
