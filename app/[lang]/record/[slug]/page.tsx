@@ -113,7 +113,7 @@ export default function RecordWithSlug({ params }: RecordWithSlugProps) {
               sideBarTools={handleSideBarTools}
               IsExpandedSet={setIsExpanded}
             />
-            {!isMobile && currentSidebar}
+            
           </div>
         </main>
       </ErrorBoundary>
