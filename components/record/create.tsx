@@ -928,7 +928,7 @@ export default function EnhancedEditor({
   
   return (
     <div className="w-full h-full flex flex-col">
-      <div className="px-4 py-3 flex items-center justify-between border-b">
+      <div className="px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold text-gray-900">
             {record_name?.trim() || 'Untitled Document'}
@@ -997,20 +997,20 @@ export default function EnhancedEditor({
         </div>
       </div>
        <div className="flex items-center w-full p-2 gap-2 text-xs text-gray-500">
-            <span>{wordCount} words</span>
-            <span>•</span>
-            <span>{characterCount} characters</span>
-            <span>•</span>
-            <span>{readingTime} min read</span>
-            <span>•</span>
+            <span className = 'p-2 border-r'>{wordCount} words</span>
+            
+            <span className = 'p-2 border-r'>{characterCount} characters</span>
+            
+            <span className = 'p-2 border-r'>{readingTime} min read</span>
+          
             <span className={`font-medium ${
               autoSaveStatus === 'saved' ? 'text-green-600' : 
               autoSaveStatus === 'saving' ? 'text-yellow-600' : 
               'text-gray-400'
             }`}>
-              {autoSaveStatus === 'saved' ? '✓ Saved' : 
-               autoSaveStatus === 'saving' ? '⟳ Saving...' : 
-               '○ Unsaved'}
+              {autoSaveStatus === 'saved' ? 'Saved' : 
+               autoSaveStatus === 'saving' ? 'Saving...' : 
+               'Unsaved'}
             </span>
           </div>
       <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2 py-1">
