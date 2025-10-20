@@ -1180,7 +1180,7 @@ export default function EnhancedEditor({
       )}
       
       {citations.length > 0 && (
-        <div className="fixed bottom-4 left-4 bg-white border border-gray-200 rounded-lg shadow-lg p-3 max-w-xs">
+        <div className="fixed bottom-4 left-4 bg-white border border-gray-200 rounded-lg  p-3 max-w-xs">
           <div className="font-semibold mb-2 text-sm">Citations ({citations.length})</div>
           <div className="space-y-1 text-xs max-h-40 overflow-y-auto">
             {citations.map((cite, idx) => (
