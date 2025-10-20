@@ -596,7 +596,7 @@ export default function EnhancedEditor({
           if (selection && selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
             const selectedText = range.toString() || 'Heading';
-            insertHTML(`<h${level}>${sanitizeHTML(selectedText)}</h${level}><hr/>`);
+            insertHTML(`<h${level} class = "h1 h${level}-t">${sanitizeHTML(selectedText)}</h${level}><hr/>`);
           }
           break;
         }
