@@ -1022,7 +1022,7 @@ export default function EnhancedEditor({
                   return (
                     <DropdownMenu key={`toolbar-dropdown-${index}`}>
                       <DropdownMenuTrigger className="max-w-[180px] border-l border-r w-auto h-10 border-none px-3 py-2 hover:bg-gray-100 flex items-center gap-2">
-                        {block.label}
+                        {block.name}
                         <Fai icon="chevron-down" style="fas" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
