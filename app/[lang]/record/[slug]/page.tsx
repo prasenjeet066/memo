@@ -3,7 +3,7 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import { Home, Compass, HandHeart, Settings } from 'lucide-react'
 import Header from '@/components/header'
 import { useMobile } from "@/lib/units/use-mobile"
-import CreateNew from '@/components/record/create'
+//import CreateNew from '@/components/record/create'
 import React, { useState, useEffect, useMemo } from 'react'
 
 // Define proper types for params
@@ -107,12 +107,12 @@ export default function RecordWithSlug({ params }: RecordWithSlugProps) {
         <main className='h-screen w-full max-h-screen max-w-screen bg-gray-50'>
           <Header navList={NavList}/>
           <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
-            <CreateNew
+           {/** <CreateNew
               onPublish={handlePublish}
               ExpandedIs={isExpanded}
               sideBarTools={handleSideBarTools}
               IsExpandedSet={setIsExpanded}
-            />
+            />**/}
             
           </div>
         </main>
