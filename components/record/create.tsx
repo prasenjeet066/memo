@@ -1,6 +1,18 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useTransition } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import Editor from '@monaco-editor/react';
 import { useSession } from 'next-auth/react';
 import {
@@ -15,12 +27,12 @@ import { toolbarBlocks } from '@/lib/editor/toolbarConfig';
 import DOMPurify from 'dompurify';
 
 interface EditorProps {
-  editor_mode?: 'visual' | 'code';
-  record_name?: string;
-  onPublish?: () => void;
-  sideBarTools?: () => void;
-  ExpandedIs?: boolean;
-  IsExpandedSet?: (value: boolean) => void;
+  editor_mode ? : 'visual' | 'code';
+  record_name ? : string;
+  onPublish ? : () => void;
+  sideBarTools ? : () => void;
+  ExpandedIs ? : boolean;
+  IsExpandedSet ? : (value: boolean) => void;
 }
 
 interface HistoryState {
@@ -31,10 +43,10 @@ interface HistoryState {
 interface Citation {
   id: string;
   text: string;
-  url?: string;
-  author?: string;
-  date?: string;
-  title?: string;
+  url ? : string;
+  author ? : string;
+  date ? : string;
+  title ? : string;
 }
 
 interface EditSummary {
@@ -112,34 +124,50 @@ export default function EnhancedEditor({
   onPublish,
   IsExpandedSet,
 }: EditorProps) {
-  const [editorMode, setEditorMode] = useState<'visual' | 'code'>(editor_mode);
+  const [editorMode, setEditorMode] = useState < 'visual' | 'code' > (editor_mode);
   const [payload, setPayload] = useState({ title: '', content: '' });
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationError, setGenerationError] = useState<string | null>(null);
-  const [activeAction, setActiveAction] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState < string | null > (null);
+  const [activeAction, setActiveAction] = useState < string | null > (null);
   const [aiGeneratedContent, setAiGeneratedContent] = useState('');
   
   // New features
-  const [citations, setCitations] = useState<Citation[]>([]);
-  const [editHistory, setEditHistory] = useState<EditSummary[]>([]);
+  const [citations, setCitations] = useState < Citation[] > ([]);
+  const [editHistory, setEditHistory] = useState < EditSummary[] > ([]);
   const [showPreview, setShowPreview] = useState(false);
   const [wordCount, setWordCount] = useState(0);
   const [characterCount, setCharacterCount] = useState(0);
   const [readingTime, setReadingTime] = useState(0);
   const [spellCheckEnabled, setSpellCheckEnabled] = useState(true);
-  const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+  const [autoSaveStatus, setAutoSaveStatus] = useState < 'saved' | 'saving' | 'unsaved' > ('saved');
   
-  const [history, setHistory] = useState<HistoryState[]>([]);
+  const [history, setHistory] = useState < HistoryState[] > ([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const maxHistorySize = 100; // Increased from 50
   
   const { data: session } = useSession();
-  const editorRef = useRef<HTMLDivElement>(null);
-  const monacoEditorRef = useRef<any>(null);
+  const editorRef = useRef < HTMLDivElement > (null);
+  const monacoEditorRef = useRef < any > (null);
   const [, startTransition] = useTransition();
-  
-  const tableListenersRef = useRef<Map<string, Array<{ element: Element; type: string; handler: EventListener }>>>(new Map());
-  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [linkDialog, setLinkDialog] = useState({ open: false, text: '' });
+  const [citationDialog, setCitationDialog] = useState({
+    open: false,
+    author: '',
+    title: '',
+    url: '',
+    date: ''
+  });
+  const [imageDialog, setImageDialog] = useState({ open: false, url: '' });
+  const [videoDialog, setVideoDialog] = useState({ open: false, url: '' });
+  const [findReplaceDialog, setFindReplaceDialog] = useState({
+    open: false,
+    find: '',
+    replace: ''
+  });
+  const [publishDialog, setPublishDialog] = useState({ open: false, summary: '' });
+  const tableListenersRef = useRef < Map < string,
+    Array < { element: Element;type: string;handler: EventListener } >>> (new Map());
+  const autoSaveTimerRef = useRef < NodeJS.Timeout | null > (null);
   
   // ==================== STATISTICS CALCULATION ====================
   const calculateStats = useCallback((content: string) => {
@@ -179,7 +207,323 @@ export default function EnhancedEditor({
     
     calculateStats(content);
   }, [historyIndex, maxHistorySize, calculateStats]);
+  const LinkDialog = () => {
+    const [url, setUrl] = useState('');
+    
+    return (
+      <Dialog open={linkDialog.open} onOpenChange={(open) => setLinkDialog({ open, text: '' })}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Insert Link</DialogTitle>
+          <DialogDescription>Enter the URL for the link</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="link-url">URL</Label>
+            <Input
+              id="link-url"
+              placeholder="https://example.com"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const selection = window.getSelection();
+                  const text = selection?.toString() || 'Link';
+                  const safeUrl = encodeURI(url);
+                  const safeText = sanitizeHTML(text);
+                  insertHTML(`<a href="${safeUrl}" contenteditable="false">${safeText}</a>`);
+                  setLinkDialog({ open: false, text: '' });
+                  setUrl('');
+                }
+              }}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setLinkDialog({ open: false, text: '' })}>
+            Cancel
+          </Button>
+          <Button onClick={() => {
+            const selection = window.getSelection();
+            const text = selection?.toString() || 'Link';
+            const safeUrl = encodeURI(url);
+            const safeText = sanitizeHTML(text);
+            insertHTML(`<a href="${safeUrl}" contenteditable="false">${safeText}</a>`);
+            setLinkDialog({ open: false, text: '' });
+            setUrl('');
+          }}>
+            Insert
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    );
+  };
   
+  // Citation Dialog Component
+  const CitationDialog = () => (
+    <Dialog open={citationDialog.open} onOpenChange={(open) => 
+    setCitationDialog({ open, author: '', title: '', url: '', date: '' })
+  }>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Add Citation</DialogTitle>
+        <DialogDescription>Enter citation details</DialogDescription>
+      </DialogHeader>
+      <div className="grid gap-4 py-4">
+        <div className="grid gap-2">
+          <Label htmlFor="cite-author">Author *</Label>
+          <Input
+            id="cite-author"
+            placeholder="Author name"
+            value={citationDialog.author}
+            onChange={(e) => setCitationDialog(prev => ({ ...prev, author: e.target.value }))}
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="cite-title">Title</Label>
+          <Input
+            id="cite-title"
+            placeholder="Title of work"
+            value={citationDialog.title}
+            onChange={(e) => setCitationDialog(prev => ({ ...prev, title: e.target.value }))}
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="cite-url">URL</Label>
+          <Input
+            id="cite-url"
+            placeholder="https://example.com"
+            value={citationDialog.url}
+            onChange={(e) => setCitationDialog(prev => ({ ...prev, url: e.target.value }))}
+          />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={() => 
+          setCitationDialog({ open: false, author: '', title: '', url: '', date: '' })
+        }>
+          Cancel
+        </Button>
+        <Button onClick={() => {
+          if (citationDialog.author) {
+            const date = new Date().toLocaleDateString();
+            addCitation({
+              text: citationDialog.author,
+              author: citationDialog.author,
+              title: citationDialog.title || '',
+              url: citationDialog.url || '',
+              date,
+            });
+            setCitationDialog({ open: false, author: '', title: '', url: '', date: '' });
+          }
+        }}>
+          Add Citation
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+  );
+  
+  // Image Dialog Component
+  const ImageDialog = () => {
+    const [url, setUrl] = useState('');
+    
+    return (
+      <Dialog open={imageDialog.open} onOpenChange={(open) => setImageDialog({ open, url: '' })}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Insert Image</DialogTitle>
+          <DialogDescription>Enter the image URL</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="image-url">Image URL</Label>
+            <Input
+              id="image-url"
+              placeholder="https://example.com/image.jpg"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setImageDialog({ open: false, url: '' })}>
+            Cancel
+          </Button>
+          <Button onClick={() => {
+            if (url) {
+              const safeUrl = encodeURI(url);
+              insertHTML(`<img src="${safeUrl}" alt="Image" style="max-width: 100%; height: auto;" /><br>`);
+              setImageDialog({ open: false, url: '' });
+              setUrl('');
+            }
+          }}>
+            Insert
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    );
+  };
+  
+  // Video Dialog Component
+  const VideoDialog = () => {
+    const [url, setUrl] = useState('');
+    
+    return (
+      <Dialog open={videoDialog.open} onOpenChange={(open) => setVideoDialog({ open, url: '' })}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Insert Video</DialogTitle>
+          <DialogDescription>Enter the video URL (YouTube/Vimeo embed URL)</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="video-url">Video URL</Label>
+            <Input
+              id="video-url"
+              placeholder="https://www.youtube.com/embed/..."
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setVideoDialog({ open: false, url: '' })}>
+            Cancel
+          </Button>
+          <Button onClick={() => {
+            if (url) {
+              const safeUrl = encodeURI(url);
+              insertHTML(`<iframe width="560" height="315" src="${safeUrl}" frameborder="0" allowfullscreen></iframe><br>`);
+              setVideoDialog({ open: false, url: '' });
+              setUrl('');
+            }
+          }}>
+            Insert
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    );
+  };
+  
+  // Find and Replace Dialog Component
+  const FindReplaceDialog = () => (
+    <Dialog open={findReplaceDialog.open} onOpenChange={(open) => 
+    setFindReplaceDialog({ open, find: '', replace: '' })
+  }>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Find and Replace</DialogTitle>
+        <DialogDescription>Search and replace text in the document</DialogDescription>
+      </DialogHeader>
+      <div className="grid gap-4 py-4">
+        <div className="grid gap-2">
+          <Label htmlFor="find-text">Find</Label>
+          <Input
+            id="find-text"
+            placeholder="Text to find"
+            value={findReplaceDialog.find}
+            onChange={(e) => setFindReplaceDialog(prev => ({ ...prev, find: e.target.value }))}
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="replace-text">Replace with</Label>
+          <Input
+            id="replace-text"
+            placeholder="Replacement text"
+            value={findReplaceDialog.replace}
+            onChange={(e) => setFindReplaceDialog(prev => ({ ...prev, replace: e.target.value }))}
+          />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={() => 
+          setFindReplaceDialog({ open: false, find: '', replace: '' })
+        }>
+          Cancel
+        </Button>
+        <Button variant="outline" onClick={() => {
+          if (findReplaceDialog.find) {
+            findAndReplace(findReplaceDialog.find, findReplaceDialog.replace, false);
+            setFindReplaceDialog({ open: false, find: '', replace: '' });
+          }
+        }}>
+          Replace
+        </Button>
+        <Button onClick={() => {
+          if (findReplaceDialog.find) {
+            findAndReplace(findReplaceDialog.find, findReplaceDialog.replace, true);
+            setFindReplaceDialog({ open: false, find: '', replace: '' });
+          }
+        }}>
+          Replace All
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+  );
+  
+  // Publish Dialog Component
+  const PublishDialog = () => (
+    <Dialog open={publishDialog.open} onOpenChange={(open) => 
+    setPublishDialog({ open, summary: '' })
+  }>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Publish Document</DialogTitle>
+        <DialogDescription>Enter a brief summary of your changes</DialogDescription>
+      </DialogHeader>
+      <div className="grid gap-4 py-4">
+        <div className="grid gap-2">
+          <Label htmlFor="edit-summary">Edit Summary</Label>
+          <Textarea
+            id="edit-summary"
+            placeholder="Describe your changes..."
+            value={publishDialog.summary}
+            onChange={(e) => setPublishDialog(prev => ({ ...prev, summary: e.target.value }))}
+            rows={3}
+          />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={() => setPublishDialog({ open: false, summary: '' })}>
+          Cancel
+        </Button>
+        <Button onClick={() => {
+          if (publishDialog.summary) {
+            const currentContent = editorMode === 'visual' && editorRef.current 
+              ? editorRef.current.innerHTML 
+              : payload.content;
+            
+            const prevContent = history[historyIndex - 1]?.content || '';
+            const charChange = currentContent.length - prevContent.length;
+            
+            setEditHistory(prev => [...prev, {
+              timestamp: Date.now(),
+              content: currentContent,
+              summary: publishDialog.summary,
+              charChange,
+            }]);
+            
+            if (onPublish) {
+              onPublish();
+            } else {
+              console.log('Publishing...', { ...payload, content: currentContent });
+            }
+            
+            setAutoSaveStatus('saved');
+            setPublishDialog({ open: false, summary: '' });
+          }
+        }}>
+          Publish
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+  );
   const handleUndo = useCallback(() => {
     if (historyIndex > 0) {
       const newIndex = historyIndex - 1;
@@ -209,7 +553,7 @@ export default function EnhancedEditor({
   }, [historyIndex, history, editorMode, calculateStats]);
   
   // ==================== CITATION MANAGEMENT ====================
-  const addCitation = useCallback((citation: Omit<Citation, 'id'>) => {
+  const addCitation = useCallback((citation: Omit < Citation, 'id' > ) => {
     const newCitation: Citation = {
       ...citation,
       id: `cite-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -374,7 +718,7 @@ export default function EnhancedEditor({
     const delRowBtn = tableContainer.querySelector('.del-row-btn');
     const delColBtn = tableContainer.querySelector('.del-col-btn');
     
-    const listeners: Array<{ element: Element; type: string; handler: EventListener }> = [];
+    const listeners: Array < { element: Element;type: string;handler: EventListener } > = [];
     
     const updateContent = () => {
       if (editorRef.current) {
@@ -461,7 +805,7 @@ export default function EnhancedEditor({
   }, [cleanupTableListeners, saveToHistory]);
   
   // ==================== AI GENERATION ====================
-  const generateAIArticle = useCallback(async (topic: string): Promise<string> => {
+  const generateAIArticle = useCallback(async (topic: string): Promise < string > => {
     if (!topic?.trim()) {
       throw new Error('Please provide a topic.');
     }
@@ -551,9 +895,9 @@ export default function EnhancedEditor({
     const regex = new RegExp(searchTerm, replaceAll ? 'gi' : 'i');
     
     if (regex.test(content)) {
-      const newContent = replaceAll 
-        ? content.replace(regex, replaceTerm)
-        : content.replace(regex, replaceTerm);
+      const newContent = replaceAll ?
+        content.replace(regex, replaceTerm) :
+        content.replace(regex, replaceTerm);
       
       editorRef.current.innerHTML = sanitizeHTML(newContent);
       saveToHistory(newContent);
@@ -562,7 +906,7 @@ export default function EnhancedEditor({
   }, [saveToHistory]);
   
   // ==================== COMMAND EXECUTION ====================
-  const executeCommand = useCallback((action: string, args?: any[]) => {
+  const executeCommand = useCallback((action: string, args ? : any[]) => {
     if (editorMode !== 'visual' || !editorRef.current) return;
     
     editorRef.current.focus();
@@ -619,50 +963,25 @@ export default function EnhancedEditor({
           break;
           
         case 'link': {
-          const url = prompt('Enter URL:');
-          if (url) {
-            const selection = window.getSelection();
-            const text = selection?.toString() || 'Link';
-            const safeUrl = encodeURI(url);
-            const safeText = sanitizeHTML(text);
-            insertHTML(`<a href="${safeUrl}" contenteditable="false">${safeText}</a>`);
-          }
+          setLinkDialog({ open: true, text: window.getSelection()?.toString() || '' });
           break;
         }
         
+        // In the 'citation' case:
         case 'citation': {
-          const author = prompt('Enter author name:');
-          if (author) {
-            const title = prompt('Enter title:');
-            const url = prompt('Enter URL (optional):');
-            const date = new Date().toLocaleDateString();
-            
-            addCitation({
-              text: author,
-              author,
-              title: title || '',
-              url: url || '',
-              date,
-            });
-          }
+          setCitationDialog({ open: true, author: '', title: '', url: '', date: '' });
           break;
         }
         
+        // In the 'image' case:
         case 'image': {
-          const url = prompt('Enter image URL:');
-          if (url) {
-            const safeUrl = encodeURI(url);
-            insertHTML(`<img src="${safeUrl}" alt="Image" style="max-width: 100%; height: auto;" /><br>`);
-          }
+          setImageDialog({ open: true, url: '' });
           break;
         }
         
+        // In the 'video' case:
         case 'video': {
-          const url = prompt('Enter video URL (YouTube/Vimeo):');
-          if (url) {
-            const safeUrl = encodeURI(url);
-            insertHTML(`<iframe width="560" height="315" src="${safeUrl}" frameborder="0" allowfullscreen></iframe><br>`);
-          }
+          setVideoDialog({ open: true, url: '' });
           break;
         }
         
@@ -774,7 +1093,7 @@ export default function EnhancedEditor({
     setEditorMode(newMode);
   }, [editorMode, payload.content, saveToHistory]);
   
-  const handleEditorContentChangeCode = useCallback((value?: string) => {
+  const handleEditorContentChangeCode = useCallback((value ? : string) => {
     setPayload(prev => ({ ...prev, content: value || '' }));
     setAutoSaveStatus('unsaved');
     
@@ -793,31 +1112,8 @@ export default function EnhancedEditor({
   }, [saveToHistory, calculateStats]);
   
   const handlePublish = useCallback(() => {
-    const currentContent = editorMode === 'visual' && editorRef.current 
-      ? editorRef.current.innerHTML 
-      : payload.content;
-    
-    const summary = prompt('Enter a brief summary of your changes:');
-    if (summary) {
-      const prevContent = history[historyIndex - 1]?.content || '';
-      const charChange = currentContent.length - prevContent.length;
-      
-      setEditHistory(prev => [...prev, {
-        timestamp: Date.now(),
-        content: currentContent,
-        summary,
-        charChange,
-      }]);
-    }
-    
-    if (onPublish) {
-      onPublish();
-    } else {
-      console.log('Publishing...', { ...payload, content: currentContent });
-    }
-    
-    setAutoSaveStatus('saved');
-  }, [onPublish, payload, editorMode, history, historyIndex]);
+    setPublishDialog({ open: true, summary: '' });
+  }, []);
   
   const handlePreview = useCallback(() => {
     setShowPreview(!showPreview);
@@ -1207,6 +1503,12 @@ export default function EnhancedEditor({
           <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+Shift+P</kbd> Preview</div>
         </div>
       </div>
+       <LinkDialogComponent />
+      <CitationDialogComponent />
+      <ImageDialogComponent />
+      <VideoDialogComponent />
+      <FindReplaceDialogComponent />
+      <PublishDialogComponent />
     </div>
   );
 }
