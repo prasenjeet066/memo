@@ -933,23 +933,7 @@ export default function EnhancedEditor({
           <h1 className="text-xl font-bold text-gray-900">
             {record_name?.trim() || 'Untitled Document'}
           </h1>
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <span>{wordCount} words</span>
-            <span>•</span>
-            <span>{characterCount} characters</span>
-            <span>•</span>
-            <span>{readingTime} min read</span>
-            <span>•</span>
-            <span className={`font-medium ${
-              autoSaveStatus === 'saved' ? 'text-green-600' : 
-              autoSaveStatus === 'saving' ? 'text-yellow-600' : 
-              'text-gray-400'
-            }`}>
-              {autoSaveStatus === 'saved' ? '✓ Saved' : 
-               autoSaveStatus === 'saving' ? '⟳ Saving...' : 
-               '○ Unsaved'}
-            </span>
-          </div>
+         
         </div>
         <div className="flex items-center justify-end gap-2">
           <button
@@ -1012,7 +996,23 @@ export default function EnhancedEditor({
           </button>
         </div>
       </div>
-
+       <div className="flex items-center w-full p-2 gap-2 text-xs text-gray-500">
+            <span>{wordCount} words</span>
+            <span>•</span>
+            <span>{characterCount} characters</span>
+            <span>•</span>
+            <span>{readingTime} min read</span>
+            <span>•</span>
+            <span className={`font-medium ${
+              autoSaveStatus === 'saved' ? 'text-green-600' : 
+              autoSaveStatus === 'saving' ? 'text-yellow-600' : 
+              'text-gray-400'
+            }`}>
+              {autoSaveStatus === 'saved' ? '✓ Saved' : 
+               autoSaveStatus === 'saving' ? '⟳ Saving...' : 
+               '○ Unsaved'}
+            </span>
+          </div>
       <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2 py-1">
         {editorMode === 'visual' ? (
           <div className="flex items-center gap-1 overflow-x-auto flex-1">
