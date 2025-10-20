@@ -1503,12 +1503,12 @@ export default function EnhancedEditor({
           <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+Shift+P</kbd> Preview</div>
         </div>
       </div>
-       <LinkDialogComponent />
-      <CitationDialogComponent />
-      <ImageDialogComponent />
-      <VideoDialogComponent />
-      <FindReplaceDialogComponent />
-      <PublishDialogComponent />
+       <LinkDialog/>
+      <CitationDialog/>
+      <ImageDialog />
+      <VideoDialog />
+      <FindReplaceDialog/>
+      <PublishDialog/>
     </div>
   );
 }
