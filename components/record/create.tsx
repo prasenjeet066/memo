@@ -491,7 +491,7 @@ export default function EnhancedEditor({
           if (selection && selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
             const selectedText = range.toString() || 'Heading';
-            insertHTML(`<h${level}>${sanitizeHTML(selectedText)}</h${level}><br/><hr/>`);
+            insertHTML(`<h${level}>${sanitizeHTML(selectedText)}</h${level}><hr/>`);
           }
           break;
         }
@@ -551,62 +551,11 @@ export default function EnhancedEditor({
           break;
           
         case 'reference':
-          insertHTML('<sup class="reference" contenteditable="true">[1]</sup>');
+          insertHTML('<sup class="reference" contenteditable="false">[1]</sup>');
           break;
           
         case 'aiTask': {
-          const aiPrompt = document.createElement('div');
-          aiPrompt.className = 'ai-task-div';
-          aiPrompt.contentEditable = 'false';
-          aiPrompt.style.cssText = 'margin: 20px 0; padding: 15px; border: 2px dashed #4CAF50; background: #f0f8f0; border-radius: 8px;';
-          aiPrompt.innerHTML = `
-            <input type="text" class="prompt-input" placeholder="Enter AI prompt..." style="width: 80%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" aria-label="AI prompt input" />
-            <button class="ai-generate-btn" style="padding: 10px 20px; margin-left: 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;" aria-label="Generate AI content">
-              <i class="fas fa-arrow-right"></i> Generate
-            </button>
-          `;
-          editorRef.current.appendChild(aiPrompt);
-          
-          setTimeout(() => {
-            const input = aiPrompt.querySelector('.prompt-input') as HTMLInputElement;
-            const btn = aiPrompt.querySelector('.ai-generate-btn') as HTMLButtonElement;
-            
-            if (input && btn) {
-              btn.onclick = async (e) => {
-                e.preventDefault();
-                const value = input.value.trim();
-                
-                if (!value) {
-                  alert('Enter a prompt');
-                  return;
-                }
-                
-                btn.disabled = true;
-                btn.textContent = 'Generating...';
-                
-                try {
-                  const content = await generateAIArticle(value);
-                  
-                  if (content) {
-                    const container = document.createElement('div');
-                    container.id = 'ai_generated';
-                    container.style.cssText = 'margin: 20px 0; padding: 15px; background: #fff; border: 1px solid #ddd; border-radius: 4px;';
-                    container.innerHTML = sanitizeHTML(content);
-                    aiPrompt.parentElement?.insertBefore(container, aiPrompt.nextSibling);
-                    
-                    if (editorRef.current) {
-                      saveToHistory(editorRef.current.innerHTML);
-                    }
-                  }
-                } catch (error) {
-                  console.error('AI generation error:', error);
-                } finally {
-                  btn.disabled = false;
-                  btn.innerHTML = '<i class="fas fa-arrow-right"></i> Generate';
-                }
-              };
-            }
-          }, 100);
+         
           break;
         }
         
