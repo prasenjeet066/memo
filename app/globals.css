@@ -159,108 +159,111 @@ body {
 }
 
 /* ==================== TABLE STYLES ==================== */
+/* ==================== TABLE STYLES (Material-inspired, no shadow/border) ==================== */
 .tbl-operator {
   margin: 16px 0;
-  background: #f1f1f1;
+  background: #fafafa;
   border-radius: 12px;
   overflow: hidden;
-  
+  padding: 8px;
 }
 
 .tbl-operator table {
   width: 100%;
-  border-collapse: collapse;
-  background: #ffffff;
-  text-align: center;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: transparent;
+  text-align: left;
 }
 
 .tbl-operator thead {
-  background: #f3f4f6;
+  background: #f5f5f5;
+  color: #424242;
   font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
 }
 
 .tbl-operator th {
-  padding: 12px;
-  font-weight: 600;
-  color: #374151;
-  min-width: 120px;
+  padding: 12px 16px;
+  color: #424242;
 }
 
 .tbl-operator td {
-  padding: 12px;
-  min-width: 120px;
-  color: #1f2937;
+  padding: 12px 16px;
+  color: #212121;
+  transition: background 0.2s ease;
 }
 
-.tbl-operator td:focus {
-  background: #f0f9ff;
+.tbl-operator tbody tr:hover {
+  background: #eeeeee;
 }
 
 .table-controls {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  
-  padding: 8px;
-  background: #f9fafb;
+  gap: 12px;
+  padding: 8px 0;
+  background: transparent;
 }
 
 .table-controls button {
   padding: 8px 16px;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  color: #374151;
-  font-size: 14px;
+  color: #1976d2;
+  font-weight: 500;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .table-controls button:hover {
-  background: #f3f4f6;
-  border-color: #9ca3af;
+  background: rgba(25, 118, 210, 0.1);
 }
 
 .table-controls hr {
-  width: 1px;
-  height: 20px;
-  background: #d1d5db;
-  border: none;
-  margin: 0 4px;
+  display: none;
 }
 
-/* ==================== TEMPLATE STYLES ==================== */
+/* ==================== TEMPLATE STYLES (Material-inspired, no shadow/border) ==================== */
 [class*="tpl-"] {
-  border-radius: 12px;
-  background: #f9fafb;
+  border-radius: 8px;
+  background: #fafafa;
   padding: 16px;
   display: flex;
-  width: max-content;
-  max-width: 100%;
   flex-direction: column;
-  gap: 8px;
+  width: 100%;
+  gap: 12px;
   margin: 16px 0;
+  transition: background 0.2s ease;
+}
 
+[class*="tpl-"]:hover {
+  background: #f5f5f5;
 }
 
 .tpl-infobox {
   min-width: 250px;
   max-width: 400px;
   padding: 20px;
+  background: #fafafa;
 }
 
 .tpl-infobox h3 {
-  margin: 0 0 12px 0;
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #111827;
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #212121;
 }
 
 .tpl-infobox p {
-  margin: 8px 0;
-  color: #4b5563;
+  margin: 6px 0;
+  color: #616161;
   font-size: 0.875rem;
+  line-height: 1.5;
 }
 
 /* ==================== AI TASK STYLES ==================== */
