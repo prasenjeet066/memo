@@ -44,7 +44,7 @@ export default function Header({ navlist , replacement }: HeaderProps) {
           />
           <Link href="/" className="flex items-center gap-1">
             <h1 className="logo-style-font text-2xl font-semibold text-gray-800 cursor-pointer">
-              memo
+              historica
             </h1>
           </Link>
         </div>
@@ -118,7 +118,7 @@ export default function Header({ navlist , replacement }: HeaderProps) {
             {/* Sidebar Header */}
             <div className="p-4 border-b border-gray-200 flex items-center justify-between">
               <h1 className="logo-style-font text-xl font-semibold text-gray-800">
-                memo
+                historica
               </h1>
               <button onClick={closeSidebar}>
                 <ArrowLeft className="w-6 h-6 text-gray-600 hover:text-gray-800 transition-colors" />
