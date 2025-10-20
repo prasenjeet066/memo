@@ -159,74 +159,48 @@ body {
 }
 
 /* ==================== TABLE STYLES ==================== */
-/* ==================== TABLE STYLES (Material-inspired, no shadow/border) ==================== */
-.tbl-operator {
-  margin: 16px 0;
-  background: #fafafa;
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
   border-radius: 12px;
   overflow: hidden;
-  padding: 8px;
 }
 
-.tbl-operator table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  background: transparent;
-  text-align: left;
-}
-
-.tbl-operator thead {
-  background: #f5f5f5;
-  color: #424242;
-  font-weight: 600;
+thead {
+  background: #f3f4f6;
   text-transform: uppercase;
-  font-size: 0.75rem;
+  font-weight: 600;
   letter-spacing: 0.05em;
+  color: #374151;
 }
 
-.tbl-operator th {
-  padding: 12px 16px;
-  color: #424242;
+th,
+td {
+  padding: 14px 18px;
+  text-align: center;
+  /* center horizontally */
+  vertical-align: middle;
+  /* center vertically */
+  font-size: 15px;
+  line-height: 1.5;
 }
 
-.tbl-operator td {
-  padding: 12px 16px;
-  color: #212121;
-  transition: background 0.2s ease;
+tbody tr:nth-child(even) {
+  background: #f9f9fb;
 }
 
-.tbl-operator tbody tr:hover {
-  background: #eeeeee;
+tbody tr:hover {
+  background: #e8eaf6;
+  transition: background-color 0.25s ease;
 }
 
-.table-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 8px 0;
-  background: transparent;
+td {
+  border-top: 1px solid #e0e0e0;
 }
 
-.table-controls button {
-  padding: 8px 16px;
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  color: #1976d2;
-  font-weight: 500;
-  transition: background 0.2s ease, color 0.2s ease;
-}
+/* ==================== TABLE STYLES (Material-inspired, no shadow/border) ==================== */
 
-.table-controls button:hover {
-  background: rgba(25, 118, 210, 0.1);
-}
-
-.table-controls hr {
-  display: none;
-}
 
 /* ==================== TEMPLATE STYLES (Material-inspired, no shadow/border) ==================== */
 [class*="tpl-"] {
@@ -333,6 +307,7 @@ body {
     opacity: 0;
     transform: translateY(-10px);
   }
+  
   to {
     opacity: 1;
     transform: translateY(0);
@@ -411,9 +386,12 @@ body {
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+  
   50% {
     opacity: 0.6;
   }
@@ -436,13 +414,13 @@ body {
     border-radius: 12px;
     padding: 8px;
   }
-
+  
   .toolbar-left {
     width: 100%;
     order: 2;
     margin-top: 8px;
   }
-
+  
   .toolbar-right {
     order: 1;
     border-left: none;
@@ -450,19 +428,19 @@ body {
     width: 100%;
     justify-content: flex-end;
   }
-
+  
   .editor-content {
     padding: 16px;
   }
-
+  
   .tbl-operator {
     overflow-x: auto;
   }
-
+  
   .ai-task-div {
     max-width: 100%;
   }
-
+  
   [class*="tpl-"] {
     max-width: 100%;
   }
@@ -472,25 +450,25 @@ body {
   .editor-title {
     font-size: 1rem;
   }
-
+  
   .publish-button {
     padding: 8px 16px;
     font-size: 14px;
   }
-
+  
   .toolbar-button {
     padding: 6px 10px;
     min-width: 36px;
   }
-
+  
   .editor-content h1 {
     font-size: 1.5rem;
   }
-
+  
   .editor-content h2 {
     font-size: 1.25rem;
   }
-
+  
   .editor-content h3 {
     font-size: 1.125rem;
   }
@@ -529,21 +507,23 @@ body {
 
 /* ==================== PRINT STYLES ==================== */
 @media print {
+
   .editor-toolbar,
   .toolbar-right,
   .table-controls,
   .ai-task-div {
     display: none !important;
   }
-
+  
   .editor-content {
     padding: 0;
   }
-
+  
   body {
     background: white;
   }
 }
+
 .h1 {
   font-weight: bold;
   font-size: 18px;
