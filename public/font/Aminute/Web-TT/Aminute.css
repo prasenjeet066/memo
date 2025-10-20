@@ -27,6 +27,11 @@
     text-rendering: optimizeLegibility;
 }
 @font-face {
+    font-family: "lotter";
+    src: url("lotter-regular.otf");
+    text-rendering: optimizeLegibility;
+}
+@font-face {
     font-family: "PPNeueMachina-ubold";
     src: url("PPNeueMachina-Ultrabold.otf");
     text-rendering: optimizeLegibility;
