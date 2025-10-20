@@ -212,7 +212,7 @@ export default function EnhancedEditor({
     
     return (
       <Dialog open={linkDialog.open} onOpenChange={(open) => setLinkDialog({ open, text: '' })}>
-      <DialogContent className = 'bg-white border-none rounded-lg'>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Insert Link</DialogTitle>
           <DialogDescription>Enter the URL for the link</DialogDescription>
@@ -265,7 +265,7 @@ export default function EnhancedEditor({
     <Dialog open={citationDialog.open} onOpenChange={(open) => 
     setCitationDialog({ open, author: '', title: '', url: '', date: '' })
   }>
-    <DialogContent className = 'bg-white border-none rounded-lg'>
+    <DialogContent>
       <DialogHeader>
         <DialogTitle>Add Citation</DialogTitle>
         <DialogDescription>Enter citation details</DialogDescription>
@@ -331,7 +331,7 @@ export default function EnhancedEditor({
     
     return (
       <Dialog open={imageDialog.open} onOpenChange={(open) => setImageDialog({ open, url: '' })}>
-      <DialogContent className = 'bg-white border-none rounded-lg'>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Insert Image</DialogTitle>
           <DialogDescription>Enter the image URL</DialogDescription>
@@ -373,7 +373,7 @@ export default function EnhancedEditor({
     
     return (
       <Dialog open={videoDialog.open} onOpenChange={(open) => setVideoDialog({ open, url: '' })}>
-      <DialogContent className = 'bg-white border-none rounded-lg'>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Insert Video</DialogTitle>
           <DialogDescription>Enter the video URL (YouTube/Vimeo embed URL)</DialogDescription>
@@ -414,7 +414,7 @@ export default function EnhancedEditor({
     <Dialog open={findReplaceDialog.open} onOpenChange={(open) => 
     setFindReplaceDialog({ open, find: '', replace: '' })
   }>
-    <DialogContent className = 'bg-white border-none rounded-lg'>
+    <DialogContent>
       <DialogHeader>
         <DialogTitle>Find and Replace</DialogTitle>
         <DialogDescription>Search and replace text in the document</DialogDescription>
@@ -471,7 +471,7 @@ export default function EnhancedEditor({
     <Dialog open={publishDialog.open} onOpenChange={(open) => 
     setPublishDialog({ open, summary: '' })
   }>
-    <DialogContent className = 'bg-white border-none rounded-lg'>
+    <DialogContent>
       <DialogHeader>
         <DialogTitle>Publish Document</DialogTitle>
         <DialogDescription>Enter a brief summary of your changes</DialogDescription>
