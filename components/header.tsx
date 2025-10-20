@@ -114,7 +114,7 @@ export default function Header({ navlist , replacement }: HeaderProps) {
       {sideBarLogic && isMobile && (
         <div className="fixed inset-0 z-50 flex">
           {/* Sidebar Panel */}
-          <div className="w-72 max-w-[85vw] bg-white shadow-xl flex flex-col">
+          <div className="w-full max-w-full bg-white  flex flex-col">
             {/* Sidebar Header */}
             <div className="p-4 border-b border-gray-200 flex items-center justify-between">
               <h1 className="logo-style-font text-xl font-semibold text-gray-800">
