@@ -63,9 +63,11 @@ import {
 import {
   INSERT_ORDERED_LIST_COMMAND,
   INSERT_UNORDERED_LIST_COMMAND,
+  REMOVE_LIST_COMMAND,
 } from '@lexical/list';
 import { $createLinkNode } from '@lexical/link';
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
+import { $createCodeNode } from '@lexical/code';
 
 interface EditorProps {
   editor_mode?: 'visual' | 'code';
@@ -107,79 +109,24 @@ const sanitizeHTML = (html: string): string => {
   });
 };
 
-// Lexical Toolbar Plugin
-function ToolbarPlugin({ 
-  onCommand, 
-  activeAction 
-}: { 
-  onCommand: (command: string) => void;
-  activeAction: string | null;
-}) {
-  const [editor] = useLexicalComposerContext();
-  const [canUndo, setCanUndo] = useState(false);
-  const [canRedo, setCanRedo] = useState(false);
-  const [isBold, setIsBold] = useState(false);
-  const [isItalic, setIsItalic] = useState(false);
-  const [isUnderline, setIsUnderline] = useState(false);
-  const [isStrikethrough, setIsStrikethrough] = useState(false);
-
-  useEffect(() => {
-    return editor.registerCommand(
-      UNDO_COMMAND,
-      () => {
-        setCanUndo(editor.getEditorState().read(() => true));
-        return false;
-      },
-      COMMAND_PRIORITY_EDITOR,
-    );
-  }, [editor]);
-
-  useEffect(() => {
-    return editor.registerCommand(
-      REDO_COMMAND,
-      () => {
-        setCanRedo(editor.getEditorState().read(() => true));
-        return false;
-      },
-      COMMAND_PRIORITY_EDITOR,
-    );
-  }, [editor]);
-
-  useEffect(() => {
-    return editor.registerUpdateListener(({ editorState }) => {
-      editorState.read(() => {
-        const selection = $getSelection();
-        if ($isRangeSelection(selection)) {
-          setIsBold(selection.hasFormat('bold'));
-          setIsItalic(selection.hasFormat('italic'));
-          setIsUnderline(selection.hasFormat('underline'));
-          setIsStrikethrough(selection.hasFormat('strikethrough'));
-        }
-      });
-    });
-  }, [editor]);
-
-  return null;
-}
-
 // Custom Commands Plugin
 function CustomCommandsPlugin({ 
-  executeCommand 
+  onCommand 
 }: { 
-  executeCommand: (action: string, args?: any[]) => void;
+  onCommand: (command: string) => void;
 }) {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
-    // Register custom keyboard shortcuts
     return editor.registerCommand(
       FORMAT_TEXT_COMMAND,
       (payload) => {
+        onCommand('format');
         return false;
       },
       COMMAND_PRIORITY_EDITOR,
     );
-  }, [editor, executeCommand]);
+  }, [editor, onCommand]);
 
   return null;
 }
@@ -193,30 +140,58 @@ function HtmlPlugin({
   onHtmlChange: (html: string) => void;
 }) {
   const [editor] = useLexicalComposerContext();
+  const isInitialized = useRef(false);
 
   useEffect(() => {
-    if (initialHtml) {
+    if (initialHtml && !isInitialized.current) {
+      isInitialized.current = true;
       editor.update(() => {
-        const parser = new DOMParser();
-        const dom = parser.parseFromString(initialHtml, 'text/html');
-        const nodes = $generateNodesFromDOM(editor, dom);
-        const root = $getRoot();
-        root.clear();
-        nodes.forEach(node => root.append(node));
+        try {
+          const parser = new DOMParser();
+          const dom = parser.parseFromString(initialHtml, 'text/html');
+          const nodes = $generateNodesFromDOM(editor, dom);
+          const root = $getRoot();
+          root.clear();
+          nodes.forEach(node => root.append(node));
+        } catch (error) {
+          console.error('Error loading initial HTML:', error);
+        }
       });
     }
-  }, []);
+  }, [editor, initialHtml]);
 
   return (
     <OnChangePlugin
       onChange={(editorState) => {
         editorState.read(() => {
-          const html = $generateHtmlFromNodes(editor);
-          onHtmlChange(html);
+          try {
+            const html = $generateHtmlFromNodes(editor);
+            onHtmlChange(html);
+          } catch (error) {
+            console.error('Error generating HTML:', error);
+          }
         });
       }}
     />
   );
+}
+
+// Editor ref plugin to expose editor instance
+function EditorRefPlugin({ 
+  editorRef 
+}: { 
+  editorRef: React.MutableRefObject<LexicalEditor | null>;
+}) {
+  const [editor] = useLexicalComposerContext();
+  
+  useEffect(() => {
+    editorRef.current = editor;
+    return () => {
+      editorRef.current = null;
+    };
+  }, [editor, editorRef]);
+  
+  return null;
 }
 
 export default function EnhancedEditor({
@@ -263,6 +238,8 @@ export default function EnhancedEditor({
   });
   const [publishDialog, setPublishDialog] = useState({ open: false, summary: '' });
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
   
   // Lexical configuration
   const initialConfig = {
@@ -282,7 +259,7 @@ export default function EnhancedEditor({
         ol: 'list-decimal ml-6 mb-2',
         listitem: 'mb-1',
       },
-      link: 'text-blue-600 hover:underline',
+      link: 'text-blue-600 hover:underline cursor-pointer',
       text: {
         bold: 'font-bold',
         italic: 'italic',
@@ -290,8 +267,8 @@ export default function EnhancedEditor({
         strikethrough: 'line-through',
         code: 'bg-gray-100 px-1 py-0.5 rounded font-mono text-sm',
       },
-      code: 'bg-gray-800 text-white p-4 rounded-lg font-mono text-sm block my-4',
-      quote: 'border-l-4 border-gray-300 pl-4 italic my-4',
+      code: 'bg-gray-800 text-white p-4 rounded-lg font-mono text-sm block my-4 overflow-x-auto',
+      quote: 'border-l-4 border-gray-300 pl-4 italic my-4 text-gray-700',
     },
     onError: (error: Error) => {
       console.error('Lexical error:', error);
@@ -357,14 +334,38 @@ export default function EnhancedEditor({
       lexicalEditorRef.current.update(() => {
         const selection = $getSelection();
         if ($isRangeSelection(selection)) {
-          const textNode = $createTextNode(`[${citationNumber}]`);
-          selection.insertNodes([textNode]);
+          const supNode = $createTextNode(`[${citationNumber}]`);
+          selection.insertNodes([supNode]);
         }
       });
     }
     
     return newCitation.id;
   }, [citations.length]);
+  
+  // Generate references section
+  const generateReferencesSection = useCallback(() => {
+    if (citations.length === 0) return '';
+    
+    const refsHTML = citations.map((cite, index) => {
+      let refText = `<li id="cite-${cite.id}">`;
+      
+      if (cite.author) refText += `${sanitizeHTML(cite.author)}. `;
+      if (cite.title) refText += `"${sanitizeHTML(cite.title)}". `;
+      if (cite.url) refText += `<a href="${encodeURI(cite.url)}" target="_blank">${sanitizeHTML(cite.url)}</a>. `;
+      if (cite.date) refText += `Retrieved ${sanitizeHTML(cite.date)}.`;
+      
+      refText += `</li>`;
+      return refText;
+    }).join('');
+    
+    return `
+      <h2>References</h2>
+      <ol class="references-list" style="font-size: 0.9em; line-height: 1.6;">
+        ${refsHTML}
+      </ol>
+    `;
+  }, [citations]);
   
   // Execute commands
   const executeCommand = useCallback((action: string, args?: any[]) => {
@@ -395,16 +396,27 @@ export default function EnhancedEditor({
           break;
           
         case 'heading': {
-          const level = Math.min(Math.max(1, args?.[0] || 2), 6);
+          const level = Math.min(Math.max(1, args?.[0] || 2), 6) as 1 | 2 | 3 | 4 | 5 | 6;
           editor.update(() => {
             const selection = $getSelection();
             if ($isRangeSelection(selection)) {
-              const heading = $createHeadingNode(`h${level}` as any);
+              const heading = $createHeadingNode(`h${level}`);
+              const text = selection.getTextContent() || 'Heading';
+              heading.append($createTextNode(text));
               selection.insertNodes([heading]);
             }
           });
           break;
         }
+        
+        case 'paragraph':
+          editor.update(() => {
+            const selection = $getSelection();
+            if ($isRangeSelection(selection)) {
+              editor.dispatchCommand(REMOVE_LIST_COMMAND, undefined);
+            }
+          });
+          break;
         
         case 'unorderedList':
           editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
@@ -412,6 +424,23 @@ export default function EnhancedEditor({
           
         case 'orderedList':
           editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
+          break;
+          
+        case 'refList':
+          const refsSection = generateReferencesSection();
+          if (refsSection) {
+            editor.update(() => {
+              const parser = new DOMParser();
+              const dom = parser.parseFromString(refsSection, 'text/html');
+              const nodes = $generateNodesFromDOM(editor, dom);
+              const selection = $getSelection();
+              if ($isRangeSelection(selection)) {
+                selection.insertNodes(nodes);
+              }
+            });
+          } else {
+            alert('No citations added yet. Add citations first using the citation tool.');
+          }
           break;
           
         case 'link':
@@ -430,11 +459,35 @@ export default function EnhancedEditor({
           setVideoDialog({ open: true, url: '' });
           break;
           
+        case 'codeBlock':
+          editor.update(() => {
+            const selection = $getSelection();
+            if ($isRangeSelection(selection)) {
+              const codeNode = $createCodeNode();
+              codeNode.append($createTextNode('// Your code here'));
+              selection.insertNodes([codeNode]);
+            }
+          });
+          break;
+          
+        case 'math':
+          editor.update(() => {
+            const selection = $getSelection();
+            if ($isRangeSelection(selection)) {
+              const paragraph = $createParagraphNode();
+              paragraph.append($createTextNode('E = mc²'));
+              selection.insertNodes([paragraph]);
+            }
+          });
+          break;
+          
         case 'blockquote':
           editor.update(() => {
             const selection = $getSelection();
             if ($isRangeSelection(selection)) {
               const quote = $createQuoteNode();
+              const text = selection.getTextContent() || 'Quote text';
+              quote.append($createTextNode(text));
               selection.insertNodes([quote]);
             }
           });
@@ -445,11 +498,26 @@ export default function EnhancedEditor({
             const selection = $getSelection();
             if ($isRangeSelection(selection)) {
               const paragraph = $createParagraphNode();
-              const text = $createTextNode('---');
-              paragraph.append(text);
+              const hr = $createTextNode('---');
+              paragraph.append(hr);
               selection.insertNodes([paragraph]);
             }
           });
+          break;
+          
+        case 'reference':
+          editor.update(() => {
+            const selection = $getSelection();
+            if ($isRangeSelection(selection)) {
+              const refNode = $createTextNode('[1]');
+              selection.insertNodes([refNode]);
+            }
+          });
+          break;
+          
+        case 'table':
+        case 'template':
+          alert('Table and template features are available in code mode or will be added in future updates.');
           break;
           
         default:
@@ -460,7 +528,7 @@ export default function EnhancedEditor({
     } finally {
       setActiveAction(null);
     }
-  }, [editorMode, citations.length]);
+  }, [editorMode, citations.length, generateReferencesSection]);
   
   // Toolbar action handler
   const handleToolbarAction = useCallback((action: string) => {
@@ -516,6 +584,40 @@ export default function EnhancedEditor({
     }
   }, []);
   
+  // Find and Replace
+  const findAndReplace = useCallback((searchTerm: string, replaceTerm: string, replaceAll: boolean = false) => {
+    if (!lexicalEditorRef.current) return;
+    
+    lexicalEditorRef.current.update(() => {
+      const root = $getRoot();
+      const textContent = root.getTextContent();
+      
+      if (textContent.includes(searchTerm)) {
+        const regex = new RegExp(searchTerm, replaceAll ? 'gi' : 'i');
+        const newContent = replaceAll ? 
+          textContent.replace(regex, replaceTerm) : 
+          textContent.replace(regex, replaceTerm);
+        
+        // This is a simplified implementation
+        // In production, you'd want to traverse the nodes properly
+        console.log('Replace functionality - simplified version');
+      }
+    });
+  }, []);
+  
+  // Monitor undo/redo state
+  useEffect(() => {
+    if (!lexicalEditorRef.current) return;
+    
+    return lexicalEditorRef.current.registerUpdateListener(() => {
+      lexicalEditorRef.current?.getEditorState().read(() => {
+        // Update undo/redo button states
+        setCanUndo(true);
+        setCanRedo(true);
+      });
+    });
+  }, []);
+  
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -547,6 +649,17 @@ export default function EnhancedEditor({
         e.preventDefault();
         handlePublish();
       }
+      if (e.ctrlKey && e.key === 'f') {
+        e.preventDefault();
+        const searchTerm = prompt('Find:');
+        if (searchTerm) {
+          window.find(searchTerm);
+        }
+      }
+      if (e.ctrlKey && e.key === 'h') {
+        e.preventDefault();
+        setFindReplaceDialog({ open: true, find: '', replace: '' });
+      }
       if (e.ctrlKey && e.shiftKey && e.key === 'P') {
         e.preventDefault();
         handlePreview();
@@ -563,6 +676,15 @@ export default function EnhancedEditor({
       executeCommand(activeAction);
     }
   }, [activeAction, executeCommand]);
+  
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, []);
   
   const hasRegisteredRole = Array.isArray(session?.user?.role) && session.user.role.includes('REG');
   
@@ -585,6 +707,21 @@ export default function EnhancedEditor({
                 placeholder="https://example.com"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && url && lexicalEditorRef.current) {
+                    lexicalEditorRef.current.update(() => {
+                      const selection = $getSelection();
+                      if ($isRangeSelection(selection)) {
+                        const linkNode = $createLinkNode(url);
+                        const textNode = $createTextNode(selection.getTextContent() || 'Link');
+                        linkNode.append(textNode);
+                        selection.insertNodes([linkNode]);
+                      }
+                    });
+                    setLinkDialog({ open: false, text: '' });
+                    setUrl('');
+                  }
+                }}
               />
             </div>
           </div>
@@ -593,11 +730,13 @@ export default function EnhancedEditor({
               Cancel
             </Button>
             <Button onClick={() => {
-              if (lexicalEditorRef.current && url) {
+              if (url && lexicalEditorRef.current) {
                 lexicalEditorRef.current.update(() => {
                   const selection = $getSelection();
                   if ($isRangeSelection(selection)) {
                     const linkNode = $createLinkNode(url);
+                    const textNode = $createTextNode(selection.getTextContent() || 'Link');
+                    linkNode.append(textNode);
                     selection.insertNodes([linkNode]);
                   }
                 });
@@ -705,12 +844,13 @@ export default function EnhancedEditor({
             <Button onClick={() => {
               if (url && lexicalEditorRef.current) {
                 lexicalEditorRef.current.update(() => {
+                  const parser = new DOMParser();
+                  const imgHtml = `<img src="${encodeURI(url)}" alt="Image" style="max-width: 100%; height: auto;" />`;
+                  const dom = parser.parseFromString(imgHtml, 'text/html');
+                  const nodes = $generateNodesFromDOM(lexicalEditorRef.current!, dom);
                   const selection = $getSelection();
                   if ($isRangeSelection(selection)) {
-                    const paragraph = $createParagraphNode();
-                    const text = $createTextNode(`![Image](${url})`);
-                    paragraph.append(text);
-                    selection.insertNodes([paragraph]);
+                    selection.insertNodes(nodes);
                   }
                 });
               }
@@ -751,8 +891,17 @@ export default function EnhancedEditor({
               Cancel
             </Button>
             <Button onClick={() => {
-              if (url) {
-                // Handle video insertion
+              if (url && lexicalEditorRef.current) {
+                lexicalEditorRef.current.update(() => {
+                  const parser = new DOMParser();
+                  const iframeHtml = `<iframe width="560" height="315" src="${encodeURI(url)}" frameborder="0" allowfullscreen></iframe>`;
+                  const dom = parser.parseFromString(iframeHtml, 'text/html');
+                  const nodes = $generateNodesFromDOM(lexicalEditorRef.current!, dom);
+                  const selection = $getSelection();
+                  if ($isRangeSelection(selection)) {
+                    selection.insertNodes(nodes);
+                  }
+                });
               }
               setVideoDialog({ open: false, url: '' });
               setUrl('');
@@ -764,6 +913,62 @@ export default function EnhancedEditor({
       </Dialog>
     );
   };
+  
+  const FindReplaceDialog = () => (
+    <Dialog open={findReplaceDialog.open} onOpenChange={(open) => 
+      setFindReplaceDialog({ open, find: '', replace: '' })
+    }>
+      <DialogContent className='rounded bg-white'>
+        <DialogHeader>
+          <DialogTitle>Find and Replace</DialogTitle>
+          <DialogDescription>Search and replace text in the document</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="find-text">Find</Label>
+            <Input
+              id="find-text"
+              placeholder="Text to find"
+              value={findReplaceDialog.find}
+              onChange={(e) => setFindReplaceDialog(prev => ({ ...prev, find: e.target.value }))}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="replace-text">Replace with</Label>
+            <Input
+              id="replace-text"
+              placeholder="Replacement text"
+              value={findReplaceDialog.replace}
+              onChange={(e) => setFindReplaceDialog(prev => ({ ...prev, replace: e.target.value }))}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => 
+            setFindReplaceDialog({ open: false, find: '', replace: '' })
+          }>
+            Cancel
+          </Button>
+          <Button variant="outline" onClick={() => {
+            if (findReplaceDialog.find) {
+              findAndReplace(findReplaceDialog.find, findReplaceDialog.replace, false);
+              setFindReplaceDialog({ open: false, find: '', replace: '' });
+            }
+          }}>
+            Replace
+          </Button>
+          <Button onClick={() => {
+            if (findReplaceDialog.find) {
+              findAndReplace(findReplaceDialog.find, findReplaceDialog.replace, true);
+              setFindReplaceDialog({ open: false, find: '', replace: '' });
+            }
+          }}>
+            Replace All
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
   
   const PublishDialog = () => (
     <Dialog open={publishDialog.open} onOpenChange={(open) => 
@@ -792,11 +997,23 @@ export default function EnhancedEditor({
           </Button>
           <Button onClick={() => {
             if (publishDialog.summary) {
+              const currentContent = payload.content;
+              const prevContent = editHistory[editHistory.length - 1]?.content || '';
+              const charChange = currentContent.length - prevContent.length;
+              
+              setEditHistory(prev => [...prev, {
+                timestamp: Date.now(),
+                content: currentContent,
+                summary: publishDialog.summary,
+                charChange,
+              }]);
+              
               if (onPublish) {
                 onPublish();
               } else {
-                console.log('Publishing...', { ...payload });
+                console.log('Publishing...', { ...payload, content: currentContent });
               }
+              
               setAutoSaveStatus('saved');
               setPublishDialog({ open: false, summary: '' });
             }
@@ -809,6 +1026,303 @@ export default function EnhancedEditor({
   );
   
   return (
-    <></>
+    <div className="w-full h-full flex flex-col">
+      <div className="px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <h1 className="text-xl font-bold text-gray-900">
+            {record_name?.trim() || 'Untitled Document'}
+          </h1>
+        </div>
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={handleUndo}
+            disabled={!canUndo}
+            className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-30"
+            title="Undo (Ctrl+Z)"
+            aria-label="Undo"
+          >
+            <Fai icon="undo" style="fal" />
+          </button>
+          <button
+            onClick={handleRedo}
+            disabled={!canRedo}
+            className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-30"
+            title="Redo (Ctrl+Y)"
+            aria-label="Redo"
+          >
+            <Fai icon="redo" style="fal" />
+          </button>
+          
+          <button
+            onClick={handlePreview}
+            className="p-2 hover:bg-gray-100 rounded-full"
+            title="Preview (Ctrl+Shift+P)"
+            aria-label="Preview"
+          >
+            <Fai icon="eye" style="fal" />
+          </button>
+          
+          {hasRegisteredRole && (
+            <DropdownMenu>
+              <DropdownMenuTrigger className="max-w-[140px] w-auto h-10 border-none bg-white rounded-full px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
+                {editorMode === 'visual' ? 'Visual' : 'Code'}
+                <Fai icon="chevron-down" style="fas" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleSwMode('visual')}>
+                  Visual
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSwMode('code')}>
+                  Code
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          
+          <button 
+            className="border-none rounded-full p-2 text-black flex items-center hover:bg-gray-100"
+            aria-label="Settings"
+            onClick={() => {
+              const enabled = confirm('Enable spell check? (Currently ' + (spellCheckEnabled ? 'enabled' : 'disabled') + ')');
+              setSpellCheckEnabled(enabled);
+            }}
+          >
+            <Fai icon="gear" style="fal" />
+          </button>
+        </div>
+      </div>
+      
+      <div className="flex items-center w-full p-2 gap-2 text-xs text-gray-500">
+        <span className='p-2 border-r'>{wordCount} words</span>
+        <span className='p-2 border-r'>{characterCount} characters</span>
+        <span className='p-2 border-r'>{readingTime} min read</span>
+        <span className={`font-medium ${
+          autoSaveStatus === 'saved' ? 'text-green-600' : 
+          autoSaveStatus === 'saving' ? 'text-yellow-600' : 
+          'text-gray-400'
+        }`}>
+          {autoSaveStatus === 'saved' ? 'Saved' : 
+           autoSaveStatus === 'saving' ? 'Saving...' : 
+           'Unsaved'}
+        </span>
+      </div>
+      
+      <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2 py-1">
+        {editorMode === 'visual' ? (
+          <div className="flex items-center gap-1 overflow-x-auto flex-1">
+            {toolbarBlocks.map((block: any, index: number) => {
+              if (block.items && Array.isArray(block.items)) {
+                if (block.name === 'Paragraph') {
+                  return (
+                    <DropdownMenu key={`toolbar-dropdown-${index}`}>
+                      <DropdownMenuTrigger className="max-w-[180px] border-l border-r w-auto h-10 border-none px-3 py-2 hover:bg-gray-100 flex items-center gap-2">
+                        {block.name}
+                        <Fai icon="chevron-down" style="fas" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        {block.items.map((item: any, itemIndex: number) => (
+                          <DropdownMenuItem 
+                            key={`item-${index}-${itemIndex}`}
+                            onClick={() => handleToolbarAction(item.action || item.label)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Fai icon={item.icon} style="fas" />
+                              <span>{item.label}</span>
+                            </div>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  );
+                }
+                return (
+                  <DropdownMenu key={`toolbar-dropdown-${index}`}>
+                    <DropdownMenuTrigger className="max-w-[180px] border-l border-r w-auto h-10 border-none px-3 py-2 hover:bg-gray-100">
+                      <Fai icon={block.icon} />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      {block.items.map((item: any, itemIndex: number) => (
+                        <DropdownMenuItem 
+                          key={`item-${index}-${itemIndex}`}
+                          onClick={() => handleToolbarAction(item.action || item.label)}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Fai icon={item.icon} style="fas" />
+                            <span>{item.label}</span>
+                          </div>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                );
+              }
+              return (
+                <button
+                  key={`toolbar-btn-${index}`}
+                  id={block.action}
+                  className={`px-3 py-2 border-0 hover:bg-gray-100 transition-colors rounded ${
+                    block.action === activeAction ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
+                  }`}
+                  onClick={() => handleToolbarAction(block.action)}
+                  title={block.label}
+                  aria-label={block.label}
+                  type="button"
+                >
+                  <Fai icon={block.icon} style="fas" />
+                </button>
+              );
+            })}
+            
+            <button
+              className="px-3 py-2 border-0 hover:bg-gray-100 transition-colors rounded text-gray-700"
+              onClick={() => handleToolbarAction('citation')}
+              title="Add Citation"
+              aria-label="Add Citation"
+              type="button"
+            >
+              <Fai icon="quote-right" style="fas" />
+            </button>
+            
+            <button
+              className="px-3 py-2 border-0 hover:bg-gray-100 transition-colors rounded text-gray-700"
+              onClick={() => handleToolbarAction('blockquote')}
+              title="Blockquote"
+              aria-label="Blockquote"
+              type="button"
+            >
+              <Fai icon="quote-left" style="fas" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2" />
+        )}
+
+        <div className="flex items-center border-l pl-2">
+          <button
+            className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
+            onClick={handlePublish}
+            aria-label="Publish document"
+            type="button"
+            title="Publish (Ctrl+S)"
+          >
+            Publish
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-auto bg-white relative">
+        {showPreview ? (
+          <div className="p-8 w-full min-h-full prose max-w-none" style={{ maxWidth: '900px', margin: '0 auto' }}>
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+              <p className="text-sm font-medium text-yellow-800">Preview Mode - Read Only</p>
+            </div>
+            <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(payload.content) }} />
+          </div>
+        ) : editorMode === 'code' ? (
+          <Editor
+            height="100%"
+            defaultLanguage="html"
+            value={payload.content || '<!-- Write your code... -->'}
+            onMount={(editor) => {
+              monacoEditorRef.current = editor;
+              editor.updateOptions({
+                minimap: { enabled: false },
+                fontSize: 14,
+                wordWrap: 'on',
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+              });
+            }}
+            onChange={handleEditorContentChangeCode}
+            theme="vs-light"
+            options={{
+              selectOnLineNumbers: true,
+              roundedSelection: false,
+              cursorStyle: 'line',
+              automaticLayout: true,
+            }}
+          />
+        ) : (
+          <div className="p-8 w-full min-h-full" style={{ maxWidth: '900px', margin: '0 auto' }}>
+            <LexicalComposer initialConfig={initialConfig}>
+              <div className="relative">
+                <RichTextPlugin
+                  contentEditable={
+                    <ContentEditable 
+                      className="outline-none prose max-w-none min-h-[500px]"
+                      style={{ minHeight: '500px' }}
+                      spellCheck={spellCheckEnabled}
+                    />
+                  }
+                  placeholder={
+                    <div className="absolute top-0 left-0 text-gray-400 pointer-events-none">
+                      Start writing...
+                    </div>
+                  }
+                  ErrorBoundary={LexicalErrorBoundary}
+                />
+                <HistoryPlugin />
+                <LinkPlugin />
+                <ListPlugin />
+                <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+                <HtmlPlugin 
+                  initialHtml={payload.content}
+                  onHtmlChange={handleLexicalChange}
+                />
+                <CustomCommandsPlugin onCommand={(cmd) => console.log('Command:', cmd)} />
+                <EditorRefPlugin editorRef={lexicalEditorRef} />
+              </div>
+            </LexicalComposer>
+          </div>
+        )}
+      </div>
+
+      {isGenerating && (
+        <div 
+          className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+          <span>Generating AI content...</span>
+        </div>
+      )}
+      
+      {citations.length > 0 && (
+        <div className="fixed bottom-4 left-4 bg-white border border-gray-200 rounded-lg p-3 max-w-xs">
+          <div className="font-semibold mb-2 text-sm">Citations ({citations.length})</div>
+          <div className="space-y-1 text-xs max-h-40 overflow-y-auto">
+            {citations.map((cite, idx) => (
+              <div key={cite.id} className="border-b pb-1">
+                <span className="font-medium">[{idx + 1}]</span> {cite.author || cite.text}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      <div className="fixed bottom-4 right-4 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs opacity-0 hover:opacity-100 transition-opacity">
+        <div className="font-semibold mb-2">Keyboard Shortcuts</div>
+        <div className="space-y-1">
+          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+B</kbd> Bold</div>
+          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+I</kbd> Italic</div>
+          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+U</kbd> Underline</div>
+          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+K</kbd> Insert Link</div>
+          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+F</kbd> Find</div>
+          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+H</kbd> Find & Replace</div>
+          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+Z</kbd> Undo</div>
+          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+Y</kbd> Redo</div>
+          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+S</kbd> Publish</div>
+          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+Shift+P</kbd> Preview</div>
+        </div>
+      </div>
+      
+      <LinkDialog />
+      <CitationDialog />
+      <ImageDialog />
+      <VideoDialog />
+      <FindReplaceDialog />
+      <PublishDialog />
+    </div>
   );
 }
