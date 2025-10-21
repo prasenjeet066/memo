@@ -12,6 +12,7 @@
     "@hookform/resolvers": "^3.9.1",
     "@huggingface/inference": "latest",
     "@radix-ui/react-accordion": "latest",
+    "canvas":"latest",
     "@radix-ui/react-alert-dialog": "latest",
     "@radix-ui/react-aspect-ratio": "latest",
     "@radix-ui/react-avatar": "latest",
