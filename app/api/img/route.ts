@@ -1,99 +1,65 @@
-import { NextResponse } from "next/server";
 import { createCanvas, registerFont } from "canvas";
-import path from "path";
 import fs from "fs";
+import path from "path";
 import postcss from "postcss";
 import safeParser from "postcss-safe-parser";
 
-// ✅ Optional: cache parsed CSS in memory for speed
 let cssRootCache: postcss.Root | null = null;
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const iconParam = searchParams.get("icon") || "fa-solid fa-question";
+    const iconParam = searchParams.get("icon") || "fa-question";
     const sizeParam = searchParams.get("size") || "512x512";
     const [width, height] = sizeParam.split("x").map(Number);
-
-    // --- Parse icon class (e.g. fa-solid fa-user) ---
-    const parts = iconParam.split(" ");
-    const stylePart = parts.find((p) =>
-      ["fa-solid", "fa-regular", "fa-brands"].includes(p)
-    );
-    const iconPart = parts.find(
-      (p) => p.startsWith("fa-") && !["fa-solid", "fa-regular", "fa-brands"].includes(p)
-    );
-
-    const style = stylePart?.replace("fa-", "") || "solid";
-    const iconName = iconPart?.replace("fa-", "") || "question";
-
-    // --- Resolve Font Awesome TTF file ---
-    const fontFileMap: Record<string, string> = {
-      solid: "fa-solid-900.ttf",
-      regular: "fa-regular-400.ttf",
-      brands: "fa-brands-400.ttf",
-    };
-    const fontFile = fontFileMap[style] || fontFileMap.solid;
-
-    const fontPath = path.join(process.cwd(), "public", "icon", "webfonts", fontFile);
-    if (fs.existsSync(fontPath)) {
-      registerFont(fontPath, { family: "Font Awesome 6 Pro" });
-    } else {
-      console.warn("⚠️ Font not found:", fontPath);
-    }
-
-    // --- Parse unicode using PostCSS ---
+    
+    // --- Parse icon ---
+    const iconName = iconParam.replace("fa-", "");
+    
+    // --- Load CSS ---
     const cssPath = path.join(process.cwd(), "public", "icon", "css", "all.min.css");
-    let unicode = "\f884"; // fallback = question-circle
-
+    let unicode = "\uF128"; // fallback = question-circle
+    
     if (fs.existsSync(cssPath)) {
-      try {
-        if (!cssRootCache) {
-          const cssText = fs.readFileSync(cssPath, "utf8");
-          cssRootCache = postcss.parse(cssText, { parser: safeParser });
-        }
-
-        const targetSelector = `.fa-${iconName}::before`;
-
-        cssRootCache.walkRules(targetSelector, (rule) => {
-          rule.walkDecls("content", (decl) => {
-            if (decl.value) {
-              const cleaned = decl.value.replace(/["']/g, ""); // remove quotes
-              try {
-                unicode = JSON.parse(`"${cleaned}"`); // decode \f007 → actual char
-              } catch {
-                console.warn(`⚠️ Failed to decode unicode for ${iconName}`);
-              }
-            }
-          });
-        });
-
-        if (unicode === "\uf128") {
-          console.warn(`⚠️ Icon "${iconName}" not found in CSS`);
-        }
-      } catch (err) {
-        console.error("❌ Failed to parse Font Awesome CSS:", err);
+      if (!cssRootCache) {
+        const cssText = fs.readFileSync(cssPath, "utf8");
+        cssRootCache = postcss.parse(cssText, { parser: safeParser });
       }
-    } else {
-      console.warn("⚠️ CSS file not found:", cssPath);
+      
+      const targetSelector = `.fa-${iconName}::before`;
+      cssRootCache.walkRules(targetSelector, (rule) => {
+        rule.walkDecls("content", (decl) => {
+          if (decl.value) {
+            const cleaned = decl.value.replace(/["']/g, "");
+            // Convert "\f007" → actual unicode character
+            unicode = String.fromCharCode(parseInt(cleaned.replace("\\f", ""), 16));
+          }
+        });
+      });
     }
-
-    // --- Draw icon onto canvas ---
+    
+    // --- Load any Font Awesome font dynamically ---
+    const fontDir = path.join(process.cwd(), "public", "icon", "webfonts");
+    const fontFiles = fs.readdirSync(fontDir).filter((f) => f.endsWith(".ttf"));
+    if (fontFiles.length > 0) {
+      registerFont(path.join(fontDir, fontFiles[0]), { family: "FA" });
+    } else {
+      console.warn("⚠️ No Font Awesome font found");
+    }
+    
+    // --- Draw icon ---
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
-
-    // Background
+    
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, width, height);
-
-    // Icon glyph
+    
     ctx.fillStyle = "#111111";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = `${Math.floor(width * 0.6)}px "Font Awesome 6 Pro"`;
+    ctx.font = `${Math.floor(width * 0.6)}px "FA"`;
     ctx.fillText(unicode, width / 2, height / 2);
-
-    // --- Output as PNG ---
+    
     const pngBuffer = canvas.toBuffer("image/png");
     return new Response(pngBuffer, {
       headers: {
@@ -104,8 +70,6 @@ export async function GET(req: Request) {
     });
   } catch (err) {
     console.error("❌ Error generating icon:", err);
-
-    // Return a fallback error image
     const canvas = createCanvas(256, 256);
     const ctx = canvas.getContext("2d");
     ctx.fillStyle = "#f8d7da";
@@ -115,11 +79,6 @@ export async function GET(req: Request) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("Error", 128, 128);
-
-    const buffer = canvas.toBuffer("image/png");
-    return new Response(buffer, {
-      headers: { "Content-Type": "image/png" },
-      status: 500,
-    });
+    return new Response(canvas.toBuffer("image/png"), { status: 500, headers: { "Content-Type": "image/png" } });
   }
 }
