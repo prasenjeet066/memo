@@ -31,7 +31,7 @@ export async function GET(req: Request) {
 
   const fontPath = path.join(process.cwd(), "public", "icon", "webfonts", fontFile);
   if (fs.existsSync(fontPath)) {
-    registerFont(fontPath, { family: "FontAwesome" });
+    registerFont(fontPath, { family: "Font Awesome 6 Pro" });
   } else {
     console.warn("⚠️ Font not found:", fontPath);
   }
@@ -62,7 +62,7 @@ export async function GET(req: Request) {
   ctx.fillStyle = "#111";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = `${Math.floor(width * 0.6)}px "FontAwesome"`;
+  ctx.font = `${Math.floor(width * 0.6)}px "Font Awesome 6 Pro"`;
   ctx.fillText(unicode, width / 2, height / 2);
 
   // Output image
