@@ -44,7 +44,7 @@ export async function GET(req: Request) {
 
     // --- Parse unicode using PostCSS ---
     const cssPath = path.join(process.cwd(), "public", "icon", "css", "all.min.css");
-    let unicode = "\uf128"; // fallback = question-circle
+    let unicode = "\f884"; // fallback = question-circle
 
     if (fs.existsSync(cssPath)) {
       try {
@@ -53,7 +53,7 @@ export async function GET(req: Request) {
           cssRootCache = postcss.parse(cssText, { parser: safeParser });
         }
 
-        const targetSelector = `.fa-${iconName}:before`;
+        const targetSelector = `.fa-${iconName}::before`;
 
         cssRootCache.walkRules(targetSelector, (rule) => {
           rule.walkDecls("content", (decl) => {
@@ -91,7 +91,7 @@ export async function GET(req: Request) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = `${Math.floor(width * 0.6)}px "Font Awesome 6 Pro"`;
-    ctx.fillText('hi', width / 2, height / 2);
+    ctx.fillText(unicode, width / 2, height / 2);
 
     // --- Output as PNG ---
     const pngBuffer = canvas.toBuffer("image/png");
