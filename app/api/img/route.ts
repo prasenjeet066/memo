@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { createCanvas, registerFont } from "canvas";
 import path from "path";
 import fs from "fs";
+import postcss from "postcss";
+import safeParser from "postcss-safe-parser";
+
+// ✅ Optional: cache parsed CSS in memory for speed
+let cssRootCache: postcss.Root | null = null;
 
 export async function GET(req: Request) {
   try {
@@ -22,7 +27,7 @@ export async function GET(req: Request) {
     const style = stylePart?.replace("fa-", "") || "solid";
     const iconName = iconPart?.replace("fa-", "") || "question";
 
-    // --- Resolve font file ---
+    // --- Resolve Font Awesome TTF file ---
     const fontFileMap: Record<string, string> = {
       solid: "fa-solid-900.ttf",
       regular: "fa-regular-400.ttf",
@@ -37,46 +42,59 @@ export async function GET(req: Request) {
       console.warn("⚠️ Font not found:", fontPath);
     }
 
-    // --- Parse unicode from local CSS ---
+    // --- Parse unicode using PostCSS ---
     const cssPath = path.join(process.cwd(), "public", "icon", "css", "all.min.css");
     let unicode = "\uf128"; // fallback = question-circle
 
     if (fs.existsSync(cssPath)) {
-      const css = fs.readFileSync(cssPath, "utf8");
-      // Match e.g. .fa-user:before{content:"\f007"}
-      const regex = new RegExp(
-        `\\.fa-${iconName}:before\\s*\\{[^}]*content:"(\\\\[a-fA-F0-9]+)"`,
-        "i"
-      );
-      const match = css.match(regex);
-      if (match) {
-        unicode = JSON.parse(`"${match[1]}"`); // convert \f007 → actual char
-      } else {
-        console.warn(`⚠️ Icon "${iconName}" not found in CSS`);
+      try {
+        if (!cssRootCache) {
+          const cssText = fs.readFileSync(cssPath, "utf8");
+          cssRootCache = postcss.parse(cssText, { parser: safeParser });
+        }
+
+        const targetSelector = `.fa-${iconName}:before`;
+
+        cssRootCache.walkRules(targetSelector, (rule) => {
+          rule.walkDecls("content", (decl) => {
+            if (decl.value) {
+              const cleaned = decl.value.replace(/["']/g, ""); // remove quotes
+              try {
+                unicode = JSON.parse(`"${cleaned}"`); // decode \f007 → actual char
+              } catch {
+                console.warn(`⚠️ Failed to decode unicode for ${iconName}`);
+              }
+            }
+          });
+        });
+
+        if (unicode === "\uf128") {
+          console.warn(`⚠️ Icon "${iconName}" not found in CSS`);
+        }
+      } catch (err) {
+        console.error("❌ Failed to parse Font Awesome CSS:", err);
       }
     } else {
       console.warn("⚠️ CSS file not found:", cssPath);
     }
 
-    // --- Draw icon ---
+    // --- Draw icon onto canvas ---
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
 
     // Background
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, width, height);
 
-    // Icon
-    ctx.fillStyle = "#111";
+    // Icon glyph
+    ctx.fillStyle = "#111111";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = `${Math.floor(width * 0.6)}px "Font Awesome 6 Pro"`;
     ctx.fillText(unicode, width / 2, height / 2);
 
-    // --- Output PNG ---
+    // --- Output as PNG ---
     const pngBuffer = canvas.toBuffer("image/png");
-
-    // ✅ Return as proper binary response
     return new Response(pngBuffer, {
       headers: {
         "Content-Type": "image/png",
@@ -87,13 +105,13 @@ export async function GET(req: Request) {
   } catch (err) {
     console.error("❌ Error generating icon:", err);
 
-    // Return a simple error PNG instead of .bin or text
+    // Return a fallback error image
     const canvas = createCanvas(256, 256);
     const ctx = canvas.getContext("2d");
     ctx.fillStyle = "#f8d7da";
     ctx.fillRect(0, 0, 256, 256);
     ctx.fillStyle = "#721c24";
-    ctx.font = '20px sans-serif';
+    ctx.font = "20px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("Error", 128, 128);
