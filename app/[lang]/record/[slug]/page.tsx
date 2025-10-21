@@ -3,7 +3,7 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import { Home, Compass, HandHeart, Settings } from 'lucide-react'
 import Header from '@/components/header'
 import { useMobile } from "@/lib/units/use-mobile"
-import CreateNew from '@/components/record/create'
+import CreateNew from '@/components/record/createx'
 import React, { useState, useEffect, useMemo } from 'react'
 
 // Define proper types for params

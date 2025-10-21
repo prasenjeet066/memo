@@ -1,15 +1,166 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html lang="en" xml:lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta content="text/html; charset=utf-8" http-equiv="content-type"/>
-<meta content="en-us" http-equiv="Content-Language"/>
-<title>Aminute Regular - Web Font Specimen</title>
-<link rel="stylesheet" type="text/css" media="screen" href="Aminute.css" />
-<style type="text/css" media="screen">
-body { font-size: 42px; font-family: "lotter", Georgia; }
-</style>
+  <meta charset="UTF-8">
+  <title>Voronoi Stippling (Subject Only, Smooth)</title>
+  <!-- Load D3.js library for handling Voronoi and SVG drawing -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    /* General page styling */
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #fff; /* dark background */
+      color: #000; /* text color */
+      font-family: sans-serif;
+    }
+
+    /* Style for the SVG canvas */
+    svg {
+      margin-top: 10px;
+      border-radius: 10px;
+    }
+
+    /* Style for input and button */
+    input, button {
+      margin-top: 10px;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    /* Specific button style */
+    button {
+      background: #00b894;
+      color: white;
+      cursor: pointer;
+    }
+
+    /* Hover effect for button */
+    button:hover {
+      background: #019874;
+    }
+  </style>
 </head>
 <body>
-<p contenteditable="true">The quick brown fox jumps over the lazy dog. $123.45!</p>
+  <h2>Voronoi Stippling – Subject Only</h2>
+
+  <!-- Input field for the image URL -->
+  <input type="text" id="imageURL" placeholder="Enter image URL" size="50" value="/Web-TT/placeholder-user.jpg">
+  <!-- Button to trigger the generation of Voronoi stippling -->
+  <button id="generate">Generate</button>
+
+  <!-- SVG element where the Voronoi diagram will be drawn -->
+  <svg width="800" height="800"></svg>
+
+  <script>
+    // Select the SVG element using D3
+    const svg = d3.select("svg");
+    const width = +svg.attr("width");  // Get width as number
+    const height = +svg.attr("height"); // Get height as number
+    const button = document.getElementById("generate"); // Select generate button
+
+    // Add click event listener to the button
+    button.addEventListener("click", () => {
+      const url = document.getElementById("imageURL").value.trim(); // Get URL input
+      if (!url) return alert("Enter a valid image URL."); // Validate input
+
+      // Disable button and show processing state
+      button.disabled = true;
+      button.textContent = "Processing...";
+
+      // Create a new image object
+      const img = new Image();
+      img.crossOrigin = "Anonymous"; // Allow cross-origin image loading
+      img.src = url; // Set image source
+
+      // When the image is loaded
+      img.onload = () => {
+        // Create a canvas to extract image pixel data
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+
+        // Draw the image onto the canvas
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Get the image pixel data (RGBA array)
+        const imageData = ctx.getImageData(0, 0, width, height);
+
+        const points = []; // Array to store Voronoi seed points
+        const maxPoints = 800; // Maximum number of points to generate
+        let attempts = 65000; // Limit to avoid infinite loops
+
+        // Randomly generate points only on dark areas (the subject)
+        while (points.length < maxPoints && attempts--) {
+          const x = Math.random() * width; // Random x-coordinate
+          const y = Math.random() * height; // Random y-coordinate
+          const idx = (Math.floor(y) * width + Math.floor(x)) * 4; // Pixel index in array
+          const r = imageData.data[idx];
+          const g = imageData.data[idx + 1];
+          const b = imageData.data[idx + 2];
+          // Calculate brightness using luminance formula
+          const brightness = (0.299*r + 0.587*g + 0.114*b)/255;
+
+          // Add point if pixel is dark enough and probability check based on brightness
+          if (brightness > 0.15 && Math.random() > brightness) {
+            points.push([x, y]);
+          }
+        }
+
+        // Create Delaunay triangulation and Voronoi diagram from points
+        const delaunay = d3.Delaunay.from(points);
+        const voronoi = delaunay.voronoi([0, 0, width, height]);
+
+        // Clear previous SVG content
+        svg.selectAll("*").remove();
+
+        // Create an array of Voronoi cell paths
+        const paths = points.map((p, i) => {
+          const cx = Math.floor(p[0]);
+          const cy = Math.floor(p[1]);
+          const idx = (cy * width + cx) * 4;
+          const r = imageData.data[idx];
+          const g = imageData.data[idx + 1];
+          const b = imageData.data[idx + 2];
+          const brightness = (0.299*r + 0.587*g + 0.114*b)/255;
+
+          // Keep only cells where the center pixel is dark
+          if (brightness < 0.5) {
+            return voronoi.renderCell(i); // Get SVG path string
+          }
+          
+        }).filter(Boolean); // Remove null values
+
+        // Draw the Voronoi cells as SVG paths
+        svg.append("g")
+          .selectAll("path")
+          .data(paths)
+          .join("path")
+          .attr("d", d => d) // Set path data
+          .attr("fill", 'none') // No fill, just outline
+          .attr("stroke", "#000") // White stroke
+          .attr("stroke-width", () => 0.7 + Math.random() * 0.6) // Random stroke width for variation
+          .attr("stroke-linecap", "round")
+          .attr("stroke-linejoin", "round")
+          .attr("opacity", 0.9); // Slight transparency
+
+        // Re-enable button after processing
+        button.disabled = false;
+        button.textContent = "Generate";
+      };
+
+      // Handle image load errors
+      img.onerror = () => {
+        alert("Failed to load image. Check URL or CORS policy.");
+        button.disabled = false;
+        button.textContent = "Generate";
+      };
+    });
+  </script>
 </body>
 </html>
