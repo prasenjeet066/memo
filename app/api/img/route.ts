@@ -42,7 +42,7 @@ export async function GET(req: Request) {
 
     // --- Load CSS once ---
     const cssPath = path.join(process.cwd(), "public", "icon", "css", "fontawesome.css");
-    let unicode = "\uf128"; // fallback to question mark
+    let unicode = "f128"; // fallback to fa-question
 
     if (fs.existsSync(cssPath)) {
       if (!cssRootCache) {
@@ -50,13 +50,19 @@ export async function GET(req: Request) {
         cssRootCache = postcss.parse(cssText, { parser: safeParser });
       }
 
+      // Walk all rules to find the icon
       cssRootCache.walkRules((rule) => {
-        if (rule.selector.includes(`fa-${iconName}`) && rule.selector.includes("::before")) {
-          rule.walkDecls("content", (decl) => {
-            if (decl.value) {
-              unicode = decl.value.replace(/["'\\]/g, "").trim();
-            }
-          });
+        const selectors = rule.selector.split(",").map((s) => s.trim());
+
+        for (const sel of selectors) {
+          if (sel.endsWith("::before") && sel.includes(`fa-${iconName}`)) {
+            rule.walkDecls("content", (decl) => {
+              if (decl.value) {
+                unicode = decl.value.replace(/["'\\]/g, "").trim();
+              }
+            });
+            break; // found the icon
+          }
         }
       });
     }
@@ -79,6 +85,9 @@ export async function GET(req: Request) {
       );
     }
 
+    // --- Convert Unicode hex to character ---
+    const iconChar = String.fromCharCode(parseInt(unicode, 16));
+
     // --- Draw icon ---
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
@@ -90,8 +99,7 @@ export async function GET(req: Request) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = `${Math.floor(width * 0.6)}px "FA-${style}"`;
-    const iconChar = String.fromCharCode(parseInt(unicode, 16));
-    ctx.fillText(iconName, width / 2, height / 2);
+    ctx.fillText(iconChar, width / 2, height / 2);
 
     const pngBuffer = canvas.toBuffer("image/png");
 
