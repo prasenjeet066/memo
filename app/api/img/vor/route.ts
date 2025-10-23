@@ -12,9 +12,9 @@ export async function GET(request) {
     }
     
     // 🔹 কনফিগারেশন
-    const MAX_POINTS = 80000; // পারফরম্যান্সের জন্য সীমিত
+    const MAX_POINTS = 800000; // পারফরম্যান্সের জন্য সীমিত
     const WIDTH = 800;
-    const HEIGHT = 600;
+    const HEIGHT = 800;
     
     // 🔹 ইমেজ লোড
     const img = await loadImage(imageUrl);
