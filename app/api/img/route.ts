@@ -68,7 +68,7 @@ export async function GET(req: Request) {
             }
           });
         });
-        if (unicode !== "\uF128") break; // found valid icon
+        if (unicode !== "F1") break; // found valid icon
       }
     }
     
