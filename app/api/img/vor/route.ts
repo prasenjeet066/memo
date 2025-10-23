@@ -62,7 +62,7 @@ export async function GET(request) {
     const voronoi = delaunay.voronoi([0, 0, WIDTH, HEIGHT]);
     
     // 🔹 ব্যাকগ্রাউন্ড সেট করা (সাদা)
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = "none";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
     
     // 🔹 প্রতিটি cell আঁকা
@@ -88,7 +88,7 @@ export async function GET(request) {
       }
       ctx.closePath();
       
-      ctx.fillStyle = color;
+      ctx.fillStyle ='none';
       ctx.fill();
     }
     
