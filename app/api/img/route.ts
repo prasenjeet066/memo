@@ -87,7 +87,7 @@ export async function GET(req: Request) {
     }
 
     // --- Convert Unicode hex to character ---
-    const iconChar = parseInt(unicode, 16);
+    //const iconChar = parseInt(unicode, 16);
 
     // --- Draw icon ---
     const canvas = createCanvas(width, height);
