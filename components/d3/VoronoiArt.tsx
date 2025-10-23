@@ -5,17 +5,54 @@ const VoronoiArt = () => {
   const svgRef = useRef();
   const inputRef = useRef();
   const imgRef = useRef();
+  const pointsRef = useRef([]);
+  const imageDataRef = useRef(null);
+  
   const [processing, setProcessing] = useState(false);
   const [exportEnabled, setExportEnabled] = useState(false);
   
   const width = 800;
   const height = 600;
-  let points = [];
-  const maxPoints = 100000;
-  let imageData = null;
+  const maxPoints = 50000; // you can adjust this for performance
+  const batchSize = 5000; // process in batches to prevent freezing
   
   const clearSVG = () => {
     d3.select(svgRef.current).selectAll("*").remove();
+  };
+  
+  const getColorAtPoint = (x, y) => {
+    const idx = (Math.floor(y) * width + Math.floor(x)) * 4;
+    const r = imageDataRef.current.data[idx];
+    const g = imageDataRef.current.data[idx + 1];
+    const b = imageDataRef.current.data[idx + 2];
+    return `rgb(${r},${g},${b})`;
+  };
+  
+  const generatePointsBatch = (resolve) => {
+    let added = pointsRef.current.length;
+    let tries = 60000;
+    
+    while (added < maxPoints && tries > 0 && added < pointsRef.current.length + batchSize) {
+      const x = Math.random() * width;
+      const y = Math.random() * height;
+      const idx = (Math.floor(y) * width + Math.floor(x)) * 4;
+      const r = imageDataRef.current.data[idx];
+      const g = imageDataRef.current.data[idx + 1];
+      const b = imageDataRef.current.data[idx + 2];
+      const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      
+      if (brightness > 0 && Math.random() > brightness) {
+        pointsRef.current.push([x, y]);
+        added++;
+      }
+      tries--;
+    }
+    
+    if (added < maxPoints && tries > 0) {
+      setTimeout(() => generatePointsBatch(resolve), 0);
+    } else {
+      resolve();
+    }
   };
   
   const handleGenerate = () => {
@@ -33,63 +70,35 @@ const VoronoiArt = () => {
       canvas.height = height;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(img, 0, 0, width, height);
-      imageData = ctx.getImageData(0, 0, width, height);
-      
-      points = [];
-      const attempts = 60000;
-      
-      // Generate all points at once
-      let added = 0;
-      let tries = attempts;
-      while (added < maxPoints && tries > 0) {
-        const x = Math.random() * width;
-        const y = Math.random() * height;
-        const idx = (Math.floor(y) * width + Math.floor(x)) * 4;
-        const r = imageData.data[idx];
-        const g = imageData.data[idx + 1];
-        const b = imageData.data[idx + 2];
-        const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        
-        if (brightness > 0 && Math.random() > brightness) {
-          points.push([x, y]);
-          added++;
-        }
-        tries--;
-      }
-      
+      imageDataRef.current = ctx.getImageData(0, 0, width, height);
+      pointsRef.current = [];
       clearSVG();
       
-      const delaunay = d3.Delaunay.from(points);
-      const voronoi = delaunay.voronoi([0, 0, width, height]);
-      
-      const paths = points
-        .map((p, i) => {
-          const cx = Math.floor(p[0]);
-          const cy = Math.floor(p[1]);
-          const idx = (cy * width + cx) * 4;
-          const r = imageData.data[idx];
-          const g = imageData.data[idx + 1];
-          const b = imageData.data[idx + 2];
-          const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-          
-          if (brightness < 0.5) return voronoi.renderCell(i);
-        })
-        .filter(Boolean);
-      
-      const svg = d3.select(svgRef.current);
-      svg.selectAll("path")
-        .data(paths)
-        .join("path")
-        .attr("d", d => d)
-        .attr("fill", "none")
-        .attr("stroke", "#000")
-        .attr("stroke-width", 0.9)
-        .attr("stroke-linecap", "round")
-        .attr("stroke-linejoin", "round")
-        .attr("opacity", 1);
-      
-      setProcessing(false);
-      setExportEnabled(true);
+      // generate points in batches
+      new Promise(generatePointsBatch).then(() => {
+        const delaunay = d3.Delaunay.from(pointsRef.current);
+        const voronoi = delaunay.voronoi([0, 0, width, height]);
+        
+        const paths = pointsRef.current
+          .map((p, i) => {
+            const cell = voronoi.renderCell(i);
+            if (!cell) return null;
+            const fillColor = getColorAtPoint(p[0], p[1]);
+            return { d: cell, fill: fillColor };
+          })
+          .filter(Boolean);
+        
+        const svg = d3.select(svgRef.current);
+        svg.selectAll("path")
+          .data(paths)
+          .join("path")
+          .attr("d", d => d.d)
+          .attr("fill", d => d.fill)
+          .attr("stroke", "none");
+        
+        setProcessing(false);
+        setExportEnabled(true);
+      });
     };
     
     img.onerror = () => {
@@ -99,9 +108,8 @@ const VoronoiArt = () => {
   };
   
   const handleExport = () => {
-    const svgElement = svgRef.current;
     const serializer = new XMLSerializer();
-    const svgBlob = new Blob([serializer.serializeToString(svgElement)], {
+    const svgBlob = new Blob([serializer.serializeToString(svgRef.current)], {
       type: "image/svg+xml",
     });
     const url = URL.createObjectURL(svgBlob);
