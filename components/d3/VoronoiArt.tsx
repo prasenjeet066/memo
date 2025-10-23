@@ -1,6 +1,5 @@
 import React, { useRef, useState } from "react";
 import * as d3 from "d3";
-import { interpolatePath } from "d3-interpolate-path"; // Make sure to install this: npm install d3-interpolate-path
 
 const VoronoiArt = () => {
   const svgRef = useRef();
@@ -13,7 +12,6 @@ const VoronoiArt = () => {
   const height = 600;
   let points = [];
   const maxPoints = 100000;
-  const animationStep = 500;
   let imageData = null;
   
   const clearSVG = () => {
@@ -26,7 +24,7 @@ const VoronoiArt = () => {
     
     setProcessing(true);
     const img = new Image();
-    img.crossOrigin = "Anonymous"; // Allow cross-origin images
+    img.crossOrigin = "Anonymous";
     img.src = url;
     
     img.onload = () => {
@@ -38,78 +36,66 @@ const VoronoiArt = () => {
       imageData = ctx.getImageData(0, 0, width, height);
       
       points = [];
-      let attempts = 60000;
+      const attempts = 60000;
+      
+      // Generate all points at once
+      let added = 0;
+      let tries = attempts;
+      while (added < maxPoints && tries > 0) {
+        const x = Math.random() * width;
+        const y = Math.random() * height;
+        const idx = (Math.floor(y) * width + Math.floor(x)) * 4;
+        const r = imageData.data[idx];
+        const g = imageData.data[idx + 1];
+        const b = imageData.data[idx + 2];
+        const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        
+        if (brightness > 0 && Math.random() > brightness) {
+          points.push([x, y]);
+          added++;
+        }
+        tries--;
+      }
       
       clearSVG();
-      animatePoints(attempts);
+      
+      const delaunay = d3.Delaunay.from(points);
+      const voronoi = delaunay.voronoi([0, 0, width, height]);
+      
+      const paths = points
+        .map((p, i) => {
+          const cx = Math.floor(p[0]);
+          const cy = Math.floor(p[1]);
+          const idx = (cy * width + cx) * 4;
+          const r = imageData.data[idx];
+          const g = imageData.data[idx + 1];
+          const b = imageData.data[idx + 2];
+          const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+          
+          if (brightness < 0.5) return voronoi.renderCell(i);
+        })
+        .filter(Boolean);
+      
+      const svg = d3.select(svgRef.current);
+      svg.selectAll("path")
+        .data(paths)
+        .join("path")
+        .attr("d", d => d)
+        .attr("fill", "none")
+        .attr("stroke", "#000")
+        .attr("stroke-width", 0.9)
+        .attr("stroke-linecap", "round")
+        .attr("stroke-linejoin", "round")
+        .attr("opacity", 1);
+      
+      setProcessing(false);
+      setExportEnabled(true);
     };
     
     img.onerror = () => {
       alert("Failed to load image.");
       setProcessing(false);
     };
-  };
-  
-  const animatePoints = (attempts) => {
-    if (points.length >= maxPoints || attempts <= 0) {
-      setProcessing(false);
-      setExportEnabled(true);
-      return;
-    }
-    
-    let added = 0;
-    while (added < animationStep && attempts > 0) {
-      const x = Math.random() * width;
-      const y = Math.random() * height;
-      const idx = (Math.floor(y) * width + Math.floor(x)) * 4;
-      const r = imageData.data[idx];
-      const g = imageData.data[idx + 1];
-      const b = imageData.data[idx + 2];
-      const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-      
-      if (brightness > 0 && Math.random() > brightness) {
-        points.push([x, y]);
-        added++;
-      }
-      attempts--;
-    }
-    
-    const delaunay = d3.Delaunay.from(points);
-    const voronoi = delaunay.voronoi([0, 0, width, height]);
-    
-    const paths = points
-      .map((p, i) => {
-        const cx = Math.floor(p[0]);
-        const cy = Math.floor(p[1]);
-        const idx = (cy * width + cx) * 4;
-        const r = imageData.data[idx];
-        const g = imageData.data[idx + 1];
-        const b = imageData.data[idx + 2];
-        const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        
-        if (brightness < 0.5) return voronoi.renderCell(i);
-      })
-      .filter(Boolean);
-    
-    const svg = d3.select(svgRef.current);
-    const selection = svg.selectAll("path").data(paths);
-    
-    selection
-      .join("path")
-      .transition()
-      .duration(200)
-      .attrTween("d", function(d) {
-        const previous = d3.select(this).attr("d") || d;
-        return interpolatePath(previous, d);
-      })
-      .attr("fill", "none")
-      .attr("stroke", "#000")
-      .attr("stroke-width", 0.9)
-      .attr("stroke-linecap", "round")
-      .attr("stroke-linejoin", "round")
-      .attr("opacity", 1);
-    
-    requestAnimationFrame(() => animatePoints(attempts));
   };
   
   const handleExport = () => {
