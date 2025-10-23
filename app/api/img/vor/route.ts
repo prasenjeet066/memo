@@ -1,16 +1,12 @@
 import { createCanvas, loadImage } from "canvas";
 import { Delaunay } from "d3-delaunay";
 
-export default async function handler(req, res) {
-  export default async function handler(req, res) {
-    if (req.method !== "GET") {
-      return res.status(405).json({ error: "Method not allowed" });
-    }
-    
-    const { url } = req.query;
-    if (!url) return res.status(400).send("Missing image URL");
-    
-    // ... rest of your code
+export async function GET(req) {
+  const { searchParams } = new URL(req.url);
+  const url = searchParams.get("url");
+  
+  if (!url) {
+    return new Response("Missing image URL", { status: 400 });
   }
   
   const width = 800;
@@ -48,8 +44,8 @@ export default async function handler(req, res) {
     const delaunay = Delaunay.from(points);
     const voronoi = delaunay.voronoi([0, 0, width, height]);
     
-    // Draw colored Voronoi
     ctx.clearRect(0, 0, width, height);
+    
     points.forEach((p, i) => {
       const cell = voronoi.cellPolygon(i);
       if (!cell) return;
@@ -71,10 +67,14 @@ export default async function handler(req, res) {
     });
     
     const buffer = canvas.toBuffer("image/png");
-    res.setHeader("Content-Type", "image/png");
-    res.status(200).send(buffer);
+    return new Response(buffer, {
+      status: 200,
+      headers: {
+        "Content-Type": "image/png",
+      },
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).send("Error generating Voronoi art");
+    return new Response("Error generating Voronoi art", { status: 500 });
   }
 }
