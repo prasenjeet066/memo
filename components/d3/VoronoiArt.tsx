@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState , useEffect} from "react";
 import * as d3 from "d3";
 
 const VoronoiArt = () => {
@@ -15,7 +15,9 @@ const VoronoiArt = () => {
   const height = 600;
   const maxPoints = 50000; // you can adjust this for performance
   const batchSize = 5000; // process in batches to prevent freezing
-  
+  useEffect(()=>{
+    imgRef.current.src = inputRef.current.value
+  },[inputRef.current,imgRef.currenr])
   const clearSVG = () => {
     d3.select(svgRef.current).selectAll("*").remove();
   };
@@ -137,7 +139,7 @@ const VoronoiArt = () => {
         Save
       </button>
       <svg ref={svgRef} width={width} height={height}></svg>
-      <img ref={imgRef} src={`/api/vor?url=${encodeURIComponent(inputRef.current.value)}`} alt="Exported PNG" />
+      <img ref={imgRef}  alt="Exported PNG" />
     </div>
   );
 };
