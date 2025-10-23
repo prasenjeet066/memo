@@ -41,8 +41,8 @@ export async function GET(req: Request) {
     }
     
     // --- Load CSS once ---
-    const cssPath = path.join(process.cwd(), "public", "icon", "css", "all.min.css");
-    let unicode = "\uF128"; // fallback (fa-question)
+    const cssPath = path.join(process.cwd(), "public", "icon", "css", "/public/icon/css/fontawesome.css");
+    //let unicode = "\uF128"; // fallback (fa-question)
     
     if (fs.existsSync(cssPath)) {
       if (!cssRootCache) {
@@ -62,9 +62,8 @@ export async function GET(req: Request) {
           rule.walkDecls("content", (decl) => {
             if (decl.value) {
               const cleaned = decl.value.replace(/["']/g, "");
-              unicode = cleaned.replace(/\\([0-9a-fA-F]+)/g, (_, hex) =>
-                String.fromCharCode(parseInt(hex, 16))
-              );
+              unicode = cleaned
+              
             }
           });
         });
@@ -103,7 +102,7 @@ export async function GET(req: Request) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = `${Math.floor(width * 0.6)}px "FA-${style}"`;
-    ctx.fillText("unicode", width / 2, height / 2);
+    ctx.fillText(unicode, width / 2, height / 2);
     
     const pngBuffer = canvas.toBuffer("image/png");
     
