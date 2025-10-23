@@ -74,7 +74,7 @@ export async function GET(request) {
       }
       ctx.closePath();
       
-      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.8)`; // হালকা ট্রান্সপারেন্ট লাইন
+      ctx.strokeStyle = `black`; // হালকা ট্রান্সপারেন্ট লাইন
       ctx.lineWidth = 0.5; // লাইন পাতলা রাখো
       ctx.stroke();
     }
