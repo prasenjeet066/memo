@@ -80,8 +80,8 @@ export async function GET(request) {
       }
       ctx.closePath();
       
-      ctx.strokeStyle = 'black'//`rgba(${r}, ${g}, ${b}, 0.8)`; // outline color from original image
-      ctx.lineWidth = 0.5;
+      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.8)`; // outline color from original image
+      ctx.lineWidth = 1;
       ctx.stroke();
     }
     
