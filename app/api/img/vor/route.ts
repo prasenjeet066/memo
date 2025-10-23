@@ -89,7 +89,7 @@ export async function GET(request) {
       ctx.closePath();
       
       ctx.fillStyle ='none';
-      ctx.fill();
+      //ctx.fill();
     }
     
     // 🔹 PNG রিটার্ন
