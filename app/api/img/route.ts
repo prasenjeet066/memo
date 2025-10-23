@@ -32,8 +32,9 @@ export async function GET(req: Request) {
           if (decl.value) {
             const cleaned = decl.value.replace(/["']/g, "");
             // Convert "\f007" → actual unicode character
-            unicode = closed
-            
+            unicode = cleaned.replace(/\\([0-9a-fA-F]+)/g, (_, hex) =>
+              String.fromCharCode(parseInt(hex, 16))
+            );
           }
         });
       });
