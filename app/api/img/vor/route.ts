@@ -10,16 +10,16 @@ export async function GET(request) {
       return new Response("❌ Missing image URL", { status: 400 });
     }
     
-    const MAX_POINTS = 8000;
+    const MAX_POINTS = 800000;
     const WIDTH = 800;
     const HEIGHT = 800;
     
+    // 🔹 Load image
     const img = await loadImage(imageUrl);
-    const canvas = createCanvas(WIDTH, HEIGHT);
-    const ctx = canvas.getContext("2d");
     
-    // ✅ ব্যাকগ্রাউন্ড transparent রাখতে fillRect দরকার নেই
-    ctx.clearRect(0, 0, WIDTH, HEIGHT);
+    // 🔹 Create offscreen canvas for image sampling
+    const imgCanvas = createCanvas(WIDTH, HEIGHT);
+    const imgCtx = imgCanvas.getContext("2d");
     
     const aspect = img.width / img.height;
     let drawWidth = WIDTH;
@@ -33,12 +33,18 @@ export async function GET(request) {
     const offsetX = (WIDTH - drawWidth) / 2;
     const offsetY = (HEIGHT - drawHeight) / 2;
     
-    ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
-    
-    const imageData = ctx.getImageData(0, 0, WIDTH, HEIGHT);
-    const points = [];
+    // Draw the image only to sample pixels
+    imgCtx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+    const imageData = imgCtx.getImageData(0, 0, WIDTH, HEIGHT);
     const data = imageData.data;
     
+    // 🔹 Create transparent canvas for final drawing
+    const canvas = createCanvas(WIDTH, HEIGHT);
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, WIDTH, HEIGHT); // Transparent background
+    
+    // 🔹 Sample points based on brightness
+    const points = [];
     for (let i = 0; i < MAX_POINTS; i++) {
       const x = Math.random() * WIDTH;
       const y = Math.random() * HEIGHT;
@@ -52,10 +58,11 @@ export async function GET(request) {
       if (Math.random() > brightness) points.push([x, y]);
     }
     
+    // 🔹 Create Voronoi
     const delaunay = Delaunay.from(points);
     const voronoi = delaunay.voronoi([0, 0, WIDTH, HEIGHT]);
     
-    // 🔹 শুধু আউটলাইন আঁকব
+    // 🔹 Draw only outline, no background
     for (let i = 0; i < points.length; i++) {
       const cell = voronoi.cellPolygon(i);
       if (!cell) continue;
@@ -66,7 +73,6 @@ export async function GET(request) {
       const g = data[idx + 1];
       const b = data[idx + 2];
       
-      // 🔸 আউটলাইনের রঙ ইমেজের পিক্সেল অনুযায়ী
       ctx.beginPath();
       ctx.moveTo(cell[0][0], cell[0][1]);
       for (let j = 1; j < cell.length; j++) {
@@ -74,11 +80,12 @@ export async function GET(request) {
       }
       ctx.closePath();
       
-      ctx.strokeStyle = `black`; // হালকা ট্রান্সপারেন্ট লাইন
-      ctx.lineWidth = 0.5; // লাইন পাতলা রাখো
+      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.8)`; // outline color from original image
+      ctx.lineWidth = 0.5;
       ctx.stroke();
     }
     
+    // 🔹 Return transparent PNG
     const buffer = canvas.toBuffer("image/png");
     return new Response(buffer, {
       status: 200,
