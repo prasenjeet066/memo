@@ -81,7 +81,7 @@ export async function GET(req: Request) {
             style,
             fontFile,
             iconName,
-            unicode: `\\u${unicode.charCodeAt(0).toString(16).padStart(4, "0")}`,
+            unicode: `hhh`,
           },
           null,
           2
