@@ -1,9 +1,17 @@
 import { createCanvas, loadImage } from "canvas";
 import { Delaunay } from "d3-delaunay";
 
-export default async function GET(req, res) {
-  const { url } = req.query;
-  if (!url) return res.status(400).send("Missing image URL");
+export default async function handler(req, res) {
+  export default async function handler(req, res) {
+    if (req.method !== "GET") {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
+    
+    const { url } = req.query;
+    if (!url) return res.status(400).send("Missing image URL");
+    
+    // ... rest of your code
+  }
   
   const width = 800;
   const height = 600;
