@@ -55,15 +55,22 @@ export async function GET(req) {
       const r = imageData.data[idx];
       const g = imageData.data[idx + 1];
       const b = imageData.data[idx + 2];
-      ctx.fillStyle = `rgb(${r},${g},${b})`;
       
-      ctx.beginPath();
-      ctx.moveTo(cell[0][0], cell[0][1]);
-      for (let j = 1; j < cell.length; j++) {
-        ctx.lineTo(cell[j][0], cell[j][1]);
+      const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      
+      // Keep only cells where the center pixel is dark
+      if (brightness < 0.5) {
+        ctx.fillStyle = `none`;
+        
+        ctx.beginPath();
+        ctx.moveTo(cell[0][0], cell[0][1]);
+        
+        for (let j = 1; j < cell.length; j++) {
+          ctx.lineTo(cell[j][0], cell[j][1]);
+        }
+        ctx.closePath();
+        ctx.fill();
       }
-      ctx.closePath();
-      ctx.fill();
     });
     
     const buffer = canvas.toBuffer("image/png");

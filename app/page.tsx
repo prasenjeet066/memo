@@ -108,7 +108,7 @@ export default function MainPage() {
         <div className='flex flex-col items-center justify-center h-full'>
           
         
-        <img alt= 'null' className = 'w-full' src = {`/api/vor?url=${encodeURIComponent('https://www.citypng.com/public/uploads/preview/high-resolution-donald-trump-smiling-face-704081694794818ijbewkbmdj.png')}`}/>
+        <img alt= 'null' className = 'w-full' src = {`https://memoorg.vercel.app/api/img/vor?url=https://www.pngwing.com/en/free-png-nrpre`}/>
         <div className="p-4 space-y-2 w-full max-w-md">
           <h1 className="text-center text-2xl mt-4 font-semibold">
             Find Anything.
