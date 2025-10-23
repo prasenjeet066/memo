@@ -137,7 +137,7 @@ const VoronoiArt = () => {
         Save
       </button>
       <svg ref={svgRef} width={width} height={height}></svg>
-      <img ref={imgRef} alt="Exported PNG" />
+      <img ref={imgRef} src={`/api/vor?url=${encodeURIComponent(inputRef.current.value)}`} alt="Exported PNG" />
     </div>
   );
 };
