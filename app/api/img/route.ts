@@ -103,7 +103,7 @@ export async function GET(req: Request) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = `${Math.floor(width * 0.6)}px "FA-${style}"`;
-    ctx.fillText(unicode, width / 2, height / 2);
+    ctx.fillText("unicode", width / 2, height / 2);
     
     const pngBuffer = canvas.toBuffer("image/png");
     
