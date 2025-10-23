@@ -56,7 +56,7 @@ export async function GET(req: Request) {
         const selectors = rule.selector.split(",").map((s) => s.trim());
 
         for (const sel of selectors) {
-          if (sel.endsWith("::before") && sel.includes(`fa-${iconName}`)) {
+          if (sel.endsWith(":before") && sel.includes(`fa-${iconName}:`)) {
             rule.walkDecls("content", (decl) => {
               if (decl.value) {
                 unicode = decl.value.replace(/["'\\]/g, "").trim();

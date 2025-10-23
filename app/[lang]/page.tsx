@@ -3,6 +3,7 @@
 
 import Header from '@/components/header'
 import { useMobile } from "@/lib/units/use-mobile"
+import VoronoiArt from '/components/d3/VoronoiArt'
 import { Home, Compass, HandHeart, Settings } from 'lucide-react'
 import { useState } from 'react'
 
@@ -77,10 +78,7 @@ export default function MainPage() {
         {Sidebar}
         <div className='flex-1 p-6'>
           <div className='max-w-4xl mx-auto'>
-            <h1 className='text-2xl font-bold text-gray-900 mb-6'>Welcome to Record</h1>
-            <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6'>
-              <p className='text-gray-600'>Main content goes here...</p>
-            </div>
+            <VoronoiArt/>
           </div>
         </div>
       </div>
