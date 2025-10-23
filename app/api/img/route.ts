@@ -59,7 +59,7 @@ export async function GET(req: Request) {
     ctx.fillStyle = "#111111";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = `${Math.floor(width * 0.6)}px "FA"`;
+    ctx.font = `${Math.floor(width * 0.6)}px "f"`;
     ctx.fillText(unicode, width / 2, height / 2);
     
     const pngBuffer = canvas.toBuffer("image/png");
@@ -71,7 +71,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (err) {
-    console.error("❌ Error generating icon:", err);
+    
     const canvas = createCanvas(256, 256);
     const ctx = canvas.getContext("2d");
     ctx.fillStyle = "#f8d7da";
