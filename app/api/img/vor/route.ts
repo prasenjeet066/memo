@@ -1,7 +1,7 @@
 import { createCanvas, loadImage } from "canvas";
 import { Delaunay } from "d3-delaunay";
 
-export default async function handler(req, res) {
+export default async function GET(req, res) {
   const { url } = req.query;
   if (!url) return res.status(400).send("Missing image URL");
   
