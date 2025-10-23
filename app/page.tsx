@@ -108,7 +108,7 @@ export default function MainPage() {
         <div className='flex flex-col items-center justify-center h-full'>
           
         
-        <img alt= 'null' className = 'w-full' src = {`https://memoorg.vercel.app/api/img/vor?url=https://www.pngwing.com/en/free-png-nrpre`}/>
+        <img alt= 'null' className = 'w-full' src = {`https://memoorg.vercel.app/api/img/vor?url=https://www.kindpng.com/picc/m/490-4906364_latest-traditional-indian-jewellery-hd-png-download.png`}/>
         <div className="p-4 space-y-2 w-full max-w-md">
           <h1 className="text-center text-2xl mt-4 font-semibold">
             Find Anything.
