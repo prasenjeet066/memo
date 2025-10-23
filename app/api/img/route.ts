@@ -22,7 +22,8 @@ export async function GET(req: Request) {
     // --- Parse prefix + icon name ---
     const [prefix, iconNameRaw] = iconParam.trim().split(/\s+/);
     const iconName = iconNameRaw?.replace(/^fa-/, "") || "question";
-    const style = prefix?.replace(/^fa-/, "") || "solid"; // e.g., fas -> solid
+    const style = prefix?.replace(/^fa-/, "") || "solid";
+    // e.g., fas -> solid
 
     // --- Font mapping ---
     const fontDir = path.join(process.cwd(), "public", "icon", "webfonts");
@@ -86,7 +87,7 @@ export async function GET(req: Request) {
     }
 
     // --- Convert Unicode hex to character ---
-    const iconChar = String.fromCharCode(parseInt(unicode, 16));
+    const iconChar = parseInt(unicode, 16);
 
     // --- Draw icon ---
     const canvas = createCanvas(width, height);
@@ -99,7 +100,7 @@ export async function GET(req: Request) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = `${Math.floor(width * 0.6)}px "FA-${style}"`;
-    ctx.fillText(iconChar, width / 2, height / 2);
+    ctx.fillText(`${iconChar}`, width / 2, height / 2);
 
     const pngBuffer = canvas.toBuffer("image/png");
 
