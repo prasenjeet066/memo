@@ -107,7 +107,7 @@ export default function MainPage() {
         <div class = 'flex flex-col w-full h-full items-center justify-center'>
         <div className='flex flex-col items-center justify-center h-full'>
           
-        <Image placeholder='blur' alt= 'null' className = 'w-full' src = {`https://memoorg.vercel.app/api/img/vor`} height={800} width={800}/>
+        <Image placeholder='blur' alt= 'null' className = 'w-full' src = {`https://memoorg.vercel.app/api/img/vor?url=${encodeURIComponent('https://www.pmindia.gov.in/wp-content/uploads/2025/12/01.jpg')}`} height={800} width={800}/>
         <div className="p-4 space-y-2 w-full max-w-md">
           <h1 className="text-center text-2xl mt-4 font-semibold">
             Find Anything.
