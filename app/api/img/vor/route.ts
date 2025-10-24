@@ -35,12 +35,12 @@ export async function GET(request) {
     }
     
     
-    const MAX_POINTS = 100000;
+    const MAX_POINTS = 8000000;
     
     // 🔹 Load image
     const img = await loadImage(imageUrl);
-    const WIDTH = 800;
-    const HEIGHT = 800;
+    const WIDTH = img.width;
+    const HEIGHT = img.height;
     // 🔹 Prepare image canvas for sampling
     const imgCanvas = createCanvas(WIDTH, HEIGHT);
     const imgCtx = imgCanvas.getContext("2d");
