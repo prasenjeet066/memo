@@ -28,7 +28,7 @@ export async function GET(request) {
     
     const WIDTH = 800;
     const HEIGHT = 800;
-    const MAX_POINTS = Math.min(100000, WIDTH * HEIGHT * 0.1);
+    const MAX_POINTS = 900000;
     // 🔹 Load image
     const img = await loadImage(imageUrl);
     
