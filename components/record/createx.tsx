@@ -1340,11 +1340,10 @@ export default function EnhancedEditor({
       <VideoDialog />
       <FindReplaceDialog />
       <PublishDialog />
-      <TablePlugin>
+      <TablePlugin/>
         <TableCellResizer />
-        </TablePlugin>
-      <TablePlugin />
-      <TableCellActionMenuPlugin/>
+        <TableCellActionMenuPlugin/>
+      
     </div>
   );
 }
