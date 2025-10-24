@@ -47,7 +47,7 @@ function mapToVisibleColor(r, g, b, visibleColors) {
 
 export async function GET(request) {
   try {
-    const { searchParams, headers } = new URL(request.url);
+    const { searchParams } = new URL(request.url);
     const imageUrl = searchParams.get("url");
     
     if (!imageUrl) {
@@ -84,18 +84,7 @@ export async function GET(request) {
     
     const canvas = createCanvas(WIDTH, HEIGHT);
     const ctx = canvas.getContext("2d");
-    
-    // Check origin
-    const origin = headers.get("origin");
-    const isRootHost = origin === RootHost;
-    
-    if (!isRootHost) {
-      // Fill background opaque if origin mismatch
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    } else {
-      ctx.clearRect(0, 0, WIDTH, HEIGHT);
-    }
+    ctx.clearRect(0, 0, WIDTH, HEIGHT);
     
     const points = [];
     for (let i = 0; i < MAX_POINTS; i++) {
@@ -111,10 +100,17 @@ export async function GET(request) {
       if (Math.random() > brightness) points.push([x, y]);
     }
     
+    // 🔹 Predefined bright/visible colors  
     const visibleColors = [
-      "#FF4C4C", "#4CFF4C", "#4C4CFF",
-      "#FFD700", "#FF69B4", "#00FFFF",
-      "#FFA500", "#800080",
+      "#FF4C4C", // red  
+      "#4CFF4C", // green  
+      "#4C4CFF", // blue  
+      '#FFE400',
+      "#FFD700", // gold  
+      "#FF69B4", // hotpink  
+      "#00FFFF", // cyan  
+      "#FFA500", // orange  
+      "#800080", // purple  
     ];
     
     const delaunay = Delaunay.from(points);
@@ -133,10 +129,13 @@ export async function GET(request) {
       
       ctx.beginPath();
       ctx.moveTo(cell[0][0], cell[0][1]);
-      for (let j = 1; j < cell.length; j++) ctx.lineTo(cell[j][0], cell[j][1]);
+      for (let j = 1; j < cell.length; j++) {
+        ctx.lineTo(cell[j][0], cell[j][1]);
+      }
       ctx.closePath();
       
       if (brightness < 0.5) {
+        // Dark pixel → map to nearest visible color  
         const [vr, vg, vb] = mapToVisibleColor(r, g, b, visibleColors);
         ctx.strokeStyle = `rgba(${vr}, ${vg}, ${vb}, 0.9)`;
       } else {
@@ -148,34 +147,21 @@ export async function GET(request) {
       ctx.stroke();
     }
     
-    if (!isRootHost) {
-      // Add watermark
-      ctx.font = "bold 30px sans-serif";
-      ctx.fillStyle = "rgba(0,0,0,0.3)";
-      ctx.textAlign = "right";
-      ctx.fillText("Sistorica", WIDTH - 20, HEIGHT - 20);
-    }
+    const buffer = canvas.toBuffer("image/png");
+    const updatedBuffer = await sharp(buffer)
+      .withMetadata({
+        copyright: "2025 Sistorica. All rights reserved.",
+        artist: "Prasenjeet H.",
+        description: "Sistorica platform",
+      })
+      .png()
+      .toBuffer();
     
-    let buffer = canvas.toBuffer("image/png");
-    
-    let sharpImage = sharp(buffer).withMetadata({
-      copyright: "2025 Sistorica. All rights reserved.",
-      artist: "Prasenjeet H.",
-      description: "Sistorica platform",
-    });
-    
-    if (!isRootHost) {
-      // Lower quality if not root host
-      sharpImage = sharpImage.jpeg({ quality: 60 });
-      buffer = await sharpImage.toBuffer();
-    } else {
-      buffer = await sharpImage.png().toBuffer();
-    }
-    
-    return new Response(buffer, {
+    return new Response(updatedBuffer, {
       status: 200,
-      headers: { "Content-Type": isRootHost ? "image/png" : "image/jpeg", ...corsHeaders },
+      headers: { "Content-Type": "image/png", ...corsHeaders },
     });
+    
   } catch (err) {
     console.error("Voronoi Error:", err);
     return new Response("⚠️ Error generating Voronoi art", {
