@@ -1,5 +1,16 @@
 import { createCanvas, loadImage } from "canvas";
 import { Delaunay } from "d3-delaunay";
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: corsHeaders,
+  });
+}
 
 export async function GET(request) {
   try {
@@ -7,7 +18,9 @@ export async function GET(request) {
     const imageUrl = searchParams.get("url");
     
     if (!imageUrl) {
-      return new Response("❌ Missing image URL", { status: 400 });
+      return new Response("❌ Missing image URL", { status: 400 ,
+        headers: corsHeaders
+      });
     }
     
     const MAX_POINTS = 800000;
@@ -89,10 +102,10 @@ export async function GET(request) {
     const buffer = canvas.toBuffer("image/png");
     return new Response(buffer, {
       status: 200,
-      headers: { "Content-Type": "image/png" },
+      headers: { "Content-Type": "image/png", ...corsHeaders},
     });
   } catch (err) {
     console.error("Voronoi Error:", err);
-    return new Response("⚠️ Error generating Voronoi art", { status: 500 });
+    return new Response("⚠️ Error generating Voronoi art", { status: 500 ,headers: corsHeaders});
   }
 }
