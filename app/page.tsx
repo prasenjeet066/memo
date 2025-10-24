@@ -104,8 +104,6 @@ export default function MainPage() {
     <main className="min-h-screen w-full bg-gray-50 flex flex-col h-screen">
       <Header navlist={NavList} />
       <div className="w-full flex-1 h-full flex flex-row items-center justify-between">
-        
-        {Sidebar}
         <div class = 'flex flex-col w-full h-full items-center justify-center'>
         <div className='flex flex-col items-center justify-center h-full'>
           
