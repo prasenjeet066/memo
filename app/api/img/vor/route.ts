@@ -108,7 +108,7 @@ export async function GET(request) {
   })
   .png()
   .toBuffer();
-    return new Response(buffer, {
+    return new Response(updatedBuffer, {
       status: 200,
       headers: { "Content-Type": "image/png", ...corsHeaders},
     });
