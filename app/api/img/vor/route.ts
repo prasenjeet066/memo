@@ -1,7 +1,7 @@
 import sharp from "sharp";
 import { createCanvas, loadImage } from "canvas";
 import { Delaunay } from "d3-delaunay";
-const RootHost = 'https://memoorg.vercel.app/'
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
@@ -13,36 +13,6 @@ export async function OPTIONS() {
     status: 204,
     headers: corsHeaders,
   });
-}
-
-// Helper: Convert hex to RGB
-function hexToRgb(hex) {
-  const bigint = parseInt(hex.replace("#", ""), 16);
-  return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
-}
-
-// Helper: Compute Euclidean distance between two RGB colors
-function colorDistance(c1, c2) {
-  return Math.sqrt(
-    (c1[0] - c2[0]) ** 2 +
-    (c1[1] - c2[1]) ** 2 +
-    (c1[2] - c2[2]) ** 2
-  );
-}
-
-// Map a color to nearest in visibleColors
-function mapToVisibleColor(r, g, b, visibleColors) {
-  const rgbColors = visibleColors.map(hexToRgb);
-  let minDist = Infinity;
-  let closest = rgbColors[0];
-  for (let color of rgbColors) {
-    const dist = colorDistance([r, g, b], color);
-    if (dist < minDist) {
-      minDist = dist;
-      closest = color;
-    }
-  }
-  return closest;
 }
 
 export async function GET(request) {
@@ -61,8 +31,10 @@ export async function GET(request) {
     const HEIGHT = 800;
     const MAX_POINTS = 900000;
     
+    // 🔹 Load image
     const img = await loadImage(imageUrl);
     
+    // 🔹 Prepare image canvas for sampling
     const imgCanvas = createCanvas(WIDTH, HEIGHT);
     const imgCtx = imgCanvas.getContext("2d");
     
@@ -78,14 +50,17 @@ export async function GET(request) {
     const offsetX = (WIDTH - drawWidth) / 2;
     const offsetY = (HEIGHT - drawHeight) / 2;
     
+    // Draw the image
     imgCtx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
     const imageData = imgCtx.getImageData(0, 0, WIDTH, HEIGHT);
     const data = imageData.data;
     
+    // 🔹 Create transparent output canvas
     const canvas = createCanvas(WIDTH, HEIGHT);
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, WIDTH, HEIGHT);
     
+    // 🔹 Sample points based on brightness (prefer dark areas)
     const points = [];
     for (let i = 0; i < MAX_POINTS; i++) {
       const x = Math.random() * WIDTH;
@@ -97,25 +72,15 @@ export async function GET(request) {
       const b = data[idx + 2];
       const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
       
+      // prefer dark pixels
       if (Math.random() > brightness) points.push([x, y]);
     }
     
-    // 🔹 Predefined bright/visible colors  
-    const visibleColors = [
-      "#FF4C4C", // red  
-      "#4CFF4C", // green  
-      "#4C4CFF", // blue  
-      '#FFE400',
-      "#FFD700", // gold  
-      "#FF69B4", // hotpink  
-      "#00FFFF", // cyan  
-      "#FFA500", // orange  
-      "#800080", // purple  
-    ];
-    
+    // 🔹 Create Voronoi diagram
     const delaunay = Delaunay.from(points);
     const voronoi = delaunay.voronoi([0, 0, WIDTH, HEIGHT]);
     
+    // 🔹 Draw each cell
     for (let i = 0; i < points.length; i++) {
       const cell = voronoi.cellPolygon(i);
       if (!cell) continue;
@@ -134,19 +99,21 @@ export async function GET(request) {
       }
       ctx.closePath();
       
-      if (brightness < 0.5) {
-        // Dark pixel → map to nearest visible color  
-        const [vr, vg, vb] = mapToVisibleColor(r, g, b, visibleColors);
-        ctx.strokeStyle = `rgba(${vr}, ${vg}, ${vb}, 0.9)`;
+      // 🔸 Color rule:
+      // - Dark areas → original color
+      // - Light areas → grayscale (black & white)
+      if (brightness < 0.3) {
+        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.9)`; // keep color
       } else {
         const gray = Math.floor(brightness * 255);
-        ctx.strokeStyle = `rgba(${gray}, ${gray}, ${gray}, 0.6)`;
+        ctx.strokeStyle = `rgba(${gray}, ${gray}, ${gray}, 0.6)`; // grayscale
       }
       
       ctx.lineWidth = 1;
       ctx.stroke();
     }
     
+    // 🔹 Convert to PNG and embed metadata
     const buffer = canvas.toBuffer("image/png");
     const updatedBuffer = await sharp(buffer)
       .withMetadata({
@@ -161,7 +128,6 @@ export async function GET(request) {
       status: 200,
       headers: { "Content-Type": "image/png", ...corsHeaders },
     });
-    
   } catch (err) {
     console.error("Voronoi Error:", err);
     return new Response("⚠️ Error generating Voronoi art", {
