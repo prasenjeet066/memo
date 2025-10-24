@@ -102,7 +102,7 @@ export async function GET(request) {
       // 🔸 Color rule:
       // - Dark areas → original color
       // - Light areas → grayscale (black & white)
-      if (brightness < 0.3) {
+      if (brightness < 0.6) {
         ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.9)`; // keep color
       } else {
         const gray = Math.floor(brightness * 255);
