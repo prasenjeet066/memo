@@ -26,7 +26,7 @@ const store = {
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const imageUrl = searchParams.get("url");
+    let imageUrl = searchParams.get("url");
     
     if (!imageUrl) {
       let urls = Object.keys(store);
