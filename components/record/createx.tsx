@@ -1286,7 +1286,8 @@ export default function EnhancedEditor({
                   initialHtml={payload.content}
                   onHtmlChange={handleLexicalChange}
                 />
-                <CustomCommandsPlugin onCommand={(cmd) => console.log('Command:', cmd)} />
+                     <TablePlugin /> <TableCellResizer/>
+  <TableCellActionMenuPlugin /> <CustomCommandsPlugin onCommand={(cmd) => console.log('Command:', cmd)} />
                 <EditorRefPlugin editorRef={lexicalEditorRef} />
               </div>
             </LexicalComposer>
@@ -1340,10 +1341,7 @@ export default function EnhancedEditor({
       <VideoDialog />
       <FindReplaceDialog />
       <PublishDialog />
-      <TablePlugin>
-         <TableCellResizer /> 
-        <TableCellActionMenuPlugin/>
-      </TablePlugin>
+
     </div>
   );
 }
