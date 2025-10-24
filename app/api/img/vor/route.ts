@@ -39,8 +39,8 @@ export async function GET(request) {
     
     // 🔹 Load image
     const img = await loadImage(imageUrl);
-    const WIDTH = img.width;
-    const HEIGHT = img.height > 300 ? 300 : img.height;
+    const WIDTH = 800;
+    const HEIGHT = 800;
     // 🔹 Prepare image canvas for sampling
     const imgCanvas = createCanvas(WIDTH, HEIGHT);
     const imgCtx = imgCanvas.getContext("2d");
