@@ -100,6 +100,14 @@ export async function GET(request) {
     
     // 🔹 Return transparent PNG
     const buffer = canvas.toBuffer("image/png");
+    const updatedBuffer = await sharp(buffer)
+  .withMetadata({
+    copyright: "2025 Sistorica. All rights reserved.",
+    artist: "Prasenjeet H.",
+    description: "Sistorica platform",
+  })
+  .png()
+  .toBuffer();
     return new Response(buffer, {
       status: 200,
       headers: { "Content-Type": "image/png", ...corsHeaders},
