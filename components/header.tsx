@@ -94,12 +94,12 @@ export default function Header({ navlist , replacement }: HeaderProps) {
               <div className="flex items-center gap-2">
                 <Link href="/login">
                   <button className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:underline transition-colors">
-                    প্রবেশ করুন
+                    Sign In
                   </button>
                 </Link>
                 <Link href="/register">
                   <button className="px-4 py-2 text-sm font-medium bg-gray-800 text-white rounded-full hover:bg-gray-900 transition-colors">
-                    নিবন্ধন করুন
+                    Register
                   </button>
                 </Link>
               </div>

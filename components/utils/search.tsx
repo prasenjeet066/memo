@@ -6,7 +6,7 @@ const SearchInHeader = () => {
       <input 
         type='text' 
         className='flex-1 bg-transparent text-sm outline-none placeholder-gray-500' 
-        placeholder='রেকর্ড সন্ধান করুন..'
+        placeholder='Search from here....'
       />
       <Search className='w-4 h-4 ml-2 text-gray-500 cursor-pointer hover:text-gray-700 transition-colors'/>
     </div>
