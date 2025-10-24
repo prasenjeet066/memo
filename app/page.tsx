@@ -1,5 +1,6 @@
 'use client'
-
+import { Suspense } from 'react'
+import Image from 'next/image'
 import { Fai } from '@/components/Fontawesome';
 import Header from '@/components/header';
 import GlobeChart from '@/components/d3/earth';
@@ -99,6 +100,7 @@ export default function MainPage() {
   ];
   
   return (
+    <Suspense fallback ={<>null</>}>
     <main className="min-h-screen w-full bg-gray-50 flex flex-col h-screen">
       <Header navlist={NavList} />
       <div className="w-full flex-1 h-full flex flex-row items-center justify-between">
@@ -107,8 +109,7 @@ export default function MainPage() {
         <div class = 'flex flex-col w-full h-full items-center justify-center'>
         <div className='flex flex-col items-center justify-center h-full'>
           
-        
-        <img alt= 'null' className = 'w-full' src = {`https://memoorg.vercel.app/api/img/vor?url=https://www.kindpng.com/picc/m/490-4906364_latest-traditional-indian-jewellery-hd-png-download.png`}/>
+        <Image placeholder='blur' alt= 'null' className = 'w-full' src = {`https://memoorg.vercel.app/api/img/vor?url=https://www.kindpng.com/picc/m/490-4906364_latest-traditional-indian-jewellery-hd-png-download.png`} height={800} width={800}/>
         <div className="p-4 space-y-2 w-full max-w-md">
           <h1 className="text-center text-2xl mt-4 font-semibold">
             Find Anything.
@@ -134,5 +135,6 @@ export default function MainPage() {
         </div>
       </div>
     </main>
+    </Suspense>
   );
 }
