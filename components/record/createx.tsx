@@ -15,6 +15,9 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import Editor from '@monaco-editor/react';
 import { useSession } from 'next-auth/react';
+import { TablePlugin, InsertTableButton,
+INSERT_TABLE_COMMAND,
+TableCellActionMenuPlugin } from '@lexical/react/LexicalTablePlugin';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,6 +53,7 @@ import {
   FORMAT_TEXT_COMMAND,
   UNDO_COMMAND,
   REDO_COMMAND,
+  
   COMMAND_PRIORITY_EDITOR,
   EditorState,
   LexicalEditor,
@@ -63,6 +67,7 @@ import {
 import {
   INSERT_ORDERED_LIST_COMMAND,
   INSERT_UNORDERED_LIST_COMMAND,
+  
   REMOVE_LIST_COMMAND,
 } from '@lexical/list';
 import { $createLinkNode } from '@lexical/link';
@@ -516,8 +521,11 @@ export default function EnhancedEditor({
           break;
           
         case 'table':
+        I
+          editor.dispatchCommand(INSERT_TABLE_COMMAND, { columns: 3, rows: 3 })
+          break;
         case 'template':
-          alert('Table and template features are available in code mode or will be added in future updates.');
+
           break;
           
         default:
@@ -1323,6 +1331,8 @@ export default function EnhancedEditor({
       <VideoDialog />
       <FindReplaceDialog />
       <PublishDialog />
+      <TablePlugin />
+      <TableCellActionMenuPlugin />
     </div>
   );
 }
