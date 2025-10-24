@@ -30,7 +30,8 @@ export async function GET(request) {
     
     if (!imageUrl) {
       let urls = Object.keys(store);
-      imageUrl = Math.floor(Math.random()*urls.length);
+      imageUrl = urls[Math.floor(Math.random()*urls.length)];
+     
     }
     
     const WIDTH = 800;
