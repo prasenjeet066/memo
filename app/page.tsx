@@ -113,7 +113,7 @@ export default function MainPage() {
             Find Anything.
           </h1>
 
-          <div className="w-full flex items-center gap-2 rounded-full p-2 bg-white/50 backdrop:blur-md">
+          <div className={`w-full flex items-center gap-2 rounded-full p-2 ${!isMobile ?'bg-white/50 backdrop:blur-md' : 'bg-white'}`}>
             <input
               type="text"
               className="outline-none border-none pl-2 bg-transparent w-full"
