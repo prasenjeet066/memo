@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useTransition } from 'react';
+
 import {
   Dialog,
   DialogContent,
@@ -15,9 +16,6 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import Editor from '@monaco-editor/react';
 import { useSession } from 'next-auth/react';
-import { TablePlugin, InsertTableButton,
-INSERT_TABLE_COMMAND,
-TableCellActionMenuPlugin } from '@lexical/react/LexicalTablePlugin';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +44,15 @@ import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { TRANSFORMERS } from '@lexical/markdown';
+import {TablePlugin} from '@lexical/react/LexicalTablePlugin';
+import {
+  INSERT_TABLE_COMMAND,
+  TablePlugin,
+  TableCellNode,
+  TableRowNode,
+  TableCellActionMenuPlugin,
+  TableNode,
+} from "@lexical/table";
 import { 
   $getRoot, 
   $getSelection, 
@@ -288,6 +295,7 @@ export default function EnhancedEditor({
       TableNode,
       TableCellNode,
       TableRowNode,
+      
       AutoLinkNode,
       LinkNode,
     ],
@@ -521,7 +529,7 @@ export default function EnhancedEditor({
           break;
           
         case 'table':
-        I
+        
           editor.dispatchCommand(INSERT_TABLE_COMMAND, { columns: 3, rows: 3 })
           break;
         case 'template':
@@ -1331,8 +1339,11 @@ export default function EnhancedEditor({
       <VideoDialog />
       <FindReplaceDialog />
       <PublishDialog />
+      <TablePlugin>
+        <TableCellResizer />
+        </TablePlugin>
       <TablePlugin />
-      <TableCellActionMenuPlugin />
+      <TableCellActionMenuPlugin/>
     </div>
   );
 }
