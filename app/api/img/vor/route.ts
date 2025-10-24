@@ -35,7 +35,7 @@ export async function GET(request) {
     }
     
     
-    const MAX_POINTS = 900000;
+    const MAX_POINTS = 100000;
     
     // 🔹 Load image
     const img = await loadImage(imageUrl);
