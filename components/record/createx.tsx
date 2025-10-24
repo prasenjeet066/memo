@@ -247,8 +247,8 @@ export default function EnhancedEditor({
     theme: {
       paragraph: 'mb-2',
       heading: {
-        h1: 'text-4xl font-bold mb-4 mt-6',
-        h2: 'text-3xl font-bold mb-3 mt-5',
+        h1: 'text-4xl font-bold mb-4 mt-6 border-b w-full pb-2',
+        h2: 'text-3xl font-bold mb-3 mt-5 border-b w-full pb-2',
         h3: 'text-2xl font-bold mb-2 mt-4',
         h4: 'text-xl font-bold mb-2 mt-3',
         h5: 'text-lg font-bold mb-2 mt-2',
