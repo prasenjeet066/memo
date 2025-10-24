@@ -1,3 +1,4 @@
+import sharp from "sharp";
 import { createCanvas, loadImage } from "canvas";
 import { Delaunay } from "d3-delaunay";
 const corsHeaders = {
@@ -18,15 +19,16 @@ export async function GET(request) {
     const imageUrl = searchParams.get("url");
     
     if (!imageUrl) {
-      return new Response("❌ Missing image URL", { status: 400 ,
+      return new Response("❌ Missing image URL", {
+        status: 400,
         headers: corsHeaders
       });
     }
     
-    const MAX_POINTS = 800000;
+    
     const WIDTH = 800;
     const HEIGHT = 800;
-    
+    const MAX_POINTS = Math.min(100000, WIDTH * HEIGHT * 0.1);
     // 🔹 Load image
     const img = await loadImage(imageUrl);
     
@@ -101,19 +103,19 @@ export async function GET(request) {
     // 🔹 Return transparent PNG
     const buffer = canvas.toBuffer("image/png");
     const updatedBuffer = await sharp(buffer)
-  .withMetadata({
-    copyright: "2025 Sistorica. All rights reserved.",
-    artist: "Prasenjeet H.",
-    description: "Sistorica platform",
-  })
-  .png()
-  .toBuffer();
+      .withMetadata({
+        copyright: "2025 Sistorica. All rights reserved.",
+        artist: "Prasenjeet H.",
+        description: "Sistorica platform",
+      })
+      .png()
+      .toBuffer();
     return new Response(updatedBuffer, {
       status: 200,
-      headers: { "Content-Type": "image/png", ...corsHeaders},
+      headers: { "Content-Type": "image/png", ...corsHeaders },
     });
   } catch (err) {
     console.error("Voronoi Error:", err);
-    return new Response("⚠️ Error generating Voronoi art", { status: 500 ,headers: corsHeaders});
+    return new Response("⚠️ Error generating Voronoi art", { status: 500, headers: corsHeaders });
   }
 }
