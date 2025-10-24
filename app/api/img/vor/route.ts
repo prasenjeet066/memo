@@ -10,7 +10,7 @@ export async function GET(request) {
       return new Response("❌ Missing image URL", { status: 400 });
     }
     
-    const MAX_POINTS = 800000;
+    const MAX_POINTS = 8000;
     const WIDTH = 800;
     const HEIGHT = 800;
     
