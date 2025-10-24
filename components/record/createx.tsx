@@ -49,6 +49,7 @@ import {
   INSERT_TABLE_COMMAND,
   TablePlugin,
   TableCellNode,
+  TableCellResizer,
   TableRowNode,
   TableCellActionMenuPlugin,
   TableNode,
