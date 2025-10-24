@@ -31,9 +31,7 @@ export async function GET(request) {
     if (!imageUrl) {
       let urls = Object.keys(store);
       imageUrl = urls[Math.floor(Math.random() * urls.length)];
-      
     }
-    
     
     const MAX_POINTS = 8000000;
     
@@ -41,7 +39,8 @@ export async function GET(request) {
     const img = await loadImage(imageUrl);
     const WIDTH = img.width;
     const HEIGHT = img.height;
-    // 🔹 Prepare image canvas for sampling
+    
+    // 🔹 Prepare image canvas
     const imgCanvas = createCanvas(WIDTH, HEIGHT);
     const imgCtx = imgCanvas.getContext("2d");
     
@@ -57,37 +56,43 @@ export async function GET(request) {
     const offsetX = (WIDTH - drawWidth) / 2;
     const offsetY = (HEIGHT - drawHeight) / 2;
     
-    // Draw the image
     imgCtx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
     const imageData = imgCtx.getImageData(0, 0, WIDTH, HEIGHT);
     const data = imageData.data;
     
-    // 🔹 Create transparent output canvas
+    // 🔹 Output canvas
     const canvas = createCanvas(WIDTH, HEIGHT);
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, WIDTH, HEIGHT);
     
-    // 🔹 Sample points based on brightness (prefer dark areas)
+    // 🔹 Sample points (top dense, bottom half)
     const points = [];
     for (let i = 0; i < MAX_POINTS; i++) {
       const x = Math.random() * WIDTH;
       const y = Math.random() * HEIGHT;
-      const idx = (Math.floor(y) * WIDTH + Math.floor(x)) * 4;
       
+      const idx = (Math.floor(y) * WIDTH + Math.floor(x)) * 4;
       const r = data[idx];
       const g = data[idx + 1];
       const b = data[idx + 2];
       const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
       
-      // prefer dark pixels
-      if (Math.random() > brightness) points.push([x, y]);
+      // 🔸 নিচের দিকে নামলে পয়েন্ট ধীরে ধীরে অর্ধেকে নামবে
+      // top → full density (1.0)
+      // bottom → half density (0.5)
+      const falloff = 1.0 - 0.5 * (y / HEIGHT);
+      
+      // prefer dark pixels; lower falloff = fewer points
+      if (Math.random() > brightness / falloff) {
+        points.push([x, y]);
+      }
     }
     
     // 🔹 Create Voronoi diagram
     const delaunay = Delaunay.from(points);
     const voronoi = delaunay.voronoi([0, 0, WIDTH, HEIGHT]);
     
-    // 🔹 Draw each cell
+    // 🔹 Draw cells
     for (let i = 0; i < points.length; i++) {
       const cell = voronoi.cellPolygon(i);
       if (!cell) continue;
@@ -106,21 +111,19 @@ export async function GET(request) {
       }
       ctx.closePath();
       
-      // 🔸 Color rule:
-      // - Dark areas → original color
-      // - Light areas → grayscale (black & white)
+      // 🔸 Dark → color, Light → grayscale
       if (brightness < 1) {
-        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.9)`; // keep color
+        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
       } else {
         const gray = Math.floor(brightness * 255);
-        ctx.strokeStyle = `rgba(${gray}, ${gray}, ${gray}, 0.6)`; // grayscale
+        ctx.strokeStyle = `rgba(${gray}, ${gray}, ${gray}, 0.6)`;
       }
       
       ctx.lineWidth = 1;
       ctx.stroke();
     }
     
-    // 🔹 Convert to PNG and embed metadata
+    // 🔹 Export PNG with metadata
     const buffer = canvas.toBuffer("image/png");
     const updatedBuffer = await sharp(buffer)
       .withMetadata({
