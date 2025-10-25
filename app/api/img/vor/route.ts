@@ -37,7 +37,7 @@ export async function GET(request) {
       imageUrl =  'https://www.pngitem.com/pimgs/m/333-3332655_lionel-messi-png-shot-transparent-png.png'//urls[Math.floor(Math.random() * urls.length)];
     }
     
-    const MAX_POINTS = 80000//00;
+    const MAX_POINTS = Math.min(20000, Math.floor((WIDTH * HEIGHT) / 50));//00;
     
     // 🔹 Load image
     const img = await loadImage(imageUrl);
@@ -87,7 +87,8 @@ export async function GET(request) {
      // const falloff = 1.0 - 0.2 * (y / HEIGHT);
       
       // prefer dark pixels; lower falloff = fewer points
-      if (Math.random() > brightness ) {
+      
+      if (Math.random() > Math.max(0.2, brightness)){
         points.push([x, y]);
       }
     }
