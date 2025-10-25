@@ -49,9 +49,7 @@ import {
   INSERT_TABLE_COMMAND,
   TablePlugin,
   TableCellNode,
-  TableCellResizer,
   TableRowNode,
-  TableCellActionMenuPlugin,
   TableNode,
 } from "@lexical/table";
 import { 
@@ -1286,8 +1284,7 @@ export default function EnhancedEditor({
                   initialHtml={payload.content}
                   onHtmlChange={handleLexicalChange}
                 />
-                     <TablePlugin /> <TableCellResizer/>
-  <TableCellActionMenuPlugin /> <CustomCommandsPlugin onCommand={(cmd) => console.log('Command:', cmd)} />
+                     <TablePlugin /> <CustomCommandsPlugin onCommand={(cmd) => console.log('Command:', cmd)} />
                 <EditorRefPlugin editorRef={lexicalEditorRef} />
               </div>
             </LexicalComposer>
