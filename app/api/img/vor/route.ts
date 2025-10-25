@@ -84,10 +84,10 @@ export async function GET(request) {
       // 🔸 নিচের দিকে নামলে পয়েন্ট ধীরে ধীরে অর্ধেকে নামবে
       // top → full density (1.0)
       // bottom → half density (0.5)
-      const falloff = 1.0 - 0.2 * (y / HEIGHT);
+     // const falloff = 1.0 - 0.2 * (y / HEIGHT);
       
       // prefer dark pixels; lower falloff = fewer points
-      if (Math.random() > brightness / falloff) {
+      if (Math.random() > brightness ) {
         points.push([x, y]);
       }
     }

@@ -3,10 +3,11 @@ import { Suspense } from 'react'
 import Image from 'next/image'
 import { Fai } from '@/components/Fontawesome';
 import Header from '@/components/header';
+import StarBorder from '@/components/ui/star-border'
 import GlobeChart from '@/components/d3/earth';
 import { useMobile } from "@/lib/units/use-mobile";
 import { Home, Compass, HandHeart, Settings } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 const HeaderNavs = () => {
   const isMobile = useMobile();
@@ -35,11 +36,12 @@ export default function MainPage() {
   ];
   
   const handleSearchSubmit = () => {};
+  
   const handleSearch = (e) => {
     const value = e.target.value.trim();
     if (value) setSearchQuery(value);
   };
-    const Sidebar = !isMobile && (
+  const Sidebar = !isMobile && (
     <div className='w-auto max-w-64 h-full bg-white ml-2 flex flex-col justify-between rounded-2xl'>
       <div className='p-4 border-b border-gray-200'>
         <button
@@ -112,8 +114,12 @@ export default function MainPage() {
           <h1 className="text-center text-2xl mt-4 font-semibold">
             Find Anything.
           </h1>
-
-          <div className={`w-full flex items-center gap-2 rounded-full p-2 ${!isMobile ?'bg-white/50 backdrop:blur-md' : 'bg-white'}`}>
+          <StarBorder
+  as="button"
+className={`w-full flex items-center gap-2 rounded-full p-2 ${!isMobile ?'bg-white/50 backdrop:blur-md' : 'bg-white'}`}
+  color="cyan"
+  speed="5s">
+      
             <input
               type="text"
               className="outline-none border-none pl-2 bg-transparent w-full"
@@ -126,7 +132,9 @@ export default function MainPage() {
             >
               <Fai icon="arrow-right" />
             </button>
-          </div>
+            </StarBorder>
+          
+          
         </div>
         </div>
         {/* ✅ Fixed footer layout (centers last item properly) */}
