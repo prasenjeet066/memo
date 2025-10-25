@@ -53,9 +53,9 @@ import {
   TableRowNode,
   TableNode,
 } from "@lexical/table";
-import { 
-  $getRoot, 
-  $getSelection, 
+import {
+  $getRoot,
+  $getSelection,
   $isRangeSelection,
   FORMAT_TEXT_COMMAND,
   UNDO_COMMAND,
@@ -67,7 +67,7 @@ import {
   $createParagraphNode,
   $createTextNode,
 } from 'lexical';
-import { 
+import {
   $createHeadingNode,
   $createQuoteNode,
 } from '@lexical/rich-text';
@@ -82,21 +82,21 @@ import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
 import { $createCodeNode } from '@lexical/code';
 
 interface EditorProps {
-  editor_mode?: 'visual' | 'code';
-  record_name?: string;
-  onPublish?: () => void;
-  sideBarTools?: () => void;
-  ExpandedIs?: boolean;
-  IsExpandedSet?: (value: boolean) => void;
+  editor_mode ? : 'visual' | 'code';
+  record_name ? : string;
+  onPublish ? : () => void;
+  sideBarTools ? : () => void;
+  ExpandedIs ? : boolean;
+  IsExpandedSet ? : (value: boolean) => void;
 }
 
 interface Citation {
   id: string;
   text: string;
-  url?: string;
-  author?: string;
-  date?: string;
-  title?: string;
+  url ? : string;
+  author ? : string;
+  date ? : string;
+  title ? : string;
 }
 
 interface EditSummary {
@@ -122,13 +122,13 @@ const sanitizeHTML = (html: string): string => {
 };
 
 // Custom Commands Plugin
-function CustomCommandsPlugin({ 
-  onCommand 
-}: { 
+function CustomCommandsPlugin({
+  onCommand
+}: {
   onCommand: (command: string) => void;
 }) {
   const [editor] = useLexicalComposerContext();
-
+  
   useEffect(() => {
     return editor.registerCommand(
       FORMAT_TEXT_COMMAND,
@@ -139,21 +139,21 @@ function CustomCommandsPlugin({
       COMMAND_PRIORITY_EDITOR,
     );
   }, [editor, onCommand]);
-
+  
   return null;
 }
 
 // HTML Import/Export Plugin
-function HtmlPlugin({ 
+function HtmlPlugin({
   initialHtml,
-  onHtmlChange 
-}: { 
-  initialHtml?: string;
+  onHtmlChange
+}: {
+  initialHtml ? : string;
   onHtmlChange: (html: string) => void;
 }) {
   const [editor] = useLexicalComposerContext();
   const isInitialized = useRef(false);
-
+  
   useEffect(() => {
     if (initialHtml && !isInitialized.current) {
       isInitialized.current = true;
@@ -171,9 +171,9 @@ function HtmlPlugin({
       });
     }
   }, [editor, initialHtml]);
-
+  
   return (
-    <OnChangePlugin
+      <OnChangePlugin
       onChange={(editorState) => {
         editorState.read(() => {
           try {
@@ -286,19 +286,18 @@ export default function EnhancedEditor({
       console.error('Lexical error:', error);
     },
     nodes: [
-      HeadingNode,
-      ListNode,
-      ListItemNode,
-      QuoteNode,
-      CodeNode,
-      CodeHighlightNode,
-      TableNode,
-      TableCellNode,
-      TableRowNode,
-      TableCellActionMenuPlugin,
-      AutoLinkNode,
-      LinkNode,
-    ],
+  HeadingNode,
+  ListNode,
+  ListItemNode,
+  QuoteNode,
+  CodeNode,
+  CodeHighlightNode,
+  TableNode,
+  TableCellNode,
+  TableRowNode,
+  AutoLinkNode,
+  LinkNode,
+],
   };
   
   // Statistics calculation
