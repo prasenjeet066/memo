@@ -43,7 +43,7 @@ export async function GET(request) {
     const img = await loadImage(imageUrl);
     const WIDTH = img.width;
     const HEIGHT = img.height;
-    const MAX_POINTS = Math.min(20000, Math.floor((WIDTH * HEIGHT) / 50));//00;
+    const MAX_POINTS = Math.min(500000, Math.floor((WIDTH * HEIGHT)));//00;
     // 🔹 Prepare image canvas
     const imgCanvas = createCanvas(WIDTH, HEIGHT);
     const imgCtx = imgCanvas.getContext("2d");
