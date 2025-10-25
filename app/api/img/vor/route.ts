@@ -29,7 +29,7 @@ export async function GET(request) {
     const data = imgCtx.getImageData(0, 0, WIDTH, HEIGHT).data;
     
     // 🔹 SVG canvas
-    const canvas = createCanvas(WIDTH, HEIGHT, "svg");
+    const canvas = createCanvas(WIDTH, HEIGHT);
     const ctx = canvas.getContext("2d");
     
     const points = [];
@@ -66,19 +66,14 @@ export async function GET(request) {
     }
     
     // 🔹 Create a ReadableStream from the SVG output
-    const svgBuffer = canvas.toBuffer();
+    const svgBuffer = canvas.toBuffer('image/png');
     
-    const stream = new ReadableStream({
-      start(controller) {
-        controller.enqueue(svgBuffer);
-        controller.close();
-      },
-    });
     
-    return new Response(stream, {
+    
+    return new Response(svgBuffer, {
       status: 200,
       headers: {
-        "Content-Type": "image/svg+xml",
+        "Content-Type": "image/png",
         "Cache-Control": "no-cache",
         ...corsHeaders,
       },
