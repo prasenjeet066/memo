@@ -120,7 +120,7 @@ export default function MainPage() {
 </div>
   {/* Responsive overlay input panel */}
   <div className=" flex-1 inset-0 flex items-start justify-center px-4 h-full w-full">
-    <div className="w-full max-w-md bg-none  rounded-lg p-4 sm:p-6 md:p-8">
+    <div className="w-full">
       <h1 className="text-center text-xl sm:text-2xl md:text-3xl font-semibold mb-4">
         Find Anything.
       </h1>
