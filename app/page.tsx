@@ -107,30 +107,44 @@ export default function MainPage() {
       <Header navlist={NavList} />
       <div className="w-full flex-1 h-full flex flex-row items-center justify-between">
         <div class = 'flex flex-col w-full h-full items-center justify-center'>
-        <div className='flex flex-col items-center justify-center h-full'>
-          
-        <Image placeholder='blur' alt= 'null' className = 'w-full' src = {`https://memoorg.vercel.app/api/img/vor`} height={800} width={800}/>
-        <div className="p-4 space-y-2 w-full max-w-md">
-          <h1 className="text-center text-2xl mt-4 font-semibold">
-            Find Anything.
-          </h1>
-          <div className='w-full p-1 rounded-full bg-indigo-100'>
-          <div className={`w-full  flex items-center gap-2 rounded-full pl-3 ${!isMobile ?'bg-white/50 backdrop:blur-md' : 'bg-white'}`} color="black" speed="5s">
-      
-            <input
-              type="text"
-              className="outline-none border-none pl-2 bg-transparent w-full"
-              placeholder="About Bangladesh"
-              onInput={handleSearch}
-            />
-            <button
-              className="bg-indigo-600 text-white p-2 rounded-full px-4"
-              onClick={handleSearchSubmit}
-            >
-              <Fai icon="arrow-up" />
-            </button>
-            </div>
-          </div>
+<div className="relative flex items-center justify-center h-full w-full">
+  <Image
+    placeholder="blur"
+    alt="null"
+    className="w-full h-full object-cover"
+    src="https://memoorg.vercel.app/api/img/vor"
+    height={800}
+    width={800}
+  />
+
+  {/* Responsive overlay input panel */}
+  <div className="absolute inset-0 flex items-center justify-center px-4">
+    <div className="w-full max-w-md bg-white/80 backdrop-blur-md rounded-lg p-4 sm:p-6 md:p-8">
+      <h1 className="text-center text-xl sm:text-2xl md:text-3xl font-semibold mb-4">
+        Find Anything.
+      </h1>
+      <div className="w-full p-1 rounded-full bg-gray-100">
+        <div
+          className={`w-full p-2 flex items-center gap-2 rounded-full pl-3 ${
+            !isMobile ? "bg-white/50 backdrop-blur-md" : "bg-white"
+          }`}
+        >
+          <input
+            type="text"
+            className="outline-none border-none pl-2 bg-transparent w-full text-sm sm:text-base"
+            placeholder="About Bangladesh"
+            onInput={handleSearch}
+          />
+          <button
+            className="bg-indigo-600 text-white p-2 rounded-full px-4 text-sm sm:text-base"
+            onClick={handleSearchSubmit}
+          >
+            <Fai icon="arrow-up" />
+          </button>
+        </div>
+      </div>
+    </div>
+  
           
         </div>
         </div>
