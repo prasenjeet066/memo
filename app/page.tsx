@@ -114,7 +114,7 @@ export default function MainPage() {
           <h1 className="text-center text-2xl mt-4 font-semibold">
             Find Anything.
           </h1>
-          <div className={`w-full  flex items-center gap-2 rounded-full p-2 ${!isMobile ?'bg-white/50 backdrop:blur-md' : 'bg-white'}`} color="black" speed="5s">
+          <div className={`w-full  flex items-center gap-2 rounded-full p-2 pl-3 ${!isMobile ?'bg-white/50 backdrop:blur-md' : 'bg-white'}`} color="black" speed="5s">
       
             <input
               type="text"
@@ -123,10 +123,10 @@ export default function MainPage() {
               onInput={handleSearch}
             />
             <button
-              className="bg-gray-800 text-white p-2 rounded-full px-4"
+              className="bg-indigo-600 text-white p-2 rounded-full px-4"
               onClick={handleSearchSubmit}
             >
-              <Fai icon="arrow-right" />
+              <Fai icon="arrow-up" />
             </button>
             </div>
           
