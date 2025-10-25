@@ -1284,7 +1284,7 @@ export default function EnhancedEditor({
                   initialHtml={payload.content}
                   onHtmlChange={handleLexicalChange}
                 />
-                     <TablePlugin /> <CustomCommandsPlugin onCommand={(cmd) => console.log('Command:', cmd)} />
+                     <CustomCommandsPlugin onCommand={(cmd) => console.log('Command:', cmd)} />
                 <EditorRefPlugin editorRef={lexicalEditorRef} />
               </div>
             </LexicalComposer>
