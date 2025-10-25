@@ -112,21 +112,21 @@ export default function MainPage() {
   <Image
     placeholder="blur"
     alt="null"
-    className="w-1/3 h-auto object-contain"
+    className="w-2/3 h-auto object-contain"
     src="https://memoorg.vercel.app/api/img/vor"
     height={800}
     width={800}
   />
 </div>
   {/* Responsive overlay input panel */}
-  <div className=" flex-1 absolute inset-0 flex items-center justify-center px-4 h-full">
+  <div className=" flex-1 inset-0 flex items-center justify-center px-4 h-full">
     <div className="w-full max-w-md bg-none  rounded-lg p-4 sm:p-6 md:p-8">
       <h1 className="text-center text-xl sm:text-2xl md:text-3xl font-semibold mb-4">
         Find Anything.
       </h1>
       <div className="w-full p-[1px] rounded-full bg-gray-800">
         <div
-          className={`w-full p-2 flex items-center gap-2 bg-white backdrop-blur-md rounded-full pl-3 ${
+          className={`w-full p-2 flex items-center gap-2 bg-white  rounded-full pl-3 ${
             !isMobile ? "bg-white/50 backdrop-blur-md" : "bg-white"
           }`}
         >
