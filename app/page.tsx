@@ -114,8 +114,8 @@ export default function MainPage() {
           <h1 className="text-center text-2xl mt-4 font-semibold">
             Find Anything.
           </h1>
-          <div className='w-full p-1 rounded-full border border-indigo-600'>
-          <div className={`w-full  flex items-center gap-2 rounded-full p-2 pl-3 ${!isMobile ?'bg-white/50 backdrop:blur-md' : 'bg-white'}`} color="black" speed="5s">
+          <div className='w-full p-1 rounded-full bg-indigo-100'>
+          <div className={`w-full  flex items-center gap-2 rounded-full pl-3 ${!isMobile ?'bg-white/50 backdrop:blur-md' : 'bg-white'}`} color="black" speed="5s">
       
             <input
               type="text"
