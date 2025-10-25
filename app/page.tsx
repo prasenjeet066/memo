@@ -112,7 +112,7 @@ export default function MainPage() {
   <Image
     placeholder="blur"
     alt="null"
-    className="w-full h-full object-cover"
+    className="w-1/3 h-auto object-contain"
     src="https://memoorg.vercel.app/api/img/vor"
     height={800}
     width={800}
@@ -126,7 +126,7 @@ export default function MainPage() {
       </h1>
       <div className="w-full p-[1px] rounded-full bg-gray-800">
         <div
-          className={`w-full p-2 flex items-center gap-2 bg-white/50 backdrop-blur-md rounded-full pl-3 ${
+          className={`w-full p-2 flex items-center gap-2 bg-white backdrop-blur-md rounded-full pl-3 ${
             !isMobile ? "bg-white/50 backdrop-blur-md" : "bg-white"
           }`}
         >
