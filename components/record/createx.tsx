@@ -46,11 +46,11 @@ import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPl
 import { TRANSFORMERS } from '@lexical/markdown';
 
 import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
+import { TableCellActionMenuPlugin } from '@lexical/react/TableCellActionMenuPlugin';
 import {
   INSERT_TABLE_COMMAND,
   TableCellNode,
   TableRowNode,
-  TableCellActionMenuPlugin,
   TableNode,
 } from "@lexical/table";
 import { 
@@ -295,7 +295,7 @@ export default function EnhancedEditor({
       TableNode,
       TableCellNode,
       TableRowNode,
-      
+      TableCellActionMenuPlugin,
       AutoLinkNode,
       LinkNode,
     ],
@@ -530,7 +530,7 @@ export default function EnhancedEditor({
           
         case 'table':
         
-          editor.dispatchCommand(INSERT_TABLE_COMMAND, { columns: 3, rows: 3 })
+          editor.dispatchCommand(INSERT_TABLE_COMMAND, { columns: 3, rows: 3,     includeHeaders: true, })
           break;
         case 'template':
 
