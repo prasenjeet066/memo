@@ -128,7 +128,7 @@ export async function GET(request) {
     }
     
     // 🔹 Export PNG with metadata
-    const buffer = canvas.toBuffer("image/svg+xml");
+    const buffer = canvas.toBuffer();
     const updatedBuffer = await sharp(buffer)
       .withMetadata({
         copyright: "2025 Sistorica. All rights reserved.",
