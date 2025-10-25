@@ -114,11 +114,7 @@ export default function MainPage() {
           <h1 className="text-center text-2xl mt-4 font-semibold">
             Find Anything.
           </h1>
-          <StarBorder
-  as="button"
-className={`w-full flex items-center gap-2 rounded-full p-2 ${!isMobile ?'bg-white/50 backdrop:blur-md' : 'bg-white'}`}
-  color="cyan"
-  speed="5s">
+          <StarBorder as="div" className={`w-full flex items-center gap-2 rounded-full p-2 ${!isMobile ?'bg-white/50 backdrop:blur-md' : 'bg-white'}`} color="black" speed="5s">
       
             <input
               type="text"
