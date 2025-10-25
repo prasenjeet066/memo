@@ -1282,7 +1282,7 @@ export default function EnhancedEditor({
                
                <TablePlugin/>
                
-               <TableCellActionMenuPlugin />
+              
                <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
                 <HtmlPlugin 
                   initialHtml={payload.content}
