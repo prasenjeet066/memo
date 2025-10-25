@@ -118,14 +118,14 @@ export default function MainPage() {
  <Image
     placeholder="blur"
     alt="null"
-    className="w-full h-auto object-contain"
+    className={`h-auto object-contain ${isMobile ? 'w-full' : 'w-1/2'}`}
     src="https://memoorg.vercel.app/api/img/vor?url=https://aspiringshe.com/wp-content/uploads/2022/09/8k-4k-priyanka-chopra-wallpaper-preview.jpg"
     height={800}
     width={800}
   />
 </div>
   {/* Responsive overlay input panel */}
-  <div className=" flex-1 inset-0 flex items-start justify-center px-4 h-full w-full lg:w-1/3">
+  <div className={`flex-1 inset-0 flex items-start justify-center px-4 h-full ${isMobile ? 'w-full'  : 'w-2/3'}`}>
     <div className="w-full">
       <h1 className="text-center text-xl sm:text-2xl md:text-3xl font-semibold mb-4">
         Find Anything.
