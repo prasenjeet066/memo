@@ -50,6 +50,7 @@ import {
   INSERT_TABLE_COMMAND,
   TableCellNode,
   TableRowNode,
+  TableCellActionMenuPlugin,
   TableNode,
 } from "@lexical/table";
 import { 
@@ -1280,7 +1281,10 @@ export default function EnhancedEditor({
                 <LinkPlugin />
                 <ListPlugin />
                
-               <TablePlugin/> <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+               <TablePlugin/>
+               
+               <TableCellActionMenuPlugin />
+               <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
                 <HtmlPlugin 
                   initialHtml={payload.content}
                   onHtmlChange={handleLexicalChange}
