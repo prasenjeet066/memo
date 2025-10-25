@@ -1,5 +1,6 @@
 'use client'
 import { Suspense } from 'react'
+import * as d3 from "d3";
 import Image from 'next/image'
 import { Fai } from '@/components/Fontawesome';
 import Header from '@/components/header';
@@ -27,6 +28,7 @@ export default function MainPage() {
   const isMobile = useMobile();
   const [isExpanded, setIsExpanded] = useState(true);
   const [searchQuery, setSearchQuery] = useState(null);
+  const svgXMlurl = 'https://memoorg.vercel.app/api/img/vor';
   
   const NavList = [
     { name: 'Home', icon: Home, href: '/' },
@@ -41,6 +43,8 @@ export default function MainPage() {
     const value = e.target.value.trim();
     if (value) setSearchQuery(value);
   };
+  
+  
   const Sidebar = !isMobile && (
     <div className='w-auto max-w-64 h-full bg-white ml-2 flex flex-col justify-between rounded-2xl'>
       <div className='p-4 border-b border-gray-200'>

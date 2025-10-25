@@ -43,7 +43,7 @@ export async function GET(request) {
     const img = await loadImage(imageUrl);
     const WIDTH = img.width;
     const HEIGHT = img.height;
-    const MAX_POINTS = 800000;
+    const MAX_POINTS = 80000 ;
     // 🔹 Prepare image canvas
     const imgCanvas = createCanvas(WIDTH, HEIGHT);
     const imgCtx = imgCanvas.getContext("2d");
