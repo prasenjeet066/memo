@@ -1,14 +1,3 @@
-import React from 'react';
-
-type StarBorderProps<T extends React.ElementType> = React.ComponentPropsWithoutRef<T> & {
-  as?: T;
-  className?: string;
-  children?: React.ReactNode;
-  color?: string;
-  speed?: React.CSSProperties['animationDuration'];
-  thickness?: number;
-};
-
 const StarBorder = <T extends React.ElementType = 'button'>({
   as,
   className = '',
@@ -22,13 +11,13 @@ const StarBorder = <T extends React.ElementType = 'button'>({
 
   return (
     <Component
-      className={`relative inline-block overflow-hidden rounded-[20px] ${className}`}
+      className={`relative inline-flex overflow-hidden rounded-[20px] ${className}`}
       {...(rest as any)}
       style={{
-        padding: `${thickness}px 0`,
         ...(rest as any).style
       }}
     >
+      {/* Animated stars */}
       <div
         className="absolute w-[300%] h-[50%] opacity-70 bottom-[-11px] right-[-250%] rounded-full animate-star-movement-bottom z-0"
         style={{
@@ -43,12 +32,11 @@ const StarBorder = <T extends React.ElementType = 'button'>({
           animationDuration: speed
         }}
       ></div>
-      <div className="relative z-1 px-[26px] rounded-full">
+
+      {/* Children container */}
+      <div className="relative z-[1] flex-1 flex items-center gap-2">
         {children}
       </div>
     </Component>
   );
 };
-
-export default StarBorder;
-
