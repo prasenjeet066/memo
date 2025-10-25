@@ -34,7 +34,7 @@ export async function GET(request) {
     
     if (!imageUrl) {
       let urls = Object.keys(store);
-      imageUrl = urls[Math.floor(Math.random() * urls.length)];
+      imageUrl = urls[urls.length] //urls[Math.floor(Math.random() * urls.length)];
     }
     
     const MAX_POINTS = 8000000;
