@@ -65,7 +65,7 @@ export async function GET(request) {
     const data = imageData.data;
     
     // 🔹 Output canvas
-    const canvas = createCanvas(WIDTH, HEIGHT);
+    const canvas = createCanvas(WIDTH, HEIGHT,'svg');
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, WIDTH, HEIGHT);
     
