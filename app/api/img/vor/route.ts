@@ -22,6 +22,10 @@ const store = {
     tags: ['indian', 'indian girl', 'indian tradition']
   },
   
+  'https://www.pngitem.com/pimgs/m/333-3332655_lionel-messi-png-shot-transparent-png.png': {
+    tags: ['messi']
+  }
+  
 }
 export async function GET(request) {
   try {
@@ -80,7 +84,7 @@ export async function GET(request) {
       // 🔸 নিচের দিকে নামলে পয়েন্ট ধীরে ধীরে অর্ধেকে নামবে
       // top → full density (1.0)
       // bottom → half density (0.5)
-      const falloff = 1.0 - 0.2 * (y / HEIGHT);
+      const falloff = 1.0 - 0.09 * (y / HEIGHT);
       
       // prefer dark pixels; lower falloff = fewer points
       if (Math.random() > brightness / falloff) {
