@@ -108,7 +108,7 @@ export default function MainPage() {
       <div className="w-full flex-1 h-full flex flex-row items-center justify-between">
         <div class = 'flex flex-col w-full h-full items-center justify-center'>
 <div className="relative flex flex-col items-center justify-center h-full w-full">
-  <div className = 'flex items-center justify-center w-full h-full px-4'>
+  <div className = 'flex items-center justify-center w-full h-1/2 px-4'>
   <Image
     placeholder="blur"
     alt="null"
@@ -119,16 +119,14 @@ export default function MainPage() {
   />
 </div>
   {/* Responsive overlay input panel */}
-  <div className=" flex-1 inset-0 flex items-center justify-center px-4 h-full">
+  <div className=" flex-1 inset-0 flex items-start justify-center px-4 h-full">
     <div className="w-full max-w-md bg-none  rounded-lg p-4 sm:p-6 md:p-8">
       <h1 className="text-center text-xl sm:text-2xl md:text-3xl font-semibold mb-4">
         Find Anything.
       </h1>
       <div className="w-full p-[1px] rounded-full bg-gray-800">
         <div
-          className={`w-full p-2 flex items-center gap-2 bg-white  rounded-full pl-3 ${
-            !isMobile ? "bg-white/50 backdrop-blur-md" : "bg-white"
-          }`}
+          className={`w-full p-2 flex items-center gap-2 bg-white  rounded-full pl-3`}
         >
           <input
             type="text"
