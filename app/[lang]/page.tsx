@@ -3,7 +3,7 @@
 
 import Header from '@/components/header'
 import { useMobile } from "@/lib/units/use-mobile"
-import VoronoiArt from '/components/d3/VoronoiArt'
+
 import { Home, Compass, HandHeart, Settings } from 'lucide-react'
 import { useState } from 'react'
 
@@ -78,7 +78,7 @@ export default function MainPage() {
         {Sidebar}
         <div className='flex-1 p-6'>
           <div className='max-w-4xl mx-auto'>
-            <VoronoiArt/>
+          
           </div>
         </div>
       </div>
