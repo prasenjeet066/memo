@@ -128,7 +128,7 @@ export async function GET(request) {
     }
     
     // 🔹 Export PNG with metadata
-    const buffer = canvas.toBuffer("image/png");
+    const buffer = canvas.toBuffer("image/svg+xml");
     const updatedBuffer = await sharp(buffer)
       .withMetadata({
         copyright: "2025 Sistorica. All rights reserved.",
@@ -138,9 +138,9 @@ export async function GET(request) {
       .png()
       .toBuffer();
     
-    return new Response(updatedBuffer, {
+    return new Response(buffer, {
       status: 200,
-      headers: { "Content-Type": "image/png", ...corsHeaders },
+      headers: { "Content-Type": "image/svg+xml", ...corsHeaders },
     });
   } catch (err) {
     console.error("Voronoi Error:", err);
