@@ -114,15 +114,15 @@ export default function MainPage() {
         <div class = 'flex flex-col w-full h-full items-center justify-center'>
 <div className="relative flex flex-col items-center justify-center h-full w-full">
   <div className = 'flex items-center justify-center w-full h-1/2 px-4'>
-    <VA/>
-{/** <Image
+    
+ <Image
     placeholder="blur"
     alt="null"
     className="w-2/3 h-auto object-contain"
-    src="https://memoorg.vercel.app/api/img/vor"
+    src="https://memoorg.vercel.app/api/img/vor?url=https://aspiringshe.com/wp-content/uploads/2022/09/8k-4k-priyanka-chopra-wallpaper-preview.jpg"
     height={800}
     width={800}
-  />**/}
+  />
 </div>
   {/* Responsive overlay input panel */}
   <div className=" flex-1 inset-0 flex items-start justify-center px-4 h-full w-full">
