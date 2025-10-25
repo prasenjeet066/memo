@@ -107,7 +107,7 @@ export default function MainPage() {
       <Header navlist={NavList} />
       <div className="w-full flex-1 h-full flex flex-row items-center justify-between">
         <div class = 'flex flex-col w-full h-full items-center justify-center'>
-<div className="relative flex items-center justify-center h-full w-full">
+<div className="relative flex flex-col items-center justify-center h-full w-full">
   <div className = 'flex items-center justify-center w-full h-full px-4'>
   <Image
     placeholder="blur"
