@@ -1279,7 +1279,8 @@ export default function EnhancedEditor({
                 <HistoryPlugin />
                 <LinkPlugin />
                 <ListPlugin />
-                <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+               
+               <TablePlugin/> <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
                 <HtmlPlugin 
                   initialHtml={payload.content}
                   onHtmlChange={handleLexicalChange}
