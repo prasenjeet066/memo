@@ -108,24 +108,25 @@ export default function MainPage() {
       <div className="w-full flex-1 h-full flex flex-row items-center justify-between">
         <div class = 'flex flex-col w-full h-full items-center justify-center'>
 <div className="relative flex items-center justify-center h-full w-full">
+  <div className = 'flex items-center justify-center w-full h-full px-4'>
   <Image
     placeholder="blur"
     alt="null"
-    className="w-[300px] h-[300px] object-cover"
+    className="w-full h-full object-cover"
     src="https://memoorg.vercel.app/api/img/vor"
     height={800}
     width={800}
   />
-
+</div>
   {/* Responsive overlay input panel */}
-  <div className="absolute inset-0 flex items-center justify-center px-4">
-    <div className="w-full max-w-md bg-none backdrop-blur-md rounded-lg p-4 sm:p-6 md:p-8">
+  <div className=" flex-1 absolute inset-0 flex items-center justify-center px-4 h-full">
+    <div className="w-full max-w-md bg-none  rounded-lg p-4 sm:p-6 md:p-8">
       <h1 className="text-center text-xl sm:text-2xl md:text-3xl font-semibold mb-4">
         Find Anything.
       </h1>
       <div className="w-full p-[1px] rounded-full bg-gray-800">
         <div
-          className={`w-full p-2 flex items-center gap-2 rounded-full pl-3 ${
+          className={`w-full p-2 flex items-center gap-2 bg-white/50 backdrop-blur-md rounded-full pl-3 ${
             !isMobile ? "bg-white/50 backdrop-blur-md" : "bg-white"
           }`}
         >
