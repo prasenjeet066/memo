@@ -34,7 +34,7 @@ const StarBorder = <T extends React.ElementType = 'button'>({
       ></div>
 
       {/* Children container */}
-      <div className="relative z-[1] flex-1 flex items-center gap-2">
+      <div className="relative z-[1] flex-1 flex flex-row items-center gap-2">
         {children}
       </div>
     </Component>
