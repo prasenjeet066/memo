@@ -45,9 +45,9 @@ import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { TRANSFORMERS } from '@lexical/markdown';
 
+import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
 import {
   INSERT_TABLE_COMMAND,
-  TablePlugin,
   TableCellNode,
   TableRowNode,
   TableNode,
