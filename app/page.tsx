@@ -106,57 +106,72 @@ export default function MainPage() {
     { label: 'APIs', href: '/api-docs' },
   ];
   
-  return (
-    <Suspense fallback ={<>null</>}>
-    <main className="min-h-screen w-full bg-gray-50 flex flex-col h-screen">
-      <Header navlist={NavList} />
-      <div className="w-full flex-1 h-full flex flex-row items-center justify-between">
-        <div class = 'flex flex-col w-full h-full items-center justify-center'>
-<div className="relative flex flex-col items-center justify-center h-full w-full">
-  <div className = 'flex items-center justify-center w-full h-1/2 px-4'>
-    
- <Image
-    placeholder="blur"
-    alt="null"
-    className={`h-auto object-contain ${isMobile ? 'w-full' : 'w-1/2'}`}
-    src="https://memoorg.vercel.app/api/img/vor?url=https://aspiringshe.com/wp-content/uploads/2022/09/8k-4k-priyanka-chopra-wallpaper-preview.jpg"
-    height={800}
-    width={800}
-  />
-</div>
-  {/* Responsive overlay input panel */}
-  <div className={`flex-1 inset-0 flex items-start justify-center px-4 h-full ${isMobile ? 'w-full'  : 'w-2/3'}`}>
-    <div className="w-full">
-      <h1 className="text-center text-xl sm:text-2xl md:text-3xl font-semibold mb-4">
-        Find Anything.
-      </h1>
-      <div className="w-full p-[1px] rounded-full bg-gray-800">
-        <div
-          className={`w-full p-2 flex items-center gap-2 bg-white  rounded-full pl-3`}
-        >
-          <input
-            type="text"
-            className="outline-none border-none pl-2 bg-transparent w-full text-sm sm:text-base"
-            placeholder="About Bangladesh"
-            onInput={handleSearch}
-          />
-          <button
-            className="bg-indigo-600 text-white p-2 rounded-full px-4 text-sm sm:text-base"
-            onClick={handleSearchSubmit}
-          >
-            <Fai icon="arrow-up" />
-          </button>
-        </div>
-      </div>
-    </div>
-  
+  return ( <Suspense fallback={<div>Loading...</div>}>
+      <main className="min-h-screen w-full bg-gray-50 flex flex-col">
+        <Header navlist={NavList} isMobile={isMobile} />
+        
+        <div className="flex-1 flex overflow-hidden">
+          {Sidebar}
           
+          <div className="flex-1 flex flex-col overflow-y-auto">
+            <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+              {/* Image Section */}
+              <div className="flex items-center justify-center w-full max-w-2xl mb-8">
+                <img
+                  alt="Sample"
+                  className={`h-auto object-contain rounded-lg ${isMobile ? 'w-full' : 'w-2/3'}`}
+                  src="https://memoorg.vercel.app/api/img/vor?url=https://aspiringshe.com/wp-content/uploads/2022/09/8k-4k-priyanka-chopra-wallpaper-preview.jpg"
+                />
+              </div>
+              
+              {/* Search Section */}
+              <div className={`w-full ${isMobile ? 'max-w-full' : 'max-w-2xl'}`}>
+                <h1 className="text-center text-2xl sm:text-3xl md:text-4xl font-semibold mb-6">
+                  Find Anything.
+                </h1>
+                <div className="w-full p-[1px] rounded-full bg-gradient-to-r from-gray-700 to-gray-900">
+                  <div className="w-full p-2 flex items-center gap-2 bg-white rounded-full">
+                    <input
+                      type="text"
+                      className="outline-none border-none pl-4 bg-transparent flex-1 text-sm sm:text-base"
+                      placeholder="About Bangladesh"
+                      value={searchQuery}
+                      onChange={handleSearch}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSearchSubmit()}
+                    />
+                    <button
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white p-2 sm:p-3 rounded-full transition-colors flex-shrink-0"
+                      onClick={handleSearchSubmit}
+                    >
+                      <Fai icon={'arrow-up'} className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <footer className="w-full bg-white border-t border-gray-200 py-6 px-4 mt-auto">
+              <div className="max-w-6xl mx-auto">
+                <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row justify-center gap-8'} items-center`}>
+                  {footerList.map((item, index) => (
+                    <a
+                      key={item.label}
+                      href={item.href}
+                      className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                      {item.label}
+                    </a>
+                  ))}
+                </div>
+                <div className="text-center mt-6 text-xs text-gray-500">
+                  © 2025 All rights reserved.
+                </div>
+              </div>
+            </footer>
+          </div>
         </div>
-        </div>
-        {/* ✅ Fixed footer layout (centers last item properly) */}
-        </div>
-      </div>
-    </main>
-    </Suspense>
-  );
+      </main>
+    </Suspense>);
 }
+
