@@ -1129,7 +1129,7 @@ const PublishDialog = () => {
 
 // Add a useEffect to watch for publish success/failure from parent:
 useEffect(() => {
-  
+  if(isSuccesfullCreated!==null){
   if (isSuccesfullCreated.success === true) {
     setPublishStatus({
       type: 'success',
@@ -1144,6 +1144,7 @@ useEffect(() => {
       type: 'error',
       message: isSuccesfullCreated.message
     });
+  }
   }
 }, [isSuccesfullCreated]);
   
