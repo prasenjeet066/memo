@@ -132,7 +132,7 @@ export default function RecordWithSlug({ params , searchParam }: RecordWithSlugP
     return null
   }
 
-  if (slug === 'new' &&  ArticleName &&  ArticleName.trim()!=='') {
+  if (slug === 'create' || ArticleName ||  ArticleName.trim()!=='') {
     return (
       <ErrorBoundary>
         <main className='h-screen w-full max-h-screen max-w-screen bg-gray-50'>
