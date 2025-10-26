@@ -1129,7 +1129,8 @@ const PublishDialog = () => {
 
 // Add a useEffect to watch for publish success/failure from parent:
 useEffect(() => {
-  if (isSuccesfullCreated === true) {
+  
+  if (isSuccesfullCreated.success === true) {
     setPublishStatus({
       type: 'success',
       message: 'Article published successfully! Redirecting...'
@@ -1138,10 +1139,10 @@ useEffect(() => {
       setPublishDialog({ open: false, summary: '' });
       setPublishStatus(null);
     }, 2000);
-  } else if ( isSuccesfullCreated === false) {
+  } else if ( isSuccesfullCreated.success === false) {
     setPublishStatus({
       type: 'error',
-      message: 'Error'
+      message: isSuccesfullCreated.message
     });
   }
 }, [isSuccesfullCreated]);

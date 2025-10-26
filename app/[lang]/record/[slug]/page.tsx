@@ -111,15 +111,20 @@ export default function RecordWithSlug({ params, searchParam }: RecordWithSlugPr
       const data = await response.json()
 
       if (response.ok) {
-        setIsSuccesfullCreated(true)
+        setIsSuccesfullCreated({
+          success: true
+        })
         console.log('Article published successfully:', data)
       } else {
-        setIsSuccesfullCreated(false)
+        setIsSuccesfullCreated({
+          success: false,
+          message: data.error
+        })
         console.error('Publish failed:', data.error)
       }
     } catch (error) {
       console.error('Publish error:', error)
-      setIsSuccesfullCreated(false)
+      setIsSuccesfullCreated({success:false, message: data.error})
     } finally {
       setIsPublishing(false)
     }
