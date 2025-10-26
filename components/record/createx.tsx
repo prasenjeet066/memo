@@ -82,25 +82,23 @@ import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
 import { $createCodeNode } from '@lexical/code';
 
 interface EditorProps {
-  editor_mode ? : 'visual' | 'code';
-  record_name ? : string;
-  onPublish ? : () => void;
-  sideBarTools ? : () => void;
-  ExpandedIs ? : boolean;
-  IsExpandedSet ? : (value: boolean) => void;
-  isSuccesfullCreated?: null | boolean;
-  __data?:{
-    data: object
-  }
+  editor_mode?: 'visual' | 'code';
+  record_name?: string;
+  onPublish?: (payload: any) => Promise<void>;
+  sideBarTools?: (arg: React.ReactNode) => void;
+  ExpandedIs?: boolean;
+  IsExpandedSet?: (value: boolean) => void;
+  isSuccesfullCreated?: { success: boolean; message?: string } | null;
+  __data?: any;
 }
 
 interface Citation {
   id: string;
   text: string;
-  url ? : string;
-  author ? : string;
-  date ? : string;
-  title ? : string;
+  url?: string;
+  author?: string;
+  date?: string;
+  title?: string;
 }
 
 interface EditSummary {
@@ -152,7 +150,7 @@ function HtmlPlugin({
   initialHtml,
   onHtmlChange
 }: {
-  initialHtml ? : string;
+  initialHtml?: string;
   onHtmlChange: (html: string) => void;
 }) {
   const [editor] = useLexicalComposerContext();
@@ -177,7 +175,7 @@ function HtmlPlugin({
   }, [editor, initialHtml]);
   
   return (
-      <OnChangePlugin
+    <OnChangePlugin
       onChange={(editorState) => {
         editorState.read(() => {
           try {
@@ -298,18 +296,18 @@ export default function EnhancedEditor({
       console.error('Lexical error:', error);
     },
     nodes: [
-  HeadingNode,
-  ListNode,
-  ListItemNode,
-  QuoteNode,
-  CodeNode,
-  CodeHighlightNode,
-  TableNode,
-  TableCellNode,
-  TableRowNode,
-  AutoLinkNode,
-  LinkNode,
-],
+      HeadingNode,
+      ListNode,
+      ListItemNode,
+      QuoteNode,
+      CodeNode,
+      CodeHighlightNode,
+      TableNode,
+      TableCellNode,
+      TableRowNode,
+      AutoLinkNode,
+      LinkNode,
+    ],
   };
   
   // Statistics calculation
@@ -540,11 +538,10 @@ export default function EnhancedEditor({
           break;
           
         case 'table':
-        
-          editor.dispatchCommand(INSERT_TABLE_COMMAND, { columns: 3, rows: 3,     includeHeaders: true, })
+          editor.dispatchCommand(INSERT_TABLE_COMMAND, { columns: 3, rows: 3, includeHeaders: true });
           break;
+          
         case 'template':
-
           break;
           
         default:
@@ -556,13 +553,15 @@ export default function EnhancedEditor({
       setActiveAction(null);
     }
   }, [editorMode, citations.length, generateReferencesSection]);
-  useEffect(()=>{
-    if (isSuccesfullCreated!==null) {
+  
+  useEffect(() => {
+    if (isSuccesfullCreated !== null) {
       if (isSuccesfullCreated) {
         setMass(`Created Done!`);
       }
     }
-  },[isSuccesfullCreated])
+  }, [isSuccesfullCreated])
+  
   // Toolbar action handler
   const handleToolbarAction = useCallback((action: string) => {
     if (action) {
@@ -597,7 +596,7 @@ export default function EnhancedEditor({
   // Publish handler
   const handlePublish = useCallback(() => {
     setPublishDialog({ open: true, summary: '' });
-  }, [publishDialog]);
+  }, []);
   
   // Preview handler
   const handlePreview = useCallback(() => {
@@ -631,8 +630,6 @@ export default function EnhancedEditor({
           textContent.replace(regex, replaceTerm) : 
           textContent.replace(regex, replaceTerm);
         
-        // This is a simplified implementation
-        // In production, you'd want to traverse the nodes properly
         console.log('Replace functionality - simplified version');
       }
     });
@@ -644,7 +641,6 @@ export default function EnhancedEditor({
     
     return lexicalEditorRef.current.registerUpdateListener(() => {
       lexicalEditorRef.current?.getEditorState().read(() => {
-        // Update undo/redo button states
         setCanUndo(true);
         setCanRedo(true);
       });
@@ -1003,484 +999,484 @@ export default function EnhancedEditor({
     </Dialog>
   );
   
-  const [publishStatus, setPublishStatus] = useState < {
-  type: 'idle' | 'loading' | 'success' | 'error';
-  message: string;
-} | null > (null);
+  const [publishStatus, setPublishStatus] = useState<{
+    type: 'idle' | 'loading' | 'success' | 'error';
+    message: string;
+  } | null>(null);
 
-// Update the PublishDialog component:
-const PublishDialog = () => {
-  const [localSummary, setLocalSummary] = useState('');
-  
-  const handlePublishClick = async () => {
-    if (!localSummary.trim()) {
-      alert('Please enter an edit summary');
-      return;
-    }
+  const PublishDialog = () => {
+    const [localSummary, setLocalSummary] = useState('');
     
-    setPublishStatus({ type: 'loading', message: 'Publishing...' });
-    
-    try {
-      const result = await onPublish?.({
-        ...payload,
-        summary: localSummary,
-      });
+    const handlePublishClick = async () => {
+      if (!localSummary.trim()) {
+        alert('Please enter an edit summary');
+        return;
+      }
       
-      // Check the isSuccesfullCreated prop from parent
-      // The parent will set this after the API call
-    } catch (error) {
-      setPublishStatus({
-        type: 'error',
-        message: 'Failed to publish. Please try again.'
-      });
-    }
+      setPublishStatus({ type: 'loading', message: 'Publishing...' });
+      
+      try {
+        const result = await onPublish?.({
+          ...payload,
+          summary: localSummary,
+        });
+      } catch (error) {
+        setPublishStatus({
+          type: 'error',
+          message: 'Failed to publish. Please try again.'
+        });
+      }
+      
+      setLocalSummary('');
+    };
     
-    setLocalSummary('');
-  };
-  
-  return (
-    <Dialog 
-      open={publishDialog.open} 
-      onOpenChange={(open) => {
-        if (!open) {
-          setPublishDialog({ open: false, summary: '' });
-          setPublishStatus(null);
-        }
-      }}
-    >
-      <DialogContent className='rounded-lg bg-white max-w-md'>
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">Publish Article</DialogTitle>
-          <DialogDescription className="text-gray-600">
-            Describe your changes before publishing
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="edit-summary" className="font-medium">
-              Edit Summary *
-            </Label>
-            <Textarea
-              id="edit-summary"
-              className='border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
-              placeholder="e.g., Added new section on methodology, fixed typos, updated references..."
-              value={localSummary}
-              onChange={(e) => setLocalSummary(e.target.value)}
-              rows={4}
-              disabled={publishStatus?.type === 'loading'}
-            />
-            <p className="text-xs text-gray-500">
-              {localSummary.length}/500 characters
-            </p>
+    return (
+      <Dialog 
+        open={publishDialog.open} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setPublishDialog({ open: false, summary: '' });
+            setPublishStatus(null);
+          }
+        }}
+      >
+        <DialogContent className='rounded-lg bg-white max-w-md'>
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">Publish Article</DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Describe your changes before publishing
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-summary" className="font-medium">
+                Edit Summary *
+              </Label>
+              <Textarea
+                id="edit-summary"
+                className='border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
+                placeholder="e.g., Added new section on methodology, fixed typos, updated references..."
+                value={localSummary}
+                onChange={(e) => setLocalSummary(e.target.value)}
+                rows={4}
+                disabled={publishStatus?.type === 'loading'}
+              />
+              <p className="text-xs text-gray-500">
+                {localSummary.length}/500 characters
+              </p>
+            </div>
+
+            {publishStatus && (
+              <div className={`p-3 rounded-lg flex items-center gap-2 ${
+                publishStatus.type === 'loading' ? 'bg-blue-50 text-blue-700' :
+                publishStatus.type === 'success' ? 'bg-green-50 text-green-700' :
+                publishStatus.type === 'error' ? 'bg-red-50 text-red-700' :
+                ''
+              }`}>
+                {publishStatus.type === 'loading' && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent" />
+                )}
+                {publishStatus.type === 'success' && (
+                  <Fai icon="check-circle" className="text-green-600" />
+                )}
+                {publishStatus.type === 'error' && (
+                  <Fai icon="exclamation-circle" className="text-red-600" />
+                )}
+                <span className="text-sm font-medium">{publishStatus.message}</span>
+              </div>
+            )}
           </div>
 
-          {/* Status Messages */}
-          {publishStatus && (
-            <div className={`p-3 rounded-lg flex items-center gap-2 ${
-              publishStatus.type === 'loading' ? 'bg-blue-50 text-blue-700' :
-              publishStatus.type === 'success' ? 'bg-green-50 text-green-700' :
-              publishStatus.type === 'error' ? 'bg-red-50 text-red-700' :
-              ''
-            }`}>
-              {publishStatus.type === 'loading' && (
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent" />
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setPublishDialog({ open: false, summary: '' });
+                setPublishStatus(null);
+              }}
+              className='rounded-full border-gray-300'
+              disabled={publishStatus?.type === 'loading'}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handlePublishClick}
+              className='bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6'
+              disabled={!localSummary.trim() || publishStatus?.type === 'loading'}
+            >
+              {publishStatus?.type === 'loading' ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                  Publishing...
+                </>
+              ) : (
+                <>
+                  <Fai icon='arrow-right' className='mr-2'/>
+                  Publish Article
+                </>
               )}
-              {publishStatus.type === 'success' && (
-                <Fai icon="check-circle" className="text-green-600" />
-              )}
-              {publishStatus.type === 'error' && (
-                <Fai icon="exclamation-circle" className="text-red-600" />
-              )}
-              <span className="text-sm font-medium">{publishStatus.message}</span>
-            </div>
-          )}
-        </div>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
-        <DialogFooter className="gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              setPublishDialog({ open: false, summary: '' });
-              setPublishStatus(null);
-            }}
-            className='rounded-full border-gray-300'
-            disabled={publishStatus?.type === 'loading'}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handlePublishClick}
-            className='bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6'
-            disabled={!localSummary.trim() || publishStatus?.type === 'loading'}
-          >
-            {publishStatus?.type === 'loading' ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-                Publishing...
-              </>
-            ) : (
-              <>
-                <Fai icon='arrow-right' className='mr-2'/>
-                Publish Article
-              </>
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent> </Dialog>
-  );
-};
-
-// Add a useEffect to watch for publish success/failure from parent:
-useEffect(() => {
-  if(isSuccesfullCreated!==null){
-  if (isSuccesfullCreated.success === true) {
-    setPublishStatus({
-      type: 'success',
-      message: 'Article published successfully! Redirecting...'
-    });
-    setTimeout(() => {
-      setPublishDialog({ open: false, summary: '' });
-      setPublishStatus(null);
-    }, 2000);
-  } else if ( isSuccesfullCreated.success === false) {
-    setPublishStatus({
-      type: 'error',
-      message: isSuccesfullCreated.message
-    });
-  }
-  }
-}, [isSuccesfullCreated]);
-  const datasView = __data?.data || null
+  useEffect(() => {
+    if (isSuccesfullCreated !== null) {
+      if (isSuccesfullCreated.success === true) {
+        setPublishStatus({
+          type: 'success',
+          message: 'Article published successfully! Redirecting...'
+        });
+        setTimeout(() => {
+          setPublishDialog({ open: false, summary: '' });
+          setPublishStatus(null);
+        }, 2000);
+      } else if (isSuccesfullCreated.success === false) {
+        setPublishStatus({
+          type: 'error',
+          message: isSuccesfullCreated.message || 'Failed to publish'
+        });
+      }
+    }
+  }, [isSuccesfullCreated]);
+  
+  const datasView = __data || null;
+  
   return (
     <div className="w-full h-full flex flex-col">
       
       <div className="px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          
           <h1 className="text-xl font-bold text-gray-900">
-            
-            {datasView!==null ? DataView.title :record_name || 'Untitled Document'}
+            {datasView !== null ? datasView.title : record_name || 'Untitled Document'}
           </h1>
         </div>
-        { datasView==null && (
-        <div className="flex items-center justify-end gap-2">
-          <button
-            onClick={handleUndo}
-            disabled={!canUndo}
-            className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-30"
-            title="Undo (Ctrl+Z)"
-            aria-label="Undo"
-          >
-            <Fai icon="undo" style="fal" />
-          </button>
-          <button
-            onClick={handleRedo}
-            disabled={!canRedo}
-            className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-30"
-            title="Redo (Ctrl+Y)"
-            aria-label="Redo"
-          >
-            <Fai icon="redo" style="fal" />
-          </button>
-          
-          <button
-            onClick={handlePreview}
-            className="p-2 hover:bg-gray-100 rounded-full"
-            title="Preview (Ctrl+Shift+P)"
-            aria-label="Preview"
-          >
-            <Fai icon="eye" style="fal" />
-          </button>
-          
-          {hasRegisteredRole && (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="max-w-[140px] w-auto h-10 border-none bg-white rounded-full px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
-                {editorMode === 'visual' ? 'Visual' : 'Code'}
-                <Fai icon="chevron-down" style="fas" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => handleSwMode('visual')}>
-                  Visual
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleSwMode('code')}>
-                  Code
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-          
-          <button 
-            className="border-none rounded-full p-2 text-black flex items-center hover:bg-gray-100"
-            aria-label="Settings"
-            onClick={() => {
-              const enabled = confirm('Enable spell check? (Currently ' + (spellCheckEnabled ? 'enabled' : 'disabled') + ')');
-              setSpellCheckEnabled(enabled);
-            }}
-          >
-            <Fai icon="gear" style="fal" />
-          </button>
-        </div>)}
+        {datasView === null && (
+          <div className="flex items-center justify-end gap-2">
+            <button
+              onClick={handleUndo}
+              disabled={!canUndo}
+              className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-30"
+              title="Undo (Ctrl+Z)"
+              aria-label="Undo"
+            >
+              <Fai icon="undo" style="fal" />
+            </button>
+            <button
+              onClick={handleRedo}
+              disabled={!canRedo}
+              className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-30"
+              title="Redo (Ctrl+Y)"
+              aria-label="Redo"
+            >
+              <Fai icon="redo" style="fal" />
+            </button>
+            
+            <button
+              onClick={handlePreview}
+              className="p-2 hover:bg-gray-100 rounded-full"
+              title="Preview (Ctrl+Shift+P)"
+              aria-label="Preview"
+            >
+              <Fai icon="eye" style="fal" />
+            </button>
+            
+            {hasRegisteredRole && (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="max-w-[140px] w-auto h-10 border-none bg-white rounded-full px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
+                  {editorMode === 'visual' ? 'Visual' : 'Code'}
+                  <Fai icon="chevron-down" style="fas" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => handleSwMode('visual')}>
+                    Visual
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSwMode('code')}>
+                    Code
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            
+            <button 
+              className="border-none rounded-full p-2 text-black flex items-center hover:bg-gray-100"
+              aria-label="Settings"
+              onClick={() => {
+                const enabled = confirm('Enable spell check? (Currently ' + (spellCheckEnabled ? 'enabled' : 'disabled') + ')');
+                setSpellCheckEnabled(enabled);
+              }}
+            >
+              <Fai icon="gear" style="fal" />
+            </button>
+          </div>
+        )}
       </div>
-          
-      
       
       <div className="flex items-center w-full p-2 gap-2 text-xs text-gray-500">
         <span className='p-2 border-r'>{wordCount} words</span>
         <span className='p-2 border-r'>{characterCount} characters</span>
         <span className='p-2 border-r'>{readingTime} min read</span>
-        {datasView===null && (
-        <span className={`font-medium ${
-          autoSaveStatus === 'saved' ? 'text-green-600' : 
-          autoSaveStatus === 'saving' ? 'text-yellow-600' : 
-          'text-gray-400'
-        }`}>
-          {autoSaveStatus === 'saved' ? 'Saved' : 
-           autoSaveStatus === 'saving' ? 'Saving...' : 
-           'Unsaved'}
-        </span>)}
+        {datasView === null && (
+          <span className={`font-medium ${
+            autoSaveStatus === 'saved' ? 'text-green-600' : 
+            autoSaveStatus === 'saving' ? 'text-yellow-600' : 
+            'text-gray-400'
+          }`}>
+            {autoSaveStatus === 'saved' ? 'Saved' : 
+             autoSaveStatus === 'saving' ? 'Saving...' : 
+             'Unsaved'}
+          </span>
+        )}
       </div>
       
       <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2 py-1">
         {datasView === null && (
-        <>
-        { editorMode === 'visual' ? ( 
-          <div className="flex items-center gap-1 overflow-x-auto flex-1">
-            {toolbarBlocks.map((block: any, index: number) => {
-              if (block.items && Array.isArray(block.items)) {
-                if (block.name === 'Paragraph') {
+          <>
+            {editorMode === 'visual' ? ( 
+              <div className="flex items-center gap-1 overflow-x-auto flex-1">
+                {toolbarBlocks.map((block: any, index: number) => {
+                  if (block.items && Array.isArray(block.items)) {
+                    if (block.name === 'Paragraph') {
+                      return (
+                        <DropdownMenu key={`toolbar-dropdown-${index}`}>
+                          <DropdownMenuTrigger className="max-w-[180px] border-l border-r w-auto h-10 border-none px-3 py-2 hover:bg-gray-100 flex items-center gap-2">
+                            {block.name}
+                            <Fai icon="chevron-down" style="fas" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            {block.items.map((item: any, itemIndex: number) => (
+                              <DropdownMenuItem 
+                                key={`item-${index}-${itemIndex}`}
+                                onClick={() => handleToolbarAction(item.action || item.label)}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Fai icon={item.icon} style="fas" />
+                                  <span>{item.label}</span>
+                                </div>
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      );
+                    }
+                    return (
+                      <DropdownMenu key={`toolbar-dropdown-${index}`}>
+                        <DropdownMenuTrigger className="max-w-[180px] border-l border-r w-auto h-10 border-none px-3 py-2 hover:bg-gray-100">
+                          <Fai icon={block.icon} />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          {block.items.map((item: any, itemIndex: number) => (
+                            <DropdownMenuItem 
+                              key={`item-${index}-${itemIndex}`}
+                              onClick={() => handleToolbarAction(item.action || item.label)}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Fai icon={item.icon} style="fas" />
+                                <span>{item.label}</span>
+                              </div>
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    );
+                  }
                   return (
-                    <DropdownMenu key={`toolbar-dropdown-${index}`}>
-                      <DropdownMenuTrigger className="max-w-[180px] border-l border-r w-auto h-10 border-none px-3 py-2 hover:bg-gray-100 flex items-center gap-2">
-                        {block.name}
-                        <Fai icon="chevron-down" style="fas" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        {block.items.map((item: any, itemIndex: number) => (
-                          <DropdownMenuItem 
-                            key={`item-${index}-${itemIndex}`}
-                            onClick={() => handleToolbarAction(item.action || item.label)}
-                          >
-                            <div className="flex items-center gap-2">
-                              <Fai icon={item.icon} style="fas" />
-                              <span>{item.label}</span>
-                            </div>
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <button
+                      key={`toolbar-btn-${index}`}
+                      id={block.action}
+                      className={`px-3 py-2 border-0 hover:bg-gray-100 transition-colors rounded ${
+                        block.action === activeAction ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
+                      }`}
+                      onClick={() => handleToolbarAction(block.action)}
+                      title={block.label}
+                      aria-label={block.label}
+                      type="button"
+                    >
+                      <Fai icon={block.icon} style="fas" />
+                    </button>
                   );
-                }
-                return (
-                  <DropdownMenu key={`toolbar-dropdown-${index}`}>
-                    <DropdownMenuTrigger className="max-w-[180px] border-l border-r w-auto h-10 border-none px-3 py-2 hover:bg-gray-100">
-                      <Fai icon={block.icon} />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      {block.items.map((item: any, itemIndex: number) => (
-                        <DropdownMenuItem 
-                          key={`item-${index}-${itemIndex}`}
-                          onClick={() => handleToolbarAction(item.action || item.label)}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Fai icon={item.icon} style="fas" />
-                            <span>{item.label}</span>
-                          </div>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                );
-              }
-              return (
+                })}
+                
                 <button
-                  key={`toolbar-btn-${index}`}
-                  id={block.action}
-                  className={`px-3 py-2 border-0 hover:bg-gray-100 transition-colors rounded ${
-                    block.action === activeAction ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
-                  }`}
-                  onClick={() => handleToolbarAction(block.action)}
-                  title={block.label}
-                  aria-label={block.label}
+                  className="px-3 py-2 border-0 hover:bg-gray-100 transition-colors rounded text-gray-700"
+                  onClick={() => handleToolbarAction('citation')}
+                  title="Add Citation"
+                  aria-label="Add Citation"
                   type="button"
                 >
-                  <Fai icon={block.icon} style="fas" />
+                  <Fai icon="quote-right" style="fas" />
                 </button>
-              );
-            })}
-            
-            <button
-              className="px-3 py-2 border-0 hover:bg-gray-100 transition-colors rounded text-gray-700"
-              onClick={() => handleToolbarAction('citation')}
-              title="Add Citation"
-              aria-label="Add Citation"
-              type="button"
-            >
-              <Fai icon="quote-right" style="fas" />
-            </button>
-            
-            <button
-              className="px-3 py-2 border-0 hover:bg-gray-100 transition-colors rounded text-gray-700"
-              onClick={() => handleToolbarAction('blockquote')}
-              title="Blockquote"
-              aria-label="Blockquote"
-              type="button"
-            >
-              <Fai icon="quote-left" style="fas" />
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2" />
-        )}</>)}
+                
+                <button
+                  className="px-3 py-2 border-0 hover:bg-gray-100 transition-colors rounded text-gray-700"
+                  onClick={() => handleToolbarAction('blockquote')}
+                  title="Blockquote"
+                  aria-label="Blockquote"
+                  type="button"
+                >
+                  <Fai icon="quote-left" style="fas" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2" />
+            )}
+          </>
+        )}
         <div className="flex items-center border-l pl-2">
-          {DataView===null ?(
-          <button
-            className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
-            onClick={handlePublish}
-            aria-label="Publish document"
-            type="button"
-            title="Publish (Ctrl+S)"
-          >
-            Publish
-          </button>):(          <button
-            className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
-           // onClick={handlePublish}
-            aria-label="Edit document"
-            type="button"
-            title="Publish (Ctrl+S)"
-          >
-            Edit Article 
-          </button>)}
+          {datasView === null ? (
+            <button
+              className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
+              onClick={handlePublish}
+              aria-label="Publish document"
+              type="button"
+              title="Publish (Ctrl+S)"
+            >
+              Publish
+            </button>
+          ) : (
+            <button
+              className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
+              aria-label="Edit document"
+              type="button"
+              title="Edit Article"
+            >
+              Edit Article 
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto bg-white relative">{ datasView === null ? <>
-        {showPreview ? (
-          <div className="p-8 w-full min-h-full prose max-w-none" style={{ maxWidth: '900px', margin: '0 auto' }}>
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-              <p className="text-sm font-medium text-yellow-800">Preview Mode - Read Only</p>
-            </div>
-            <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(payload.content) }} />
-          </div>
-        ) : editorMode === 'code' ? (
-          <Editor
-            height="100%"
-            defaultLanguage="html"
-            value={payload.content || '<!-- Write your code... -->'}
-            onMount={(editor) => {
-              monacoEditorRef.current = editor;
-              editor.updateOptions({
-                minimap: { enabled: false },
-                fontSize: 14,
-                wordWrap: 'on',
-                lineNumbers: 'on',
-                scrollBeyondLastLine: false,
-              });
-            }}
-            onChange={handleEditorContentChangeCode}
-            theme="vs-light"
-            options={{
-              selectOnLineNumbers: true,
-              roundedSelection: false,
-              cursorStyle: 'line',
-              automaticLayout: true,
-            }}
-          />
+      <div className="flex-1 overflow-auto bg-white relative">
+        {datasView === null ? (
+          <>
+            {showPreview ? (
+              <div className="p-8 w-full min-h-full prose max-w-none" style={{ maxWidth: '900px', margin: '0 auto' }}>
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                  <p className="text-sm font-medium text-yellow-800">Preview Mode - Read Only</p>
+                </div>
+                <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(payload.content) }} />
+              </div>
+            ) : editorMode === 'code' ? (
+              <Editor
+                height="100%"
+                defaultLanguage="html"
+                value={payload.content || '<!-- Write your code... -->'}
+                onMount={(editor) => {
+                  monacoEditorRef.current = editor;
+                  editor.updateOptions({
+                    minimap: { enabled: false },
+                    fontSize: 14,
+                    wordWrap: 'on',
+                    lineNumbers: 'on',
+                    scrollBeyondLastLine: false,
+                  });
+                }}
+                onChange={handleEditorContentChangeCode}
+                theme="vs-light"
+                options={{
+                  selectOnLineNumbers: true,
+                  roundedSelection: false,
+                  cursorStyle: 'line',
+                  automaticLayout: true,
+                }}
+              />
+            ) : (
+              <div className="p-8 w-full min-h-full" style={{ maxWidth: '900px', margin: '0 auto' }}>
+                <LexicalComposer initialConfig={initialConfig}>
+                  <div className="relative">
+                    <RichTextPlugin
+                      contentEditable={
+                        <ContentEditable 
+                          className="outline-none prose max-w-none min-h-[500px]"
+                          style={{ minHeight: '500px' }}
+                          spellCheck={spellCheckEnabled}
+                        />
+                      }
+                      placeholder={
+                        <div className="absolute top-0 left-0 text-gray-400 pointer-events-none">
+                          Start writing...
+                        </div>
+                      }
+                      ErrorBoundary={LexicalErrorBoundary}
+                    />
+                    <HistoryPlugin />
+                    <LinkPlugin />
+                    <ListPlugin />
+                    <TablePlugin />
+                    <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+                    <HtmlPlugin 
+                      initialHtml={payload.content}
+                      onHtmlChange={handleLexicalChange}
+                    />
+                    <CustomCommandsPlugin onCommand={(cmd) => console.log('Command:', cmd)} />
+                    <EditorRefPlugin editorRef={lexicalEditorRef} />
+                  </div>
+                </LexicalComposer>
+              </div>
+            )}
+          </>
         ) : (
           <div className="p-8 w-full min-h-full" style={{ maxWidth: '900px', margin: '0 auto' }}>
-            <LexicalComposer initialConfig={initialConfig}>
-              <div className="relative">
-                <RichTextPlugin
-                  contentEditable={
-                    <ContentEditable 
-                      className="outline-none prose max-w-none min-h-[500px]"
-                      style={{ minHeight: '500px' }}
-                      spellCheck={spellCheckEnabled}
-                    />
-                  }
-                  placeholder={
-                    <div className="absolute top-0 left-0 text-gray-400 pointer-events-none">
-                      Start writing...
-                    </div>
-                  }
-                  ErrorBoundary={LexicalErrorBoundary}
-                />
-                <HistoryPlugin />
-                <LinkPlugin />
-                <ListPlugin />
-               
-               <TablePlugin/>
-               
-              
-               <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
-                <HtmlPlugin 
-                  initialHtml={payload.content}
-                  onHtmlChange={handleLexicalChange}
-                />
-                     <CustomCommandsPlugin onCommand={(cmd) => console.log('Command:', cmd)} />
-                <EditorRefPlugin editorRef={lexicalEditorRef} />
-              </div>
-            </LexicalComposer>
+            <div className="prose max-w-none">
+              <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(datasView.content || '') }} />
+            </div>
           </div>
         )}
-        </> : <></>}
       </div>
-      {DataView === null && (
-      <>
-      {isGenerating && (
-        <div 
-          className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2"
-          role="status"
-          aria-live="polite"
-        >
-          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-          <span>Generating AI content...</span>
-        </div>
-      )}
       
-      {citations.length > 0 && (
-        <div className="fixed bottom-4 left-4 bg-white border border-gray-200 rounded-lg p-3 max-w-xs">
-          <div className="font-semibold mb-2 text-sm">Citations ({citations.length})</div>
-          <div className="space-y-1 text-xs max-h-40 overflow-y-auto">
-            {citations.map((cite, idx) => (
-              <div key={cite.id} className="border-b pb-1">
-                <span className="font-medium">[{idx + 1}]</span> {cite.author || cite.text}
+      {datasView === null && (
+        <>
+          {isGenerating && (
+            <div 
+              className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2"
+              role="status"
+              aria-live="polite"
+            >
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+              <span>Generating AI content...</span>
+            </div>
+          )}
+          
+          {citations.length > 0 && (
+            <div className="fixed bottom-4 left-4 bg-white border border-gray-200 rounded-lg p-3 max-w-xs">
+              <div className="font-semibold mb-2 text-sm">Citations ({citations.length})</div>
+              <div className="space-y-1 text-xs max-h-40 overflow-y-auto">
+                {citations.map((cite, idx) => (
+                  <div key={cite.id} className="border-b pb-1">
+                    <span className="font-medium">[{idx + 1}]</span> {cite.author || cite.text}
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+          )}
+          
+          <div className="fixed bottom-4 right-4 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs opacity-0 hover:opacity-100 transition-opacity">
+            <div className="font-semibold mb-2">Keyboard Shortcuts</div>
+            <div className="space-y-1">
+              <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+B</kbd> Bold</div>
+              <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+I</kbd> Italic</div>
+              <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+U</kbd> Underline</div>
+              <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+K</kbd> Insert Link</div>
+              <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+F</kbd> Find</div>
+              <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+H</kbd> Find & Replace</div>
+              <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+Z</kbd> Undo</div>
+              <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+Y</kbd> Redo</div>
+              <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+S</kbd> Publish</div>
+              <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+Shift+P</kbd> Preview</div>
+            </div>
           </div>
-        </div>
+          
+          <LinkDialog />
+          <CitationDialog />
+          <ImageDialog />
+          <VideoDialog />
+          <FindReplaceDialog />
+          <PublishDialog />
+        </>
       )}
-      
-      <div className="fixed bottom-4 right-4 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs opacity-0 hover:opacity-100 transition-opacity">
-        <div className="font-semibold mb-2">Keyboard Shortcuts</div>
-        <div className="space-y-1">
-          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+B</kbd> Bold</div>
-          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+I</kbd> Italic</div>
-          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+U</kbd> Underline</div>
-          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+K</kbd> Insert Link</div>
-          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+F</kbd> Find</div>
-          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+H</kbd> Find & Replace</div>
-          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+Z</kbd> Undo</div>
-          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+Y</kbd> Redo</div>
-          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+S</kbd> Publish</div>
-          <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+Shift+P</kbd> Preview</div>
-        </div>
-      </div>
-      
-      <LinkDialog />
-      <CitationDialog />
-      <ImageDialog />
-      <VideoDialog />
-      <FindReplaceDialog />
-      <PublishDialog />
-</>)}
     </div>
   );
 }
-
-
-
-
-// Replace the PublishDialog and related state in components/record/createx.tsx
-
-// Add these state variables at the top of the component:
