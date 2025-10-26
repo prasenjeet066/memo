@@ -88,6 +88,7 @@ interface EditorProps {
   sideBarTools ? : () => void;
   ExpandedIs ? : boolean;
   IsExpandedSet ? : (value: boolean) => void;
+  isSuccesfullCreated?: null | boolean
 }
 
 interface Citation {
@@ -210,10 +211,15 @@ export default function EnhancedEditor({
   editor_mode = 'visual',
   record_name = 'Untitled Document',
   onPublish,
+  isSuccesfullCreated,
   IsExpandedSet,
 }: EditorProps) {
   const [editorMode, setEditorMode] = useState<'visual' | 'code'>(editor_mode);
-  const [payload, setPayload] = useState({ title: '', content: '' });
+  const [payload, setPayload] = useState({ 
+    slug: '',
+    title: '', 
+    content: '' 
+  });
   const editSummary = useRef()
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
@@ -249,6 +255,7 @@ export default function EnhancedEditor({
     find: '',
     replace: ''
   });
+  const [Massage, setMass] = useState(null)
   const [publishDialog, setPublishDialog] = useState({ open: false, summary: '' });
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [canUndo, setCanUndo] = useState(false);
@@ -545,7 +552,13 @@ export default function EnhancedEditor({
       setActiveAction(null);
     }
   }, [editorMode, citations.length, generateReferencesSection]);
-  
+  useEffect(()=>{
+    if (isSuccesfullCreated!==null) {
+      if (isSuccesfullCreated) {
+        setMass(`Created Done!`);
+      }
+    }
+  },[isSuccesfullCreated])
   // Toolbar action handler
   const handleToolbarAction = useCallback((action: string) => {
     if (action) {
@@ -1030,7 +1043,10 @@ export default function EnhancedEditor({
               }]);
               
               if (onPublish) {
-                onPublish();
+                onPublish({
+                  ...payload,
+                  summary: publishDialog.summary
+                });
               } else {
                 console.log('Publishing...', { ...payload, content: currentContent });
               }
@@ -1049,6 +1065,7 @@ export default function EnhancedEditor({
   
   return (
     <div className="w-full h-full flex flex-col">
+      {Massage!==null &&  (<small>Massage</small>)}
       <div className="px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold text-gray-900">

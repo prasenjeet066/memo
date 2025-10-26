@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { memoFlow } from "@/lib/workflow";
 import { z } from "zod";
-
+import {RecordDAL} from '@/lib/dal/record.dal';
 // -------------------
 // OpenRouter Setup
 // -------------------
@@ -246,10 +246,10 @@ memoFlow.createFunction(
     const { articleId, htmlContent, author, title, category } = event.data;
 
     // Step 1: Clean HTML
-    const cleanedHtml = await step.run("ai-clean-html", async () => aiCleanAndSecureHtml(htmlContent), { maxRetries: 2 });
+   // const cleanedHtml = await step.run("ai-clean-html", async () => aiCleanAndSecureHtml(htmlContent), { maxRetries: 2 });
 
     // Step 2: Parse HTML → JSON
-    const jsonData = await step.run(
+  /**  const jsonData = await step.run(
       "ai-parse-json",
       async () => aiParseArticleToJson(cleanedHtml, { articleId, title, author, category }),
       { maxRetries: 2 }
@@ -257,19 +257,12 @@ memoFlow.createFunction(
 
     // Step 3: Content Review
     const contentReview = await step.run("ai-content-review", async () => aiReviewContent(jsonData), { maxRetries: 3 });
-
+**/
     // Step 4: Store Reviewed Article
     const storageResult = await step.run("store-article", async () =>
-      storeReviewedArticle({
-        articleId,
-        originalHtml: htmlContent,
-        cleanedHtml,
-        jsonData,
-        contentReview,
-        reviewedAt: new Date(),
-        status: contentReview.nsfwDetected ? "flagged" : "approved",
-        aiConfidence: contentReview.aiConfidence,
-      }),
+      ()=>{
+        
+      },
       { maxRetries: 3 }
     );
 

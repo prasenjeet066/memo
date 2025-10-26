@@ -81,21 +81,28 @@ export default function RecordWithSlug({ params }: RecordWithSlugProps) {
 
   // Fix 2: Remove problematic useEffect and state that was causing infinite loop
   const [currentSidebar, setCurrentSidebar] = useState<React.ReactNode>(Sidebar)
-  
+  const [isSuccesfullCreated , setIsSuccesfullCreated] = useState(null)
   const handleSideBarTools = (arg: React.ReactNode) => {
     setCurrentSidebar(arg);
   }
 
   const handlePublish = async(payload: any) => {
     if (payload) {
+      try {
       // Handle publish logic
-      let xht = await fetch(`/api/publish/article/sakib_al`,{
+      let xht = await fetch(`/api/publish/article/${slug}`,{
         method: 'POST',
-        
+        body: {
+          ...payload,
+          title : 'Simple Articel'
+        }
       })
       let res = await xht.json()
       if (xht.ok) {
-        alert(res)
+        setIsSuccesfullCreated(true)
+      }
+      } catch (error){
+        setIsSuccesfullCreated(false)
       }
     }
     return null
@@ -111,6 +118,7 @@ export default function RecordWithSlug({ params }: RecordWithSlugProps) {
               onPublish={handlePublish}
               ExpandedIs={isExpanded}
               sideBarTools={handleSideBarTools}
+              isSuccesfullCreated = {isSuccesfullCreated}
               IsExpandedSet={setIsExpanded}
             />
             
