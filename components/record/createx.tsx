@@ -209,7 +209,7 @@ function EditorRefPlugin({
 
 export default function EnhancedEditor({
   editor_mode = 'visual',
-  record_name = 'Untitled Document',
+  record_name,
   onPublish,
   isSuccesfullCreated,
   IsExpandedSet,
