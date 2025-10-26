@@ -579,7 +579,7 @@ export default function EnhancedEditor({
   // Publish handler
   const handlePublish = useCallback(() => {
     setPublishDialog({ open: true, summary: '' });
-  }, []);
+  }, [publishDialog]);
   
   // Preview handler
   const handlePreview = useCallback(() => {
