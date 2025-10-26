@@ -16,7 +16,7 @@ interface RecordWithSlugProps {
   }
 }
 
-export default function RecordWithSlug({ params, searchParam }: RecordWithSlugProps) {
+export default function RecordWithSlug({ params, searchParams }: RecordWithSlugProps) {
   const slug = params.slug
   const ArticleName = searchParams?.new?.trim() || ''
   const isMobile = useMobile()
