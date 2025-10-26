@@ -3,116 +3,94 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
-// Define supported languages
+// Supported languages
 const SUPPORTED_LANGUAGES = ['en', 'es', 'fr', 'de', 'bn', 'hi', 'ar', 'zh', 'ja', 'ko'];
 const DEFAULT_LANGUAGE = 'en';
 
-// Protected routes that require authentication
+// Protected and auth routes
 const PROTECTED_ROUTES = ['/account'];
-
-// Auth routes that authenticated users shouldn't access
 const AUTH_ROUTES = ['/login', '/register', '/signup', '/signin'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Skip middleware for static files, API routes, and Next.js internals
+  // Early handle OPTIONS (CORS preflight)
+  if (request.method === 'OPTIONS') {
+    const response = new NextResponse(null, { status: 204 });
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    return response;
+  }
+  
+  // Skip static / API / internal
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/static') ||
-    pathname.includes('.') // Skip files with extensions
+    pathname.includes('.')
   ) {
     return NextResponse.next();
   }
   
-  // Extract language from pathname
+  // Extract and validate language
   const pathSegments = pathname.split('/').filter(Boolean);
   const potentialLang = pathSegments[0];
-  
-  // Validate language
   let lang = DEFAULT_LANGUAGE;
   let restOfPath = pathname;
   
   if (potentialLang && SUPPORTED_LANGUAGES.includes(potentialLang)) {
     lang = potentialLang;
     restOfPath = '/' + pathSegments.slice(1).join('/');
-  } else if (potentialLang && pathSegments.length > 0) {
-    // Invalid language detected, redirect to default language
-    const newPathname = `/${DEFAULT_LANGUAGE}${pathname}`;
+  } else if (potentialLang && !SUPPORTED_LANGUAGES.includes(potentialLang)) {
     const url = request.nextUrl.clone();
-    url.pathname = newPathname;
+    url.pathname = `/${DEFAULT_LANGUAGE}${pathname.startsWith('/') ? pathname : '/' + pathname}`;
     return NextResponse.redirect(url);
   }
   
-  // Get authentication token
+  // Get auth token
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
   });
   
   const isAuthenticated = !!token;
-  
-  // Normalize the rest of path for route matching
   const normalizedPath = restOfPath === '' ? '/' : restOfPath;
   
-  // Check if the current route is protected
-  const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
-    normalizedPath.startsWith(route)
-  );
+  const isProtectedRoute = PROTECTED_ROUTES.some((route) => normalizedPath.startsWith(route));
+  const isAuthRoute = AUTH_ROUTES.some((route) => normalizedPath.startsWith(route));
   
-  // Check if the current route is an auth route
-  const isAuthRoute = AUTH_ROUTES.some((route) =>
-    normalizedPath.startsWith(route)
-  );
-  
-  // Handle unauthenticated users trying to access protected routes
+  // Unauthenticated user accessing protected route
   if (isProtectedRoute && !isAuthenticated) {
     const url = request.nextUrl.clone();
     url.pathname = `/${lang}/login`;
-    url.searchParams.set('callbackUrl', pathname);
+    url.searchParams.set('callbackUrl', encodeURIComponent(request.url));
     return NextResponse.redirect(url);
   }
   
-  // Handle authenticated users trying to access auth routes
+  // Authenticated user accessing auth routes
   if (isAuthRoute && isAuthenticated) {
     const url = request.nextUrl.clone();
-    // Redirect to account page or home page
     url.pathname = `/${lang}/account`;
     return NextResponse.redirect(url);
   }
   
-  // Add language to response headers for use in components
+  // Build response with CORS and language headers
+  const requestHeaders = new Headers(request.headers);
   const response = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  })
+    request: { headers: requestHeaders },
+  });
   
-  response.headers.set('Access-Control-Allow-Origin', '*') // Change '*' to specific domains if needed
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   response.headers.set('x-current-lang', lang);
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   
-  // Handle OPTIONS requests for preflight checks
-  if (request.method === 'OPTIONS') {
-    return response // Return early for preflight requests
-  }
-  
-  return response
+  return response;
 }
 
-// Configure which routes the middleware should run on
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     * - api routes
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\..*|api).*)',
   ],
 };
