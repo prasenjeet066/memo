@@ -1138,10 +1138,10 @@ useEffect(() => {
       setPublishDialog({ open: false, summary: '' });
       setPublishStatus(null);
     }, 2000);
-  } else if (typeof isSuccesfullCreated === 'string') {
+  } else if ( isSuccesfullCreated === false) {
     setPublishStatus({
       type: 'error',
-      message: isSuccesfullCreated
+      message: 'Error'
     });
   }
 }, [isSuccesfullCreated]);
