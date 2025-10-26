@@ -29,7 +29,7 @@ export default function RecordWithSlug({ params, searchParam }: RecordWithSlugPr
     { name: 'Settings', icon: Settings, href: '/settings' },
   ], [])
 
-  // ✅ Use useMemo for Sidebar (prevents re-renders)
+  // Use useMemo for Sidebar (prevents re-renders)
   const Sidebar = useMemo(() =>
     <div className='w-auto max-w-64 h-full bg-white mr-2 flex flex-col justify-between rounded-2xl'>
       <div className='p-4 border-b border-gray-200'>
@@ -127,7 +127,7 @@ export default function RecordWithSlug({ params, searchParam }: RecordWithSlugPr
     return null
   }
 
-  // ✅ Fix logic condition (safe and avoids runtime error)
+  //  Fix logic condition (safe and avoids runtime error)
   if (slug === 'create' || ArticleName !== '') {
     return (
       <ErrorBoundary>
@@ -151,7 +151,7 @@ export default function RecordWithSlug({ params, searchParam }: RecordWithSlugPr
   const [isExistArticel, setEA] = useState(false)
   const [recordJdata, setRecordJdata] = useState<any>(null)
 
-  // ✅ Fix useEffect (must not use await directly; correctly fetch data)
+  // Fix useEffect (must not use await directly; correctly fetch data)
   useEffect(() => {
     const fetchRecord = async () => {
       if (!slug) return
@@ -173,7 +173,7 @@ export default function RecordWithSlug({ params, searchParam }: RecordWithSlugPr
     fetchRecord()
   }, [slug])
 
-  // ✅ UI unchanged
+  
   return (
     <div className='min-h-screen w-full bg-gray-50 h-screen'>
       <Header navList={NavList} />
