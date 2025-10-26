@@ -10,9 +10,9 @@ export async function POST(req: Request, context: RouteContext) {
   // Get session first
   const session = await getServerSession(authOptions)
   
-  if (!session?.user?.email) {
+  /**if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 })
-  }
+  }**/
   
   try {
     let record = await RecordDAL.findBySlug(slug);
