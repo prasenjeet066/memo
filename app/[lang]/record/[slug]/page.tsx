@@ -151,16 +151,42 @@ export default function RecordWithSlug({ params , searchParam }: RecordWithSlugP
       </ErrorBoundary>
     )
   }
+  const [isExistArticel , SetEA]  = useState(false);
+  const [recordJdata , setrecordJdata] = useState(null)
+  useEffect(()=>{
+    if (isExistArticel &&  slug) {
+      try {
+        let feRecord = await fetch('/api/record/'+slug);
+        
+        if (feRecord.ok) {
+          let recordData = await feRecord.json();
+          const {
+            id , content
+          } = recordData.data
+          SetEA(true)
+          setrecordJdata(recordData.data)
+        }
+      } catch (e) {
+        
+      }
+    }
+  },[slug, isExistArticel])
   
   // Handle other slug cases
   return (
     <div className='min-h-screen w-full bg-gray-50 h-screen '>
       <Header navList={NavList}/>
       <div className='w-full h-full p-4 gap-2 flex items-start justify-start'>
-        {Sidebar}
-        <p>Record ID: {slug}</p>
-        {/* Add your record display component here */}
+        
+        {
+          isExistArticel ? 
+            
+              JSON.stringify(recordJdata)
+            
+          :null
+        }
       </div>
+      
     </div>
   )
 }
