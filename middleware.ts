@@ -83,10 +83,23 @@ export async function middleware(request: NextRequest) {
   }
   
   // Add language to response headers for use in components
-  const response = NextResponse.next();
-  response.headers.set('x-current-lang', lang);
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
   
-  return response;
+  response.headers.set('Access-Control-Allow-Origin', '*') // Change '*' to specific domains if needed
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  response.headers.set('x-current-lang', lang);
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  
+  // Handle OPTIONS requests for preflight checks
+  if (request.method === 'OPTIONS') {
+    return response // Return early for preflight requests
+  }
+  
+  return response
 }
 
 // Configure which routes the middleware should run on
