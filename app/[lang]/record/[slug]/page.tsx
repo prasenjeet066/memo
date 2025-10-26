@@ -1,4 +1,3 @@
-
 'use client'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import { Home, Compass, HandHeart, Settings } from 'lucide-react'
@@ -12,8 +11,8 @@ interface RecordWithSlugProps {
   params: {
     slug: string
   }
-  searchParams?: {
-    new?: string
+  searchParams ? : {
+    new ? : string
   }
 }
 
@@ -22,14 +21,14 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
   const ArticleName = searchParams?.new?.trim() || ''
   const isMobile = useMobile()
   const [isExpanded, setIsExpanded] = useState(true)
-
+  
   const NavList = useMemo(() => [
     { name: 'Home', icon: Home, href: '/' },
     { name: 'Explore', icon: Compass, href: '/explore' },
     { name: 'Contribute', icon: HandHeart, href: '/contribute' },
     { name: 'Settings', icon: Settings, href: '/settings' },
   ], [])
-
+  
   // Use useMemo for Sidebar (prevents re-renders)
   const Sidebar = useMemo(() =>
     <div className='w-auto max-w-64 h-full bg-white mr-2 flex flex-col justify-between rounded-2xl'>
@@ -81,23 +80,22 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
           })()}
         </div>
       </nav>
-    </div>
-  , [isExpanded, NavList])
-
-  const [currentSidebar, setCurrentSidebar] = useState<React.ReactNode>(Sidebar)
-  const [isSuccesfullCreated, setIsSuccesfullCreated] = useState<boolean | null>(null)
+    </div>, [isExpanded, NavList])
+  
+  const [currentSidebar, setCurrentSidebar] = useState < React.ReactNode > (Sidebar)
+  const [isSuccesfullCreated, setIsSuccesfullCreated] = useState < boolean | null > (null)
   const [isPublishing, setIsPublishing] = useState(false)
-
+  
   const handleSideBarTools = (arg: React.ReactNode) => {
     setCurrentSidebar(arg)
   }
-
+  
   const handlePublish = async (payload: any) => {
     if (!payload) return null
-
+    
     setIsPublishing(true)
     setIsSuccesfullCreated(null)
-
+    
     try {
       const response = await fetch(`/api/publish/article/${slug}`, {
         method: 'POST',
@@ -108,9 +106,9 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
           articleId: ArticleName.replace(/\s+/g, '-').toLowerCase(),
         })
       })
-
+      
       const data = await response.json()
-
+      
       if (response.ok) {
         setIsSuccesfullCreated({
           success: true
@@ -125,14 +123,14 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
       }
     } catch (error) {
       console.error('Publish error:', error)
-      setIsSuccesfullCreated({success:false, message: data.error})
+      setIsSuccesfullCreated({ success: false, message: data.error })
     } finally {
       setIsPublishing(false)
     }
-
+    
     return null
   }
-
+  
   //  Fix logic condition (safe and avoids runtime error)
   if (slug === 'create' || ArticleName !== '') {
     return (
@@ -153,10 +151,10 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
       </ErrorBoundary>
     )
   }
-
+  
   const [isExistArticel, setEA] = useState(false)
-  const [recordJdata, setRecordJdata] = useState<any>(null)
-
+  const [recordJdata, setRecordJdata] = useState < any > (null)
+  
   // Fix useEffect (must not use await directly; correctly fetch data)
   useEffect(() => {
     const fetchRecord = async () => {
@@ -175,20 +173,24 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
         setEA(false)
       }
     }
-
+    
     fetchRecord()
   }, [slug])
-
   
-  return (
-    <div className='min-h-screen w-full bg-gray-50 h-screen'>
+  if (isExistArticel || recordJdata.data) {
+    return (
+      <div className='min-h-screen w-full bg-gray-50 h-screen'>
       <Header navList={NavList} />
       <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
+        <ErrorBoundary>
+        
             <CreateNew
               __data ={ recordJdata}
               IsExpandedSet={setIsExpanded}
             />
+            </ErrorBoundary>
           </div>
     </div>
-  )
+    )
+  }
 }
