@@ -88,7 +88,10 @@ interface EditorProps {
   sideBarTools ? : () => void;
   ExpandedIs ? : boolean;
   IsExpandedSet ? : (value: boolean) => void;
-  isSuccesfullCreated?: null | boolean
+  isSuccesfullCreated?: null | boolean;
+  __data?:{
+    data: object
+  }
 }
 
 interface Citation {
@@ -213,6 +216,7 @@ export default function EnhancedEditor({
   onPublish,
   isSuccesfullCreated,
   IsExpandedSet,
+  __data,
 }: EditorProps) {
   const [editorMode, setEditorMode] = useState<'visual' | 'code'>(editor_mode);
   const [payload, setPayload] = useState({ 
@@ -1147,16 +1151,19 @@ useEffect(() => {
   }
   }
 }, [isSuccesfullCreated]);
-  
+  const datasView = __data?.data || null
   return (
     <div className="w-full h-full flex flex-col">
       
       <div className="px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
+          
           <h1 className="text-xl font-bold text-gray-900">
-            {record_name || 'Untitled Document'}
+            
+            {datasView!==null ? DataView.title :record_name || 'Untitled Document'}
           </h1>
         </div>
+        { datasView==null && (
         <div className="flex items-center justify-end gap-2">
           <button
             onClick={handleUndo}
@@ -1213,13 +1220,16 @@ useEffect(() => {
           >
             <Fai icon="gear" style="fal" />
           </button>
-        </div>
+        </div>)}
       </div>
+          
+      
       
       <div className="flex items-center w-full p-2 gap-2 text-xs text-gray-500">
         <span className='p-2 border-r'>{wordCount} words</span>
         <span className='p-2 border-r'>{characterCount} characters</span>
         <span className='p-2 border-r'>{readingTime} min read</span>
+        {datasView===null && (
         <span className={`font-medium ${
           autoSaveStatus === 'saved' ? 'text-green-600' : 
           autoSaveStatus === 'saving' ? 'text-yellow-600' : 
@@ -1228,11 +1238,13 @@ useEffect(() => {
           {autoSaveStatus === 'saved' ? 'Saved' : 
            autoSaveStatus === 'saving' ? 'Saving...' : 
            'Unsaved'}
-        </span>
+        </span>)}
       </div>
       
       <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2 py-1">
-        {editorMode === 'visual' ? (
+        {datasView === null && (
+        <>
+        { editorMode === 'visual' ? ( 
           <div className="flex items-center gap-1 overflow-x-auto flex-1">
             {toolbarBlocks.map((block: any, index: number) => {
               if (block.items && Array.isArray(block.items)) {
@@ -1319,9 +1331,9 @@ useEffect(() => {
           </div>
         ) : (
           <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2" />
-        )}
-
+        )}</>)}
         <div className="flex items-center border-l pl-2">
+          {DataView===null ?(
           <button
             className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
             onClick={handlePublish}
@@ -1330,11 +1342,19 @@ useEffect(() => {
             title="Publish (Ctrl+S)"
           >
             Publish
-          </button>
+          </button>):(          <button
+            className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
+           // onClick={handlePublish}
+            aria-label="Edit document"
+            type="button"
+            title="Publish (Ctrl+S)"
+          >
+            Edit Article 
+          </button>)}
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto bg-white relative">
+      <div className="flex-1 overflow-auto bg-white relative">{ datasView === null ? <>
         {showPreview ? (
           <div className="p-8 w-full min-h-full prose max-w-none" style={{ maxWidth: '900px', margin: '0 auto' }}>
             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
@@ -1403,8 +1423,10 @@ useEffect(() => {
             </LexicalComposer>
           </div>
         )}
+        </> : <></>}
       </div>
-
+      {DataView === null && (
+      <>
       {isGenerating && (
         <div 
           className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2"
@@ -1451,7 +1473,7 @@ useEffect(() => {
       <VideoDialog />
       <FindReplaceDialog />
       <PublishDialog />
-
+</>)}
     </div>
   );
 }

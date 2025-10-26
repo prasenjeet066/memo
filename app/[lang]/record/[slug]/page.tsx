@@ -1,3 +1,4 @@
+
 'use client'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import { Home, Compass, HandHeart, Settings } from 'lucide-react'
@@ -182,9 +183,12 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
   return (
     <div className='min-h-screen w-full bg-gray-50 h-screen'>
       <Header navList={NavList} />
-      <div className='w-full h-full p-4 gap-2 flex items-start justify-start'>
-        {isExistArticel && recordJdata ? JSON.stringify(recordJdata) : null}
-      </div>
+      <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
+            <CreateNew
+              __data ={ recordJdata}
+              IsExpandedSet={setIsExpanded}
+            />
+          </div>
     </div>
   )
 }
