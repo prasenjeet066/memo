@@ -26,9 +26,11 @@ export async function GET(request) {
     const imgCanvas = createCanvas(WIDTH, HEIGHT);
     const imgCtx = imgCanvas.getContext("2d");
     imgCtx.drawImage(img, 0, 0, WIDTH, HEIGHT);
-    imgCtx.fillText('Sistorica' , WIDTH / 2, HEIGHT - 10)
     imgCtx.font = 'bold 110px Sans'
     imgCtx.fillStyle = 'black'
+    imgCtx.fillText('Sistorica' , WIDTH / 2, HEIGHT - 10)
+    
+    
     const data = imgCtx.getImageData(0, 0, WIDTH, HEIGHT).data;
     
     // 🔹 SVG canvas
