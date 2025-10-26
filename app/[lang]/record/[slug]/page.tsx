@@ -77,34 +77,54 @@ export default function RecordWithSlug({ params }: RecordWithSlugProps) {
         </div>
       </nav>
     </div>
-  , [isExpanded, NavList]) // Add dependencies
+  , [isExpanded, NavList])
 
-  // Fix 2: Remove problematic useEffect and state that was causing infinite loop
   const [currentSidebar, setCurrentSidebar] = useState<React.ReactNode>(Sidebar)
-  const [isSuccesfullCreated , setIsSuccesfullCreated] = useState(null)
+  const [isSuccesfullCreated, setIsSuccesfullCreated] = useState<boolean | null>(null)
+  const [isPublishing, setIsPublishing] = useState(false)
+  
   const handleSideBarTools = (arg: React.ReactNode) => {
     setCurrentSidebar(arg);
   }
 
   const handlePublish = async(payload: any) => {
-    if (payload) {
-      try {
-      // Handle publish logic
-      let xht = await fetch(`/api/publish/article/${slug}`,{
-        method: 'POST',
-        body: {
-          ...payload,
-          title : 'Simple Articel'
-        }
-      })
-      let res = await xht.json()
-      if (xht.ok) {
-        setIsSuccesfullCreated(true)
-      }
-      } catch (error){
-        setIsSuccesfullCreated(false)
-      }
+    if (!payload) {
+      return null
     }
+
+    setIsPublishing(true)
+    setIsSuccesfullCreated(null)
+
+    try {
+      // Fixed: Use JSON.stringify for the body and set proper headers
+      const response = await fetch(`/api/publish/article/${slug}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...payload,
+          title: payload.title || 'Simple Article',
+          articleId: slug,
+        })
+      })
+
+      const data = await response.json()
+      
+      if (response.ok) {
+        setIsSuccesfullCreated(true)
+        console.log('Article published successfully:', data)
+      } else {
+        setIsSuccesfullCreated(false)
+        console.error('Publish failed:', data.error)
+      }
+    } catch (error) {
+      console.error('Publish error:', error)
+      setIsSuccesfullCreated(false)
+    } finally {
+      setIsPublishing(false)
+    }
+
     return null
   }
 
@@ -118,10 +138,9 @@ export default function RecordWithSlug({ params }: RecordWithSlugProps) {
               onPublish={handlePublish}
               ExpandedIs={isExpanded}
               sideBarTools={handleSideBarTools}
-              isSuccesfullCreated = {isSuccesfullCreated}
+              isSuccesfullCreated={isSuccesfullCreated}
               IsExpandedSet={setIsExpanded}
             />
-            
           </div>
         </main>
       </ErrorBoundary>
