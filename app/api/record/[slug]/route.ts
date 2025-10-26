@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth/auth'
 import { RecordDAL } from '@/lib/dal/record.dal';
 
 
-export async function POST(req: Request, context: RouteContext) {
+export async function GET(req: Request, context: RouteContext) {
   const { slug } = await context.params;
   
   // Get session first
