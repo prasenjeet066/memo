@@ -84,8 +84,8 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
       </nav>
     </div>, [isExpanded, NavList])
   
-  const [currentSidebar, setCurrentSidebar] = useState < React.ReactNode > (Sidebar)
-  const [isSuccesfullCreated, setIsSuccesfullCreated] = useState < boolean | null > (null)
+  const [currentSidebar, setCurrentSidebar] = useState<React.ReactNode>(Sidebar)
+  const [isSuccesfullCreated, setIsSuccesfullCreated] = useState<any>(null)
   const [isPublishing, setIsPublishing] = useState(false)
   
   const handleSideBarTools = (arg: React.ReactNode) => {
@@ -125,7 +125,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
       }
     } catch (error) {
       console.error('Publish error:', error)
-      setIsSuccesfullCreated({ success: false, message: data.error })
+      setIsSuccesfullCreated({ success: false, message: 'An error occurred' })
     } finally {
       setIsPublishing(false)
     }
@@ -155,7 +155,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
   }
   
   const [isExistArticel, setEA] = useState(false)
-  const [recordJdata, setRecordJdata] = useState < any > (null)
+  const [recordJdata, setRecordJdata] = useState<any>(null)
   
   // Fix useEffect (must not use await directly; correctly fetch data)
   useEffect(() => {
@@ -166,7 +166,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
         if (feRecord.ok) {
           const recordData = await feRecord.json()
           setEA(true)
-          setRecordJdata(recordData.data)
+          setRecordJdata(recordData)
         } else {
           setEA(false)
         }
@@ -179,7 +179,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
     fetchRecord()
   }, [slug])
   
-  if (isExistArticel || recordJdata.data) {
+  if (isExistArticel && recordJdata) {
     return (
       <ErrorBoundary>
       <div className='min-h-screen w-full bg-gray-50 h-screen'>
@@ -191,4 +191,6 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
     </ErrorBoundary>
     )
   }
+  
+  return null
 }
