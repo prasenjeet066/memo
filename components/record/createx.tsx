@@ -999,69 +999,152 @@ export default function EnhancedEditor({
     </Dialog>
   );
   
-  const PublishDialog = () => (
-    <Dialog open={publishDialog.open} onOpenChange={(open) => 
-      setPublishDialog({ open, summary: '' })
-    } className='rounded'>
-      <DialogContent className='rounded bg-white'>
+  const [publishStatus, setPublishStatus] = useState < {
+  type: 'idle' | 'loading' | 'success' | 'error';
+  message: string;
+} | null > (null);
+
+// Update the PublishDialog component:
+const PublishDialog = () => {
+  const [localSummary, setLocalSummary] = useState('');
+  
+  const handlePublishClick = async () => {
+    if (!localSummary.trim()) {
+      alert('Please enter an edit summary');
+      return;
+    }
+    
+    setPublishStatus({ type: 'loading', message: 'Publishing...' });
+    
+    try {
+      const result = await onPublish?.({
+        ...payload,
+        summary: localSummary,
+      });
+      
+      // Check the isSuccesfullCreated prop from parent
+      // The parent will set this after the API call
+    } catch (error) {
+      setPublishStatus({
+        type: 'error',
+        message: 'Failed to publish. Please try again.'
+      });
+    }
+    
+    setLocalSummary('');
+  };
+  
+  return (
+    <Dialog 
+      open={publishDialog.open} 
+      onOpenChange={(open) => {
+        if (!open) {
+          setPublishDialog({ open: false, summary: '' });
+          setPublishStatus(null);
+        }
+      }}
+    >
+      <DialogContent className='rounded-lg bg-white max-w-md'>
         <DialogHeader>
-          <DialogTitle>Publish Document</DialogTitle>
-          <DialogDescription>Enter a brief summary of your changes</DialogDescription>
+          <DialogTitle className="text-xl font-semibold">Publish Article</DialogTitle>
+          <DialogDescription className="text-gray-600">
+            Describe your changes before publishing
+          </DialogDescription>
         </DialogHeader>
+        
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="edit-summary">Edit Summary</Label>
+            <Label htmlFor="edit-summary" className="font-medium">
+              Edit Summary *
+            </Label>
             <Textarea
               id="edit-summary"
-              className= 'border-gray-100 rounded'
-              ref = {editSummary}
-              placeholder="Describe your changes..."
-             // value={publishDialog.summary}
-             // onChange={(e) => setPublishDialog(prev => ({ ...prev, summary: e.target.value }))}
-              rows={3}
+              className='border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
+              placeholder="e.g., Added new section on methodology, fixed typos, updated references..."
+              value={localSummary}
+              onChange={(e) => setLocalSummary(e.target.value)}
+              rows={4}
+              disabled={publishStatus?.type === 'loading'}
             />
+            <p className="text-xs text-gray-500">
+              {localSummary.length}/500 characters
+            </p>
           </div>
+
+          {/* Status Messages */}
+          {publishStatus && (
+            <div className={`p-3 rounded-lg flex items-center gap-2 ${
+              publishStatus.type === 'loading' ? 'bg-blue-50 text-blue-700' :
+              publishStatus.type === 'success' ? 'bg-green-50 text-green-700' :
+              publishStatus.type === 'error' ? 'bg-red-50 text-red-700' :
+              ''
+            }`}>
+              {publishStatus.type === 'loading' && (
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent" />
+              )}
+              {publishStatus.type === 'success' && (
+                <Fai icon="check-circle" className="text-green-600" />
+              )}
+              {publishStatus.type === 'error' && (
+                <Fai icon="exclamation-circle" className="text-red-600" />
+              )}
+              <span className="text-sm font-medium">{publishStatus.message}</span>
+            </div>
+          )}
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setPublishDialog({ open: false, summary: '' })}
-          className='border-none'
+
+        <DialogFooter className="gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              setPublishDialog({ open: false, summary: '' });
+              setPublishStatus(null);
+            }}
+            className='rounded-full border-gray-300'
+            disabled={publishStatus?.type === 'loading'}
           >
             Cancel
           </Button>
-          <Button onClick={() => {
-          setPublishDialog({open: true, summary: editSummary.current.value || ''})
-            if (publishDialog.summary) {
-              const currentContent = payload.content;
-              const prevContent = editHistory[editHistory.length - 1]?.content || '';
-              const charChange = currentContent.length - prevContent.length;
-              
-              setEditHistory(prev => [...prev, {
-                timestamp: Date.now(),
-                content: currentContent,
-                summary: publishDialog.summary,
-                charChange,
-              }]);
-              
-              if (onPublish) {
-                onPublish({
-                  ...payload,
-                  summary: publishDialog.summary
-                });
-              } else {
-                console.log('Publishing...', { ...payload, content: currentContent });
-              }
-              
-              setAutoSaveStatus('saved');
-              setPublishDialog({ open: false, summary: '' });
-            }
-          }} className ='bg-gray-800 text-white rounded-full border-none outline-none ml-2'>
-            <Fai icon ='arrow-right' className='mr-2'/>
-            Publish
+          <Button 
+            onClick={handlePublishClick}
+            className='bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6'
+            disabled={!localSummary.trim() || publishStatus?.type === 'loading'}
+          >
+            {publishStatus?.type === 'loading' ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                Publishing...
+              </>
+            ) : (
+              <>
+                <Fai icon='arrow-right' className='mr-2'/>
+                Publish Article
+              </>
+            )}
           </Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </DialogContent> </Dialog>
   );
+};
+
+// Add a useEffect to watch for publish success/failure from parent:
+useEffect(() => {
+  if (isSuccesfullCreated === true) {
+    setPublishStatus({
+      type: 'success',
+      message: 'Article published successfully! Redirecting...'
+    });
+    setTimeout(() => {
+      setPublishDialog({ open: false, summary: '' });
+      setPublishStatus(null);
+    }, 2000);
+  } else if (isSuccesfullCreated === false) {
+    setPublishStatus({
+      type: 'error',
+      message: 'Publication failed. Please check your connection and try again.'
+    });
+  }
+}, [isSuccesfullCreated]);
   
   return (
     <div className="w-full h-full flex flex-col">
@@ -1370,3 +1453,10 @@ export default function EnhancedEditor({
     </div>
   );
 }
+
+
+
+
+// Replace the PublishDialog and related state in components/record/createx.tsx
+
+// Add these state variables at the top of the component:
