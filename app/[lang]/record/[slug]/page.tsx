@@ -11,14 +11,14 @@ interface RecordWithSlugProps {
   params: {
     slug: string
   }
-  searchParam?: {
+  searchParams?: {
     new?: string
   }
 }
 
 export default function RecordWithSlug({ params, searchParam }: RecordWithSlugProps) {
   const slug = params.slug
-  const ArticleName = searchParam?.new?.trim() || ''
+  const ArticleName = searchParams?.new?.trim() || ''
   const isMobile = useMobile()
   const [isExpanded, setIsExpanded] = useState(true)
 
