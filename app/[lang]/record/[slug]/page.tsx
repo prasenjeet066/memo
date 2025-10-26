@@ -12,25 +12,25 @@ interface RecordWithSlugProps {
     slug: string
   }
   searchParam?: {
-    new?:string 
+    new?: string
   }
 }
 
-export default function RecordWithSlug({ params , searchParam }: RecordWithSlugProps) {
-  const slug = params.slug;
-  const ArticleName = searchParam?.new
+export default function RecordWithSlug({ params, searchParam }: RecordWithSlugProps) {
+  const slug = params.slug
+  const ArticleName = searchParam?.new?.trim() || ''
   const isMobile = useMobile()
-  const [isExpanded, setIsExpanded] = useState(true);
-  
-  const NavList = [
+  const [isExpanded, setIsExpanded] = useState(true)
+
+  const NavList = useMemo(() => [
     { name: 'Home', icon: Home, href: '/' },
     { name: 'Explore', icon: Compass, href: '/explore' },
     { name: 'Contribute', icon: HandHeart, href: '/contribute' },
     { name: 'Settings', icon: Settings, href: '/settings' },
-  ]
+  ], [])
 
-  // Fix 1: Use useMemo for Sidebar to prevent infinite re-renders
-  const Sidebar = useMemo(() => 
+  // ✅ Use useMemo for Sidebar (prevents re-renders)
+  const Sidebar = useMemo(() =>
     <div className='w-auto max-w-64 h-full bg-white mr-2 flex flex-col justify-between rounded-2xl'>
       <div className='p-4 border-b border-gray-200'>
         <button
@@ -86,45 +86,40 @@ export default function RecordWithSlug({ params , searchParam }: RecordWithSlugP
   const [currentSidebar, setCurrentSidebar] = useState<React.ReactNode>(Sidebar)
   const [isSuccesfullCreated, setIsSuccesfullCreated] = useState<boolean | null>(null)
   const [isPublishing, setIsPublishing] = useState(false)
-  
+
   const handleSideBarTools = (arg: React.ReactNode) => {
-    setCurrentSidebar(arg);
+    setCurrentSidebar(arg)
   }
 
-  const handlePublish = async(payload: any) => {
-    if (!payload) {
-      return null
-    }
+  const handlePublish = async (payload: any) => {
+    if (!payload) return null
 
     setIsPublishing(true)
     setIsSuccesfullCreated(null)
 
     try {
-      // Fixed: Use JSON.stringify for the body and set proper headers
       const response = await fetch(`/api/publish/article/${slug}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...payload,
           title: ArticleName,
-          articleId: ArticleName.replace(' ','-').toLocaleLowerCase(),
+          articleId: ArticleName.replace(/\s+/g, '-').toLowerCase(),
         })
       })
 
       const data = await response.json()
-      
+
       if (response.ok) {
         setIsSuccesfullCreated(true)
         console.log('Article published successfully:', data)
       } else {
-        setIsSuccesfullCreated(data.error)
+        setIsSuccesfullCreated(false)
         console.error('Publish failed:', data.error)
       }
     } catch (error) {
       console.error('Publish error:', error)
-      setIsSuccesfullCreated(error)
+      setIsSuccesfullCreated(false)
     } finally {
       setIsPublishing(false)
     }
@@ -132,16 +127,17 @@ export default function RecordWithSlug({ params , searchParam }: RecordWithSlugP
     return null
   }
 
-  if (slug === 'create' || ArticleName ||  ArticleName.trim()!=='') {
+  // ✅ Fix logic condition (safe and avoids runtime error)
+  if (slug === 'create' || ArticleName !== '') {
     return (
       <ErrorBoundary>
         <main className='h-screen w-full max-h-screen max-w-screen bg-gray-50'>
-          <Header navList={NavList}/>
+          <Header navList={NavList} />
           <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
             <CreateNew
               onPublish={handlePublish}
               ExpandedIs={isExpanded}
-              record_name = {ArticleName}
+              record_name={ArticleName}
               sideBarTools={handleSideBarTools}
               isSuccesfullCreated={isSuccesfullCreated}
               IsExpandedSet={setIsExpanded}
@@ -151,42 +147,39 @@ export default function RecordWithSlug({ params , searchParam }: RecordWithSlugP
       </ErrorBoundary>
     )
   }
-  const [isExistArticel , SetEA]  = useState(false);
-  const [recordJdata , setrecordJdata] = useState(null)
-  useEffect(()=>{
-    if (isExistArticel &&  slug) {
+
+  const [isExistArticel, setEA] = useState(false)
+  const [recordJdata, setRecordJdata] = useState<any>(null)
+
+  // ✅ Fix useEffect (must not use await directly; correctly fetch data)
+  useEffect(() => {
+    const fetchRecord = async () => {
+      if (!slug) return
       try {
-        let feRecord = await fetch('/api/record/'+slug);
-        
+        const feRecord = await fetch(`/api/record/${slug}`)
         if (feRecord.ok) {
-          let recordData = await feRecord.json();
-          const {
-            id , content
-          } = recordData.data
-          SetEA(true)
-          setrecordJdata(recordData.data)
+          const recordData = await feRecord.json()
+          setEA(true)
+          setRecordJdata(recordData.data)
+        } else {
+          setEA(false)
         }
       } catch (e) {
-        
+        console.error('Error fetching record:', e)
+        setEA(false)
       }
     }
-  },[slug, isExistArticel])
-  
-  // Handle other slug cases
+
+    fetchRecord()
+  }, [slug])
+
+  // ✅ UI unchanged
   return (
-    <div className='min-h-screen w-full bg-gray-50 h-screen '>
-      <Header navList={NavList}/>
+    <div className='min-h-screen w-full bg-gray-50 h-screen'>
+      <Header navList={NavList} />
       <div className='w-full h-full p-4 gap-2 flex items-start justify-start'>
-        
-        {
-          isExistArticel ? 
-            
-              JSON.stringify(recordJdata)
-            
-          :null
-        }
+        {isExistArticel && recordJdata ? JSON.stringify(recordJdata) : null}
       </div>
-      
     </div>
   )
 }
