@@ -1010,7 +1010,9 @@ export default function EnhancedEditor({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setPublishDialog({ open: false, summary: '' })}>
+          <Button variant="outline" onClick={() => setPublishDialog({ open: false, summary: '' })}
+          className='border-none'
+          >
             Cancel
           </Button>
           <Button onClick={() => {
@@ -1036,7 +1038,7 @@ export default function EnhancedEditor({
               setAutoSaveStatus('saved');
               setPublishDialog({ open: false, summary: '' });
             }
-          }} className ='bg-gray-800 text-white rounded-full border-none outline-none'>
+          }} className ='bg-gray-800 text-white rounded-full border-none outline-none ml-2'>
             <Fai icon ='arrow-right' className='mr-2'/>
             Publish
           </Button>
