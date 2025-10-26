@@ -11,10 +11,14 @@ interface RecordWithSlugProps {
   params: {
     slug: string
   }
+  searchParam?: {
+    new?:string 
+  }
 }
 
-export default function RecordWithSlug({ params }: RecordWithSlugProps) {
+export default function RecordWithSlug({ params , searchParam }: RecordWithSlugProps) {
   const slug = params.slug;
+  const ArticleName = searchParam?.new
   const isMobile = useMobile()
   const [isExpanded, setIsExpanded] = useState(true);
   
@@ -104,8 +108,8 @@ export default function RecordWithSlug({ params }: RecordWithSlugProps) {
         },
         body: JSON.stringify({
           ...payload,
-          title: payload.title || 'Simple Article',
-          articleId: slug,
+          title: ArticleName,
+          articleId: ArticleName.replace(' ','-').toLocaleLowerCase(),
         })
       })
 
@@ -115,12 +119,12 @@ export default function RecordWithSlug({ params }: RecordWithSlugProps) {
         setIsSuccesfullCreated(true)
         console.log('Article published successfully:', data)
       } else {
-        setIsSuccesfullCreated(false)
+        setIsSuccesfullCreated(data.error)
         console.error('Publish failed:', data.error)
       }
     } catch (error) {
       console.error('Publish error:', error)
-      setIsSuccesfullCreated(false)
+      setIsSuccesfullCreated(error)
     } finally {
       setIsPublishing(false)
     }
@@ -128,7 +132,7 @@ export default function RecordWithSlug({ params }: RecordWithSlugProps) {
     return null
   }
 
-  if (slug === 'new') {
+  if (slug === 'new' &&  ArticleName &&  ArticleName.trim()!=='') {
     return (
       <ErrorBoundary>
         <main className='h-screen w-full max-h-screen max-w-screen bg-gray-50'>
@@ -137,6 +141,7 @@ export default function RecordWithSlug({ params }: RecordWithSlugProps) {
             <CreateNew
               onPublish={handlePublish}
               ExpandedIs={isExpanded}
+              record_name = {ArticleName}
               sideBarTools={handleSideBarTools}
               isSuccesfullCreated={isSuccesfullCreated}
               IsExpandedSet={setIsExpanded}
