@@ -2,8 +2,10 @@
 import ErrorBoundary from '@/components/ErrorBoundary'
 import { Home, Compass, HandHeart, Settings } from 'lucide-react'
 import Header from '@/components/header'
+import { Viewer } from'@/components/record/view'
 import { useMobile } from "@/lib/units/use-mobile"
 import CreateNew from '@/components/record/createx'
+
 import React, { useState, useEffect, useMemo } from 'react'
 
 // Define proper types for params
@@ -182,14 +184,8 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
       <div className='min-h-screen w-full bg-gray-50 h-screen'>
       <Header navList={NavList} />
       <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
-        <ErrorBoundary>
-        
-            <CreateNew
-              __data ={ recordJdata}
-              IsExpandedSet={setIsExpanded}
-            />
-            </ErrorBoundary>
-          </div>
+        <Viewer __data={recordJdata}/>
+      </div>
     </div>
     )
   }
