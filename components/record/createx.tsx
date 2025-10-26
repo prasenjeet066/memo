@@ -214,6 +214,7 @@ export default function EnhancedEditor({
 }: EditorProps) {
   const [editorMode, setEditorMode] = useState<'visual' | 'code'>(editor_mode);
   const [payload, setPayload] = useState({ title: '', content: '' });
+  const editSummary = useRef()
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [activeAction, setActiveAction] = useState<string | null>(null);
@@ -988,7 +989,7 @@ export default function EnhancedEditor({
   const PublishDialog = () => (
     <Dialog open={publishDialog.open} onOpenChange={(open) => 
       setPublishDialog({ open, summary: '' })
-    }>
+    } className='rounded'>
       <DialogContent className='rounded bg-white'>
         <DialogHeader>
           <DialogTitle>Publish Document</DialogTitle>
@@ -999,9 +1000,11 @@ export default function EnhancedEditor({
             <Label htmlFor="edit-summary">Edit Summary</Label>
             <Textarea
               id="edit-summary"
+              className= 'border-gray-100 rounded'
+              ref = {editSummary}
               placeholder="Describe your changes..."
-              value={publishDialog.summary}
-              onChange={(e) => setPublishDialog(prev => ({ ...prev, summary: e.target.value }))}
+             // value={publishDialog.summary}
+             // onChange={(e) => setPublishDialog(prev => ({ ...prev, summary: e.target.value }))}
               rows={3}
             />
           </div>
@@ -1011,6 +1014,7 @@ export default function EnhancedEditor({
             Cancel
           </Button>
           <Button onClick={() => {
+          setPublishDialog({open: true, summary: editSummary.current.value || ''})
             if (publishDialog.summary) {
               const currentContent = payload.content;
               const prevContent = editHistory[editHistory.length - 1]?.content || '';
@@ -1032,7 +1036,8 @@ export default function EnhancedEditor({
               setAutoSaveStatus('saved');
               setPublishDialog({ open: false, summary: '' });
             }
-          }}>
+          }} className ='bg-gray-800 text-white rounded-full border-none outline-none'>
+            <Fai icon ='arrow-right' className='mr-2'/>
             Publish
           </Button>
         </DialogFooter>
