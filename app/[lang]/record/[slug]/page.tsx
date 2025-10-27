@@ -156,8 +156,9 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
               IsExpandedSet={setIsExpanded}
             />
           </div>
-          <footer className="w-full bg-white py-6 px-4 mt-auto">
+             <footer className="w-full bg-white py-6 px-4 mt-auto">
               <div className="max-w-6xl mx-auto">
+                {!isMobile && (
                 <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row justify-center gap-8'} items-center`}>
                   {footerList.map((item, index) => (
                     <a
@@ -168,7 +169,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
                       {item.label}
                     </a>
                   ))}
-                </div>
+                </div>)}
                 <div className="text-center mt-6 text-xs text-gray-500">
                   © 2025 All rights reserved.
                 </div>
@@ -234,6 +235,25 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
             { ! isMobile && Sidebar}
             <Viewer __data={recordJdata} />
           </div>
+              <footer className="w-full bg-white py-6 px-4 mt-auto">
+              <div className="max-w-6xl mx-auto">
+                {!isMobile && (
+                <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row justify-center gap-8'} items-center`}>
+                  {footerList.map((item, index) => (
+                    <a
+                      key={item.label}
+                      href={item.href}
+                      className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                      {item.label}
+                    </a>
+                  ))}
+                </div>)}
+                <div className="text-center mt-6 text-xs text-gray-500">
+                  © 2025 All rights reserved.
+                </div>
+              </div>
+            </footer>
         </div>
       </ErrorBoundary>
     )
@@ -276,6 +296,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
     </div>  
     <footer className="w-full bg-white py-6 px-4 mt-auto">
               <div className="max-w-6xl mx-auto">
+                {!isMobile && (
                 <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row justify-center gap-8'} items-center`}>
                   {footerList.map((item, index) => (
                     <a
@@ -286,7 +307,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
                       {item.label}
                     </a>
                   ))}
-                </div>
+                </div>)}
                 <div className="text-center mt-6 text-xs text-gray-500">
                   © 2025 All rights reserved.
                 </div>

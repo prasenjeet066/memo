@@ -154,8 +154,9 @@ export default function MainPage() {
             
           </div>
         </div>
-        <footer className="w-full bg-white py-6 px-4 mt-auto">
+           <footer className="w-full bg-white py-6 px-4 mt-auto">
               <div className="max-w-6xl mx-auto">
+                {!isMobile && (
                 <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row justify-center gap-8'} items-center`}>
                   {footerList.map((item, index) => (
                     <a
@@ -166,7 +167,7 @@ export default function MainPage() {
                       {item.label}
                     </a>
                   ))}
-                </div>
+                </div>)}
                 <div className="text-center mt-6 text-xs text-gray-500">
                   © 2025 All rights reserved.
                 </div>
