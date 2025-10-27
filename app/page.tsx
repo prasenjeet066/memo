@@ -1,39 +1,53 @@
 'use client'
-import ErrorBoundary from '@/components/ErrorBoundary'
-import { Home, Compass, HandHeart, Settings } from 'lucide-react'
-import Header from '@/components/header'
-import { Viewer } from '@/components/record/view'
-import { useMobile } from "@/lib/units/use-mobile"
-import CreateNew from '@/components/record/createx'
+import { Suspense } from 'react'
+import * as d3 from "d3";
+import Image from 'next/image'
+import { Fai } from '@/components/Fontawesome';
+import VA from '@/components/d3/VoronoiArt'
+import Header from '@/components/header';
+import StarBorder from '@/components/ui/star-border'
+import GlobeChart from '@/components/d3/earth';
+import { useMobile } from "@/lib/units/use-mobile";
+import { Home, Compass, HandHeart, Settings } from 'lucide-react';
+import { useState, useRef } from 'react';
 
-import React, { useState, useEffect, useMemo } from 'react'
+const HeaderNavs = () => {
+  const isMobile = useMobile();
+  return (
+    <>
+      {!isMobile && (
+        <button className="p-2 px-4 bg-gray-800 text-white rounded-full">
+          <Fai icon="heart" className="mr-1" />
+          Contribute Now!
+        </button>
+      )}
+    </>
+  );
+};
 
-// Define proper types for params
-interface RecordWithSlugProps {
-  params: {
-    slug: string
-  }
-  searchParams ? : {
-    new ? : string
-  }
-}
-
-export default function RecordWithSlug({ params, searchParams }: RecordWithSlugProps) {
-  const slug = params.slug
-  const ArticleName = searchParams?.new?.trim() || ''
-  const isMobile = useMobile()
-  const [isExpanded, setIsExpanded] = useState(true)
+export default function MainPage() {
+  const isMobile = useMobile();
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [searchQuery, setSearchQuery] = useState(null);
+  const svgXMlurl = 'https://memoorg.vercel.app/api/img/vor';
   
-  const NavList = useMemo(() => [
+  const NavList = [
     { name: 'Home', icon: Home, href: '/' },
     { name: 'Explore', icon: Compass, href: '/explore' },
     { name: 'Contribute', icon: HandHeart, href: '/contribute' },
     { name: 'Settings', icon: Settings, href: '/settings' },
-  ], [])
+  ];
   
-  // Use useMemo for Sidebar (prevents re-renders)
-  const Sidebar = useMemo(() =>
-    <div className='w-auto max-w-64 h-full bg-white mr-2 flex flex-col justify-between rounded-2xl'>
+  const handleSearchSubmit = () => {};
+  
+  const handleSearch = (e) => {
+    const value = e.target.value.trim();
+    if (value) setSearchQuery(value);
+  };
+  
+  
+  const Sidebar = !isMobile && (
+    <div className='w-auto max-w-64 h-full bg-white ml-2 flex flex-col justify-between rounded-2xl'>
       <div className='p-4 border-b border-gray-200'>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
@@ -82,145 +96,81 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
           })()}
         </div>
       </nav>
-    </div>, [isExpanded, NavList])
-  
-  const [currentSidebar, setCurrentSidebar] = useState < React.ReactNode > (Sidebar)
-  const [isSuccesfullCreated, setIsSuccesfullCreated] = useState < any > (null)
-  const [isPublishing, setIsPublishing] = useState(false)
-  
-  const handleSideBarTools = (arg: React.ReactNode) => {
-    setCurrentSidebar(arg)
-  }
-  
-  const handlePublish = async (payload: any) => {
-    if (!payload) return null
-    
-    setIsPublishing(true)
-    setIsSuccesfullCreated(null)
-    
-    try {
-      const response = await fetch(`/api/publish/article/${slug}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...payload,
-          title: ArticleName || payload.title,
-        })
-      })
-      
-      const data = await response.json()
-      
-      if (response.ok) {
-        setIsSuccesfullCreated({
-          success: true,
-          articleId: data.articleId,
-          slug: data.slug
-        })
-        console.log('Article published successfully:', data)
-      } else {
-        setIsSuccesfullCreated({
-          success: false,
-          message: data.error
-        })
-        console.error('Publish failed:', data.error)
-      }
-    } catch (error) {
-      console.error('Publish error:', error)
-      setIsSuccesfullCreated({ success: false, message: 'An error occurred' })
-    } finally {
-      setIsPublishing(false)
-    }
-    
-    return null
-  }
-  
-  //  Fix logic condition (safe and avoids runtime error)
-  if (slug === 'create' || ArticleName !== '') {
-    return (
-      <ErrorBoundary>
-        <main className='h-screen w-full max-h-screen max-w-screen bg-gray-50'>
-          <Header navList={NavList} />
-          <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
-            <CreateNew
-              onPublish={handlePublish}
-              ExpandedIs={isExpanded}
-              record_name={ArticleName}
-              sideBarTools={handleSideBarTools}
-              isSuccesfullCreated={isSuccesfullCreated}
-              IsExpandedSet={setIsExpanded}
-            />
-          </div>
-        </main>
-      </ErrorBoundary>
-    )
-  }
-  
-  const [isExistArticel, setEA] = useState(false)
-  const [recordJdata, setRecordJdata] = useState < any > (null)
-  const [isLoading, setIsLoading] = useState(true)
-  
-  // Fix useEffect (must not use await directly; correctly fetch data)
-  useEffect(() => {
-    const fetchRecord = async () => {
-      if (!slug) return
-      
-      setIsLoading(true)
-      try {
-        const feRecord = await fetch(`/api/record/${slug}`)
-        if (feRecord.ok) {
-          const recordData = await feRecord.json()
-          setEA(true)
-          setRecordJdata(recordData)
-        } else {
-          setEA(false)
-          setRecordJdata(null)
-        }
-      } catch (e) {
-        console.error('Error fetching record:', e)
-        setEA(false)
-        setRecordJdata(null)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    
-    fetchRecord()
-  }, [slug])
-  
-  if (isLoading) {
-    return (
-      <ErrorBoundary>
-        <div className='min-h-screen w-full bg-gray-50 h-screen'>
-          <Header navList={NavList} />
-          <div className='p-4 w-full flex h-full items-center justify-center'>
-            <div className='text-gray-500'>Loading...</div>
-          </div>
-        </div>
-      </ErrorBoundary>
-    )
-  }
-  
-  if (isExistArticel && recordJdata) {
-    return (
-      <ErrorBoundary>
-        <div className='min-h-screen w-full bg-gray-50 h-screen'>
-          <Header navList={NavList} />
-          <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
-            <Viewer __data={recordJdata} />
-          </div>
-        </div>
-      </ErrorBoundary>
-    )
-  }
-  
-  return (
-    <ErrorBoundary>
-      <div className='min-h-screen w-full bg-gray-50 h-screen'>
-        <Header navList={NavList} />
-        <div className='p-4 w-full flex h-full items-center justify-center'>
-          <div className='text-gray-500'>Record not found</div>
-        </div>
-      </div>
-    </ErrorBoundary>
+    </div>
   )
+  const footerList = [
+    { label: 'Terms & Conditions', href: '/terms' },
+    { label: 'Content Security', href: '/security' },
+    { label: 'Developers', href: '/developers' },
+    { label: 'About Us', href: '/about' },
+    { label: 'APIs', href: '/api-docs' },
+  ];
+  
+  return ( <Suspense fallback={<div>Loading...</div>}>
+      <main className="min-h-screen w-full bg-gray-50 flex flex-col">
+        <Header navlist={NavList} isMobile={isMobile} />
+        
+        <div className="flex-1 flex overflow-hidden">
+          {Sidebar}
+          
+          <div className="flex-1 flex flex-col overflow-y-auto">
+            <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+              {/* Image Section */}
+              <div className="flex items-center justify-center w-full max-w-2xl mb-8">
+                <img
+                  alt="Sample"
+                  className={`h-auto object-contain rounded-lg ${isMobile ? 'w-full' : 'w-2/3'}`}
+                  src="https://memoorg.vercel.app/api/img/vor?url=https://aspiringshe.com/wp-content/uploads/2022/09/8k-4k-priyanka-chopra-wallpaper-preview.jpg"
+                />
+              </div>
+              
+              {/* Search Section */}
+              <div className={`w-full ${isMobile ? 'max-w-full' : 'max-w-2xl'}`}>
+                <h1 className="text-center text-2xl sm:text-3xl md:text-4xl font-semibold mb-6">
+                  Find Anything.
+                </h1>
+                <div className="w-full p-[1px] rounded-full bg-gradient-to-r from-gray-700 to-gray-900">
+                  <div className="w-full p-2 flex items-center gap-2 bg-white rounded-full">
+                    <input
+                      type="text"
+                      className="outline-none border-none pl-4 bg-transparent flex-1 text-sm sm:text-base"
+                      placeholder="About Bangladesh"
+                      value={searchQuery}
+                      onChange={handleSearch}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSearchSubmit()}
+                    />
+                    <button
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white p-2 sm:p-3 rounded-full transition-colors flex-shrink-0"
+                      onClick={handleSearchSubmit}
+                    >
+                      <Fai icon={'arrow-up'} className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <footer className="w-full bg-white py-6 px-4 mt-auto">
+              <div className="max-w-6xl mx-auto">
+                <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row justify-center gap-8'} items-center`}>
+                  {footerList.map((item, index) => (
+                    <a
+                      key={item.label}
+                      href={item.href}
+                      className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                      {item.label}
+                    </a>
+                  ))}
+                </div>
+                <div className="text-center mt-6 text-xs text-gray-500">
+                  © 2025 All rights reserved.
+                </div>
+              </div>
+            </footer>
+          </div>
+        </div>
+      </main>
+    </Suspense>);
 }

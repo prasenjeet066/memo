@@ -2,7 +2,7 @@
 import ErrorBoundary from '@/components/ErrorBoundary'
 import { Home, Compass, HandHeart, Settings } from 'lucide-react'
 import Header from '@/components/header'
-import { Viewer } from'@/components/record/view'
+import { Viewer } from '@/components/record/view'
 import { useMobile } from "@/lib/units/use-mobile"
 import CreateNew from '@/components/record/createx'
 
@@ -84,8 +84,8 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
       </nav>
     </div>, [isExpanded, NavList])
   
-  const [currentSidebar, setCurrentSidebar] = useState<React.ReactNode>(Sidebar)
-  const [isSuccesfullCreated, setIsSuccesfullCreated] = useState<any>(null)
+  const [currentSidebar, setCurrentSidebar] = useState < React.ReactNode > (Sidebar)
+  const [isSuccesfullCreated, setIsSuccesfullCreated] = useState < any > (null)
   const [isPublishing, setIsPublishing] = useState(false)
   
   const handleSideBarTools = (arg: React.ReactNode) => {
@@ -104,8 +104,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...payload,
-          title: ArticleName,
-          //articleId: ArticleName.replace(/\s+/g, '-').toLowerCase(),
+          title: ArticleName || payload.title,
         })
       })
       
@@ -113,7 +112,9 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
       
       if (response.ok) {
         setIsSuccesfullCreated({
-          success: true
+          success: true,
+          articleId: data.articleId,
+          slug: data.slug
         })
         console.log('Article published successfully:', data)
       } else {
@@ -155,12 +156,15 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
   }
   
   const [isExistArticel, setEA] = useState(false)
-  const [recordJdata, setRecordJdata] = useState<any>(null)
+  const [recordJdata, setRecordJdata] = useState < any > (null)
+  const [isLoading, setIsLoading] = useState(true)
   
   // Fix useEffect (must not use await directly; correctly fetch data)
   useEffect(() => {
     const fetchRecord = async () => {
       if (!slug) return
+      
+      setIsLoading(true)
       try {
         const feRecord = await fetch(`/api/record/${slug}`)
         if (feRecord.ok) {
@@ -169,30 +173,54 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
           setRecordJdata(recordData)
         } else {
           setEA(false)
+          setRecordJdata(null)
         }
       } catch (e) {
         console.error('Error fetching record:', e)
         setEA(false)
+        setRecordJdata(null)
+      } finally {
+        setIsLoading(false)
       }
     }
     
     fetchRecord()
   }, [slug])
   
-  if (isExistArticel && recordJdata) {
+  if (isLoading) {
     return (
       <ErrorBoundary>
-      <div className='min-h-screen w-full bg-gray-50 h-screen'>
-      <Header navList={NavList} />
-      <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
-        <Viewer __data={recordJdata}
-  
-        />
-      </div>
-    </div>
-    </ErrorBoundary>
+        <div className='min-h-screen w-full bg-gray-50 h-screen'>
+          <Header navList={NavList} />
+          <div className='p-4 w-full flex h-full items-center justify-center'>
+            <div className='text-gray-500'>Loading...</div>
+          </div>
+        </div>
+      </ErrorBoundary>
     )
   }
   
-  return null
+  if (isExistArticel && recordJdata) {
+    return (
+      <ErrorBoundary>
+        <div className='min-h-screen w-full bg-gray-50 h-screen'>
+          <Header navList={NavList} />
+          <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
+            <Viewer __data={recordJdata} />
+          </div>
+        </div>
+      </ErrorBoundary>
+    )
+  }
+  
+  return (
+    <ErrorBoundary>
+      <div className='min-h-screen w-full bg-gray-50 h-screen'>
+        <Header navList={NavList} />
+        <div className='p-4 w-full flex h-full items-center justify-center'>
+          <div className='text-gray-500'>Record not found</div>
+        </div>
+      </div>
+    </ErrorBoundary>
+  )
 }
