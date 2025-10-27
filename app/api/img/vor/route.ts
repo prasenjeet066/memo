@@ -33,7 +33,7 @@ function getConfig(searchParams: URLSearchParams): VoronoiConfig {
   
   return {
     imageUrl,
-    maxPoints: parseInt(searchParams.get("points") || "5000"),
+    maxPoints: parseInt(searchParams.get("points") || "50000"),
     minBrightness: parseFloat(searchParams.get("minBright") || "0.2"),
     maxBrightness: parseFloat(searchParams.get("maxBright") || "0.8"),
     style: (searchParams.get("style") as VoronoiConfig['style']) || "outlined",

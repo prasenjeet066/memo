@@ -1,10 +1,14 @@
-//import '@/components/utils/spinner.css'
-export default function Spinner() {
-  return (
-    <>
-    <style>
-      {
-        `.loader {
+import styled from 'styled-components';
+
+const SpinnerContainer = styled.div`
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const Loader = styled.span`
   font-size: 10px;
   width: 1em;
   height: 1em;
@@ -13,39 +17,96 @@ export default function Spinner() {
   text-indent: -9999em;
   animation: mulShdSpin 1.1s infinite ease;
   transform: translateZ(0);
-}
-@keyframes mulShdSpin {
-  0%,
-  100% {
-    box-shadow: 0em -2.6em 0em 0em #ffffff, 1.8em -1.8em 0 0em rgba(255,255,255, 0.2), 2.5em 0em 0 0em rgba(255,255,255, 0.2), 1.75em 1.75em 0 0em rgba(255,255,255, 0.2), 0em 2.5em 0 0em rgba(255,255,255, 0.2), -1.8em 1.8em 0 0em rgba(255,255,255, 0.2), -2.6em 0em 0 0em rgba(255,255,255, 0.5), -1.8em -1.8em 0 0em rgba(255,255,255, 0.7);
+
+  @keyframes mulShdSpin {
+    0%,
+    100% {
+      box-shadow: 0em -2.6em 0em 0em #ffffff, 
+                  1.8em -1.8em 0 0em rgba(255,255,255, 0.2), 
+                  2.5em 0em 0 0em rgba(255,255,255, 0.2), 
+                  1.75em 1.75em 0 0em rgba(255,255,255, 0.2), 
+                  0em 2.5em 0 0em rgba(255,255,255, 0.2), 
+                  -1.8em 1.8em 0 0em rgba(255,255,255, 0.2), 
+                  -2.6em 0em 0 0em rgba(255,255,255, 0.5), 
+                  -1.8em -1.8em 0 0em rgba(255,255,255, 0.7);
+    }
+    12.5% {
+      box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.7), 
+                  1.8em -1.8em 0 0em #ffffff, 
+                  2.5em 0em 0 0em rgba(255,255,255, 0.2), 
+                  1.75em 1.75em 0 0em rgba(255,255,255, 0.2), 
+                  0em 2.5em 0 0em rgba(255,255,255, 0.2), 
+                  -1.8em 1.8em 0 0em rgba(255,255,255, 0.2), 
+                  -2.6em 0em 0 0em rgba(255,255,255, 0.2), 
+                  -1.8em -1.8em 0 0em rgba(255,255,255, 0.5);
+    }
+    25% {
+      box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.5), 
+                  1.8em -1.8em 0 0em rgba(255,255,255, 0.7), 
+                  2.5em 0em 0 0em #ffffff, 
+                  1.75em 1.75em 0 0em rgba(255,255,255, 0.2), 
+                  0em 2.5em 0 0em rgba(255,255,255, 0.2), 
+                  -1.8em 1.8em 0 0em rgba(255,255,255, 0.2), 
+                  -2.6em 0em 0 0em rgba(255,255,255, 0.2), 
+                  -1.8em -1.8em 0 0em rgba(255,255,255, 0.2);
+    }
+    37.5% {
+      box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.2), 
+                  1.8em -1.8em 0 0em rgba(255,255,255, 0.5), 
+                  2.5em 0em 0 0em rgba(255,255,255, 0.7), 
+                  1.75em 1.75em 0 0em #ffffff, 
+                  0em 2.5em 0 0em rgba(255,255,255, 0.2), 
+                  -1.8em 1.8em 0 0em rgba(255,255,255, 0.2), 
+                  -2.6em 0em 0 0em rgba(255,255,255, 0.2), 
+                  -1.8em -1.8em 0 0em rgba(255,255,255, 0.2);
+    }
+    50% {
+      box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.2), 
+                  1.8em -1.8em 0 0em rgba(255,255,255, 0.2), 
+                  2.5em 0em 0 0em rgba(255,255,255, 0.5), 
+                  1.75em 1.75em 0 0em rgba(255,255,255, 0.7), 
+                  0em 2.5em 0 0em #ffffff, 
+                  -1.8em 1.8em 0 0em rgba(255,255,255, 0.2), 
+                  -2.6em 0em 0 0em rgba(255,255,255, 0.2), 
+                  -1.8em -1.8em 0 0em rgba(255,255,255, 0.2);
+    }
+    62.5% {
+      box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.2), 
+                  1.8em -1.8em 0 0em rgba(255,255,255, 0.2), 
+                  2.5em 0em 0 0em rgba(255,255,255, 0.2), 
+                  1.75em 1.75em 0 0em rgba(255,255,255, 0.5), 
+                  0em 2.5em 0 0em rgba(255,255,255, 0.7), 
+                  -1.8em 1.8em 0 0em #ffffff, 
+                  -2.6em 0em 0 0em rgba(255,255,255, 0.2), 
+                  -1.8em -1.8em 0 0em rgba(255,255,255, 0.2);
+    }
+    75% {
+      box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.2), 
+                  1.8em -1.8em 0 0em rgba(255,255,255, 0.2), 
+                  2.5em 0em 0 0em rgba(255,255,255, 0.2), 
+                  1.75em 1.75em 0 0em rgba(255,255,255, 0.2), 
+                  0em 2.5em 0 0em rgba(255,255,255, 0.5), 
+                  -1.8em 1.8em 0 0em rgba(255,255,255, 0.7), 
+                  -2.6em 0em 0 0em #ffffff, 
+                  -1.8em -1.8em 0 0em rgba(255,255,255, 0.2);
+    }
+    87.5% {
+      box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.2), 
+                  1.8em -1.8em 0 0em rgba(255,255,255, 0.2), 
+                  2.5em 0em 0 0em rgba(255,255,255, 0.2), 
+                  1.75em 1.75em 0 0em rgba(255,255,255, 0.2), 
+                  0em 2.5em 0 0em rgba(255,255,255, 0.2), 
+                  -1.8em 1.8em 0 0em rgba(255,255,255, 0.5), 
+                  -2.6em 0em 0 0em rgba(255,255,255, 0.7), 
+                  -1.8em -1.8em 0 0em #ffffff;
+    }
   }
-  12.5% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.7), 1.8em -1.8em 0 0em #ffffff, 2.5em 0em 0 0em rgba(255,255,255, 0.2), 1.75em 1.75em 0 0em rgba(255,255,255, 0.2), 0em 2.5em 0 0em rgba(255,255,255, 0.2), -1.8em 1.8em 0 0em rgba(255,255,255, 0.2), -2.6em 0em 0 0em rgba(255,255,255, 0.2), -1.8em -1.8em 0 0em rgba(255,255,255, 0.5);
-  }
-  25% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.5), 1.8em -1.8em 0 0em rgba(255,255,255, 0.7), 2.5em 0em 0 0em #ffffff, 1.75em 1.75em 0 0em rgba(255,255,255, 0.2), 0em 2.5em 0 0em rgba(255,255,255, 0.2), -1.8em 1.8em 0 0em rgba(255,255,255, 0.2), -2.6em 0em 0 0em rgba(255,255,255, 0.2), -1.8em -1.8em 0 0em rgba(255,255,255, 0.2);
-  }
-  37.5% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.2), 1.8em -1.8em 0 0em rgba(255,255,255, 0.5), 2.5em 0em 0 0em rgba(255,255,255, 0.7), 1.75em 1.75em 0 0em #ffffff, 0em 2.5em 0 0em rgba(255,255,255, 0.2), -1.8em 1.8em 0 0em rgba(255,255,255, 0.2), -2.6em 0em 0 0em rgba(255,255,255, 0.2), -1.8em -1.8em 0 0em rgba(255,255,255, 0.2);
-  }
-  50% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.2), 1.8em -1.8em 0 0em rgba(255,255,255, 0.2), 2.5em 0em 0 0em rgba(255,255,255, 0.5), 1.75em 1.75em 0 0em rgba(255,255,255, 0.7), 0em 2.5em 0 0em #ffffff, -1.8em 1.8em 0 0em rgba(255,255,255, 0.2), -2.6em 0em 0 0em rgba(255,255,255, 0.2), -1.8em -1.8em 0 0em rgba(255,255,255, 0.2);
-  }
-  62.5% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.2), 1.8em -1.8em 0 0em rgba(255,255,255, 0.2), 2.5em 0em 0 0em rgba(255,255,255, 0.2), 1.75em 1.75em 0 0em rgba(255,255,255, 0.5), 0em 2.5em 0 0em rgba(255,255,255, 0.7), -1.8em 1.8em 0 0em #ffffff, -2.6em 0em 0 0em rgba(255,255,255, 0.2), -1.8em -1.8em 0 0em rgba(255,255,255, 0.2);
-  }
-  75% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.2), 1.8em -1.8em 0 0em rgba(255,255,255, 0.2), 2.5em 0em 0 0em rgba(255,255,255, 0.2), 1.75em 1.75em 0 0em rgba(255,255,255, 0.2), 0em 2.5em 0 0em rgba(255,255,255, 0.5), -1.8em 1.8em 0 0em rgba(255,255,255, 0.7), -2.6em 0em 0 0em #ffffff, -1.8em -1.8em 0 0em rgba(255,255,255, 0.2);
-  }
-  87.5% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.2), 1.8em -1.8em 0 0em rgba(255,255,255, 0.2), 2.5em 0em 0 0em rgba(255,255,255, 0.2), 1.75em 1.75em 0 0em rgba(255,255,255, 0.2), 0em 2.5em 0 0em rgba(255,255,255, 0.2), -1.8em 1.8em 0 0em rgba(255,255,255, 0.5), -2.6em 0em 0 0em rgba(255,255,255, 0.7), -1.8em -1.8em 0 0em #ffffff;
-  }
-}`
-      }
-    </style>
-    <div className = 'min-h-screen w-full flex items-center justify-between'>
-      <span className ='loader'></span>
-    </div>
-    </>
-  )
+`;
+
+export default function Spinner() {
+  return (
+    <SpinnerContainer>
+      <Loader />
+    </SpinnerContainer>
+  );
 }
