@@ -129,18 +129,18 @@ export default function MainPage() {
                 <h1 className="text-center text-2xl sm:text-3xl md:text-4xl font-semibold mb-6">
                   Find Anything.
                 </h1>
-                <div className="w-full p-[1px] rounded-full bg-gradient-to-r from-gray-700 to-gray-900">
+                <div className="w-full p-[1px] rounded-full bg-blue-600">
                   <div className="w-full p-2 flex items-center gap-2 bg-white rounded-full">
                     <input
                       type="text"
-                      className="outline-none border-none pl-4 bg-transparent flex-1 text-sm sm:text-base"
+                      className="outline-none border-none pl-4 bg-transparent flex-1 text-sm sm:text-base font-semibold"
                       placeholder="About Bangladesh"
                       value={searchQuery}
                       onChange={handleSearch}
                       onKeyPress={(e) => e.key === 'Enter' && handleSearchSubmit()}
                     />
                     <button
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white p-2 sm:p-3 rounded-full transition-colors flex-shrink-0"
+                      className="bg-indigo-600 px-2 hover:bg-indigo-700 text-white p-2 sm:p-3 rounded-full transition-colors flex-shrink-0"
                       onClick={handleSearchSubmit}
                     >
                       <Fai icon={'arrow-up'} className="w-4 h-4 sm:w-5 sm:h-5" />
