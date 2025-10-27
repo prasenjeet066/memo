@@ -5,6 +5,7 @@ import Header from '@/components/header'
 import { Viewer } from '@/components/record/view'
 import { useMobile } from "@/lib/units/use-mobile"
 import CreateNew from '@/components/record/createx'
+import Spinner from '/components/utils/spinner'
 
 import React, { useState, useEffect, useMemo } from 'react'
 
@@ -214,14 +215,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
   
   if (isLoading) {
     return (
-      <ErrorBoundary>
-        <div className='min-h-screen w-full bg-gray-50 h-screen'>
-          <Header navList={NavList} />
-          <div className='p-4  w-full flex h-full items-center justify-center'>
-            <div className='text-gray-500'>Loading...</div>
-          </div>
-        </div>
-      </ErrorBoundary>
+      <Spinner/>
     )
   }
   

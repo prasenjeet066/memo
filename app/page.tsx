@@ -109,7 +109,7 @@ export default function MainPage() {
   
   return ( <Suspense fallback={<Spinner/>}>
       <main className="min-h-screen w-full bg-gray-900 flex flex-col">
-        <Header navlist={NavList} isMobile={isMobile} />
+        <Header isDark = {true} navlist={NavList} isMobile={isMobile} />
         
         <div className="flex-1 flex overflow-hidden">
     
@@ -126,7 +126,7 @@ export default function MainPage() {
               
               {/* Search Section */}
               <div className={`w-full ${isMobile ? 'max-w-full' : 'max-w-2xl'}`}>
-                <h1 className="text-center text-2xl sm:text-3xl md:text-4xl font-semibold mb-6 ">
+                <h1 className="text-center text-white text-2xl sm:text-3xl md:text-4xl font-semibold mb-6 ">
                   {
                     "Search anything..."
                   }
@@ -136,7 +136,7 @@ export default function MainPage() {
                   <div className="w-full p-2 flex items-center gap-2 bg-white rounded-full">
                     <input
                       type="text"
-                      className="outline-none border-none pl-4 bg-transparent flex-1 text-sm sm:text-base font-semibold"
+                      className="outline-none text-white border-none pl-4 bg-transparent flex-1 text-sm sm:text-base font-semibold"
                       placeholder="About Bangladesh"
                       value={searchQuery}
                       onChange={handleSearch}

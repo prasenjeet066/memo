@@ -14,14 +14,15 @@ interface NavItem {
   href ? : string;
 }
 interface Replenishment {
-  last : any ;
+  last: any;
 }
 interface HeaderProps {
   navlist: NavItem[];
-  replacement?: Replenishment;
+  replacement ? : Replenishment;
+  isDark ? : boolean;
 }
 
-export default function Header({ navlist , replacement }: HeaderProps) {
+export default function Header({ navlist, replacement, isDark = false }: HeaderProps) {
   const [sideBarLogic, setSideBarOpenLogic] = useState < boolean > (false)
   const { data: session, status } = useSession()
   const isMobile = useMobile()
@@ -32,32 +33,44 @@ export default function Header({ navlist , replacement }: HeaderProps) {
     <>
       {/* Header Bar */}
       <header
-        className={`w-full px-4 py-3 flex items-center justify-between bg-gray-50 border-gray-200 ${
-          isMobile ? 'sticky top-0 z-40' : ''
-        }`}
+        className={`w-full px-4 py-3 flex items-center justify-between ${
+          isDark ? 'bg-transparent text-white' : 'bg-gray-50 text-gray-800'
+        } ${isMobile ? 'sticky top-0 z-40' : ''}`}
       >
         {/* ===== Left Section ===== */}
         <div className="flex items-center gap-3">
           <Menu
-            className="w-6 h-6 cursor-pointer text-gray-700 hover:text-gray-900 transition-colors"
+            className={`w-6 h-6 cursor-pointer transition-colors ${
+              isDark ? 'text-white' : 'text-gray-700 hover:text-gray-900'
+            }`}
             onClick={() => setSideBarOpenLogic(!sideBarLogic)}
           />
           <Link href="/" className="flex items-center gap-1">
-            <h1 className="logo-style-font text-2xl font-semibold text-gray-800 cursor-pointer">
+            <h1
+              className={`logo-style-font text-2xl font-semibold cursor-pointer ${
+                isDark ? 'text-white' : 'text-gray-800'
+              }`}
+            >
               Sistorica
             </h1>
           </Link>
         </div>
 
         {/* ===== Right Section ===== */}
-        
-        
-          {isMobile ? (
+        {isMobile ? (
           <div className="flex items-center gap-4">
-            <Search className="w-6 h-6 cursor-pointer text-gray-700 hover:text-gray-900 transition-colors" />
+            <Search
+              className={`w-6 h-6 cursor-pointer transition-colors ${
+                isDark ? 'text-white' : 'text-gray-700 hover:text-gray-900'
+              }`}
+            />
             {session && (
-              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-gray-600" />
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  isDark ? 'bg-gray-700' : 'bg-gray-200'
+                }`}
+              >
+                <User className={`w-4 h-4 ${isDark ? 'text-white' : 'text-gray-700'}`} />
               </div>
             )}
           </div>
@@ -67,40 +80,78 @@ export default function Header({ navlist , replacement }: HeaderProps) {
 
             {/* ===== Auth / Notifications Section ===== */}
             {status === "loading" ? (
-              <div className="w-20 h-8 bg-gray-200 animate-pulse rounded-full"></div>
+              <div
+                className={`w-20 h-8 rounded-full animate-pulse ${
+                  isDark ? 'bg-gray-700' : 'bg-gray-200'
+                }`}
+              ></div>
             ) : session ? (
               <div className="flex items-center gap-2">
                 <button
-                  className="p-2 rounded-full hover:bg-gray-100 text-gray-700 hover:text-gray-900 transition-colors"
+                  className={`p-2 rounded-full transition-colors ${
+                    isDark
+                      ? 'text-white hover:bg-gray-800'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
                   title="Messages"
                 >
                   <Mail className="w-5 h-5" />
                 </button>
                 <button
-                  className="p-2 rounded-full hover:bg-gray-100 text-gray-700 hover:text-gray-900 transition-colors"
+                  className={`p-2 rounded-full transition-colors ${
+                    isDark
+                      ? 'text-white hover:bg-gray-800'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
                   title="Notifications"
                 >
                   <Bell className="w-5 h-5" />
                 </button>
-                <div className = 'flex items-center gap-2 p-2 border-l gap-1'>
-                <span class = 'h-5 w-5 rounded-full bg-gray-500'>
-                  
-                </span>
-                <div className = 'flex flex-col items-start justify-center text-xs text-gray-800'>
-                  <h1 className='font-semibold'>{session.user.name.split(' ')[0].slice(0,3) + '..' +session.user.name.split(' ')[1].slice(0,3) }</h1>
-                  <small>Account</small>
-                </div>
+                <div
+                  className={`flex items-center gap-2 p-2 border-l ${
+                    isDark ? 'border-gray-600' : 'border-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`h-5 w-5 rounded-full ${
+                      isDark ? 'bg-gray-500' : 'bg-gray-500'
+                    }`}
+                  ></span>
+                  <div
+                    className={`flex flex-col items-start justify-center text-xs ${
+                      isDark ? 'text-gray-200' : 'text-gray-800'
+                    }`}
+                  >
+                    <h1 className="font-semibold">
+                      {session.user.name.split(' ')[0].slice(0, 3) +
+                        '..' +
+                        session.user.name.split(' ')[1].slice(0, 3)}
+                    </h1>
+                    <small>Account</small>
+                  </div>
                 </div>
               </div>
             ) : (
               <div className="flex items-center gap-2">
                 <Link href="/login">
-                  <button className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:underline transition-colors">
+                  <button
+                    className={`px-4 py-2 text-sm font-medium hover:underline transition-colors ${
+                      isDark
+                        ? 'text-white hover:text-gray-300'
+                        : 'text-gray-700 hover:text-gray-900'
+                    }`}
+                  >
                     Sign In
                   </button>
                 </Link>
                 <Link href="/register">
-                  <button className="px-4 py-2 text-sm font-medium bg-gray-800 text-white rounded-full hover:bg-gray-900 transition-colors">
+                  <button
+                    className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${
+                      isDark
+                        ? 'bg-white text-gray-900 hover:bg-gray-200'
+                        : 'bg-gray-800 text-white hover:bg-gray-900'
+                    }`}
+                  >
                     Register
                   </button>
                 </Link>
@@ -108,22 +159,30 @@ export default function Header({ navlist , replacement }: HeaderProps) {
             )}
           </div>
         )}
-        
-        
       </header>
 
       {/* ===== Mobile Sidebar ===== */}
       {sideBarLogic && isMobile && (
         <div className="fixed inset-0 z-50 flex">
           {/* Sidebar Panel */}
-          <div className="w-full max-w-full bg-white  flex flex-col">
+          <div
+            className={`w-full max-w-full flex flex-col ${
+              isDark ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'
+            }`}
+          >
             {/* Sidebar Header */}
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-              <h1 className="logo-style-font text-xl font-semibold text-gray-800">
-                Sistorica
-              </h1>
+            <div
+              className={`p-4 border-b flex items-center justify-between ${
+                isDark ? 'border-gray-700' : 'border-gray-200'
+              }`}
+            >
+              <h1 className="logo-style-font text-xl font-semibold">Sistorica</h1>
               <button onClick={closeSidebar}>
-                <ArrowLeft className="w-6 h-6 text-gray-600 hover:text-gray-800 transition-colors" />
+                <ArrowLeft
+                  className={`w-6 h-6 transition-colors ${
+                    isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                />
               </button>
             </div>
 
@@ -134,10 +193,20 @@ export default function Header({ navlist , replacement }: HeaderProps) {
                   key={item.name}
                   href={item.href || `/${item.name.toLowerCase()}`}
                   onClick={closeSidebar}
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-colors group"
+                  className={`flex items-center gap-3 p-3 rounded-lg transition-colors group ${
+                    isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
+                  }`}
                 >
-                  <item.icon className="w-5 h-5 text-gray-600 group-hover:text-gray-800" />
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 capitalize">
+                  <item.icon
+                    className={`w-5 h-5 ${
+                      isDark ? 'text-gray-300 group-hover:text-white' : 'text-gray-600 group-hover:text-gray-800'
+                    }`}
+                  />
+                  <span
+                    className={`text-sm font-medium capitalize ${
+                      isDark ? 'text-gray-200 group-hover:text-white' : 'text-gray-700 group-hover:text-gray-900'
+                    }`}
+                  >
                     {item.name}
                   </span>
                 </Link>
@@ -146,13 +215,21 @@ export default function Header({ navlist , replacement }: HeaderProps) {
 
             {/* Sidebar Footer */}
             {session && (
-              <div className="p-4 border-t border-gray-200">
+              <div
+                className={`p-4 border-t ${
+                  isDark ? 'border-gray-700' : 'border-gray-200'
+                }`}
+              >
                 <button
                   onClick={() => {
                     signOut()
                     closeSidebar()
                   }}
-                  className="flex items-center gap-3 p-3 w-full rounded-lg hover:bg-gray-100 transition-colors text-red-600 hover:text-red-700"
+                  className={`flex items-center gap-3 p-3 w-full rounded-lg transition-colors ${
+                    isDark
+                      ? 'hover:bg-gray-800 text-red-400 hover:text-red-500'
+                      : 'hover:bg-gray-100 text-red-600 hover:text-red-700'
+                  }`}
                 >
                   <LogOut className="w-5 h-5" />
                   <span>Logout</span>
@@ -171,13 +248,3 @@ export default function Header({ navlist , replacement }: HeaderProps) {
     </>
   )
 }
-
-/*"
-                <button
-                  onClick={() => signOut()}
-                  className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-gray-100 text-sm text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Logout</span>
-                </button>
-"**/
