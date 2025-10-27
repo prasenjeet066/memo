@@ -23,7 +23,13 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
   const ArticleName = searchParams?.new?.trim() || ''
   const isMobile = useMobile()
   const [isExpanded, setIsExpanded] = useState(true)
-  
+  const footerList = [
+    { label: 'Terms & Conditions', href: '/terms' },
+    { label: 'Content Security', href: '/security' },
+    { label: 'Developers', href: '/developers' },
+    { label: 'About Us', href: '/about' },
+    { label: 'APIs', href: '/api-docs' },
+  ];
   const NavList = useMemo(() => [
     { name: 'Home', icon: Home, href: '/' },
     { name: 'Explore', icon: Compass, href: '/explore' },
@@ -150,6 +156,24 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
               IsExpandedSet={setIsExpanded}
             />
           </div>
+          <footer className="w-full bg-white py-6 px-4 mt-auto">
+              <div className="max-w-6xl mx-auto">
+                <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row justify-center gap-8'} items-center`}>
+                  {footerList.map((item, index) => (
+                    <a
+                      key={item.label}
+                      href={item.href}
+                      className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                      {item.label}
+                    </a>
+                  ))}
+                </div>
+                <div className="text-center mt-6 text-xs text-gray-500">
+                  © 2025 All rights reserved.
+                </div>
+              </div>
+            </footer>
         </main>
       </ErrorBoundary>
     )
@@ -250,6 +274,24 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
         </div>  
       </div>  
     </div>  
+    <footer className="w-full bg-white py-6 px-4 mt-auto">
+              <div className="max-w-6xl mx-auto">
+                <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row justify-center gap-8'} items-center`}>
+                  {footerList.map((item, index) => (
+                    <a
+                      key={item.label}
+                      href={item.href}
+                      className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                      {item.label}
+                    </a>
+                  ))}
+                </div>
+                <div className="text-center mt-6 text-xs text-gray-500">
+                  © 2025 All rights reserved.
+                </div>
+              </div>
+            </footer>
   </div>  
 </ErrorBoundary>
   )
