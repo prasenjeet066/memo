@@ -83,8 +83,7 @@ export const Viewer = function({ __data }: Props) {
     'CASCADE': ['ADMIN'],
   }
   // logic for - can edit this article?
-  const isEditableForMe =
-  session?.user && whoCanEdit[data.protection_level]?.includes(session.user.role);
+  const [isEditableForMe,setEFM]= useState(false)
   
   
   const handlePublish = async (payload: any) => {
@@ -126,9 +125,11 @@ export const Viewer = function({ __data }: Props) {
   // Fetch & set data from props
   useEffect(() => {
     if (__data?.data) {
+      
       setData(__data.data)
+      setEFM(session?.user && whoCanEdit[data.protection_level]?.includes(session.user.role))
     }
-  }, [__data])
+  }, [__data,session])
   
   if (!data) {
     return <div>Loading...</div>
