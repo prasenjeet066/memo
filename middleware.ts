@@ -1,4 +1,4 @@
-// middleware.ts - Next.js 16 compatible
+// middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
@@ -14,7 +14,7 @@ const AUTH_ROUTES = ['/login', '/register', '/signup', '/signin'];
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Early handle OPTIONS (CORS preflight)
+  // Handle OPTIONS (CORS preflight)
   if (request.method === 'OPTIONS') {
     const response = new NextResponse(null, { status: 204 });
     response.headers.set('Access-Control-Allow-Origin', '*');
@@ -33,7 +33,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   
-  // Extract and validate language
+  // Parse language
   const pathSegments = pathname.split('/').filter(Boolean);
   const potentialLang = pathSegments[0];
   let lang = DEFAULT_LANGUAGE;
@@ -43,6 +43,7 @@ export async function middleware(request: NextRequest) {
     lang = potentialLang;
     restOfPath = '/' + pathSegments.slice(1).join('/');
   } else if (potentialLang && !SUPPORTED_LANGUAGES.includes(potentialLang)) {
+    // Redirect unknown language to default
     const url = request.nextUrl.clone();
     url.pathname = `/${DEFAULT_LANGUAGE}${pathname.startsWith('/') ? pathname : '/' + pathname}`;
     return NextResponse.redirect(url);
@@ -63,7 +64,8 @@ export async function middleware(request: NextRequest) {
   // Unauthenticated user accessing protected route
   if (isProtectedRoute && !isAuthenticated) {
     const url = request.nextUrl.clone();
-    url.pathname = `/${lang}/login`;
+    // Do NOT add lang for auth routes
+    url.pathname = `/login`;
     url.searchParams.set('callbackUrl', encodeURIComponent(request.url));
     return NextResponse.redirect(url);
   }
@@ -71,7 +73,18 @@ export async function middleware(request: NextRequest) {
   // Authenticated user accessing auth routes
   if (isAuthRoute && isAuthenticated) {
     const url = request.nextUrl.clone();
+    // Add lang prefix for redirect to account
     url.pathname = `/${lang}/account`;
+    return NextResponse.redirect(url);
+  }
+  
+  // --- Language normalization for non-auth routes ---
+  // If no lang prefix and route is not auth or protected, redirect with default lang
+  const isMissingLang = !SUPPORTED_LANGUAGES.includes(potentialLang);
+  const isSystemRoute = isAuthRoute || isProtectedRoute;
+  if (isMissingLang && !isSystemRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/${DEFAULT_LANGUAGE}${pathname.startsWith('/') ? pathname : '/' + pathname}`;
     return NextResponse.redirect(url);
   }
   
@@ -90,7 +103,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\..*|api).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\..*|api).*)'],
 };
