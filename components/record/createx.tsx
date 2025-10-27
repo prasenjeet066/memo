@@ -82,23 +82,23 @@ import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
 import { $createCodeNode } from '@lexical/code';
 
 interface EditorProps {
-  editor_mode?: 'visual' | 'code';
-  record_name?: string;
-  onPublish?: (payload: any) => Promise<void>;
-  sideBarTools?: (arg: React.ReactNode) => void;
-  ExpandedIs?: boolean;
-  IsExpandedSet?: (value: boolean) => void;
-  isSuccesfullCreated?: { success: boolean; message?: string } | null;
-  __data?: any;
+  editor_mode ? : 'visual' | 'code';
+  record_name ? : string;
+  onPublish ? : (payload: any) => Promise < void > ;
+  sideBarTools ? : (arg: React.ReactNode) => void;
+  ExpandedIs ? : boolean;
+  IsExpandedSet ? : (value: boolean) => void;
+  isSuccesfullCreated ? : { success: boolean;message ? : string } | null;
+  __data ? : any;
 }
 
 interface Citation {
   id: string;
   text: string;
-  url?: string;
-  author?: string;
-  date?: string;
-  title?: string;
+  url ? : string;
+  author ? : string;
+  date ? : string;
+  title ? : string;
 }
 
 interface EditSummary {
@@ -150,7 +150,7 @@ function HtmlPlugin({
   initialHtml,
   onHtmlChange
 }: {
-  initialHtml?: string;
+  initialHtml ? : string;
   onHtmlChange: (html: string) => void;
 }) {
   const [editor] = useLexicalComposerContext();
@@ -175,7 +175,7 @@ function HtmlPlugin({
   }, [editor, initialHtml]);
   
   return (
-    <OnChangePlugin
+      <OnChangePlugin
       onChange={(editorState) => {
         editorState.read(() => {
           try {
@@ -309,7 +309,12 @@ export default function EnhancedEditor({
       LinkNode,
     ],
   };
-  
+  useEffect(()=>{
+    if (__data) {
+          const d = __data;
+          setPayload((prev)=>({...prev,slug:d.slug,id:d.id}))
+    }
+  },[__data])
   // Statistics calculation
   const calculateStats = useCallback((content: string) => {
     const tempDiv = document.createElement('div');
@@ -1017,10 +1022,7 @@ export default function EnhancedEditor({
       setPublishStatus({ type: 'loading', message: 'Publishing...' });
       
       try {
-        if (__data) {
-          const d = __data;
-          setPayload((prev)=>({...prev,slug:d.slug,id:d.id}))
-        }
+        
         const result = await onPublish?.({
           ...payload,
           
