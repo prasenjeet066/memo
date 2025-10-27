@@ -82,12 +82,12 @@ export default function Header({ navlist , replacement }: HeaderProps) {
                 >
                   <Bell className="w-5 h-5" />
                 </button>
-                <div className = 'flex items-center gap-1 p-2 border-l gap-1'>
+                <div className = 'flex items-center gap-2 p-2 border-l gap-1'>
                 <span class = 'h-5 w-5 rounded-full bg-gray-500'>
                   
                 </span>
                 <div className = 'flex flex-col items-start justify-center text-xs text-gray-800'>
-                  <h1>{session.user.username}</h1>
+                  <h1 className='font-semibold'>{session.user.name.split(' ')[0].slice(0,3) + '..' +session.user.name.split(' ')[1].slice(0,3) }</h1>
                   <small>Account</small>
                 </div>
                 </div>
