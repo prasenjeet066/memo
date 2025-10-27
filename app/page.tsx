@@ -120,7 +120,7 @@ export default function MainPage() {
                 <img
                   alt="Sample"
                   className={`h-auto object-contain rounded-lg ${isMobile ? 'w-full' : 'w-full'}`}
-                  src="https://memoorg.vercel.app/api/img/vor?url=https://aspiringshe.com/wp-content/uploads/2022/09/8k-4k-priyanka-chopra-wallpaper-preview.jpg"
+                  src="https://memoorg.vercel.app/api/img/vor?url=https://memoorg.vercel.app/api/img/vor?url=https://aspiringshe.com/wp-content/uploads/2022/09/8k-4k-priyanka-chopra-wallpaper-preview.jpg&points=1000000&style=gradient"
                 />
               </div>
               
