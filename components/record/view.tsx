@@ -13,6 +13,7 @@ interface Props {
     data: {
       title ? : string
       content ? : string
+      protection_level ? : string
     }
   }
 }
@@ -21,14 +22,12 @@ export const Viewer = function({ __data }: Props) {
   const [data, setData] = useState < any > (null)
   const [editPage, gotoEditPage] = useState < boolean > (false)
   
-  // States & logic brought from RecordWithSlug
   const [isExpanded, setIsExpanded] = useState(true)
   const { data: session } = useSession();
   const [isSuccesfullCreated, setIsSuccesfullCreated] = useState < any > (null)
   const [isPublishing, setIsPublishing] = useState(false)
   const [currentSidebar, setCurrentSidebar] = useState < React.ReactNode > (null)
   
-  // Sidebar & Nav
   const NavList = useMemo(
     () => [
       { name: 'Home', icon: Home, href: '/' },
@@ -42,49 +41,16 @@ export const Viewer = function({ __data }: Props) {
   const handleSideBarTools = (arg: React.ReactNode) => {
     setCurrentSidebar(arg)
   }
+  
   const whoCanEdit = {
-    'NONE': ['IP', // Unregistered Users
-      'REG', // Registered Users
-      'AC', // Autoconfirmed Users
-      'EC', // Extended Confirmed Users
-      'ADMIN', // Administrators
-      'BUC', // Bureaucrats
-      'CU', // Checkusers
-      'OS', // Oversighters
-      'TE', // Template Editors
-      'STEW', // Stewards
-      'ARBC', // Arbitration Committee Members
-      'BOT',
-    ], // No protection
-    'SEMI': [
-      'AC', // Autoconfirmed Users
-      'EC', // Extended Confirmed Users
-      'ADMIN', // Administrators
-      'BUC', // Bureaucrats
-      'CU', // Checkusers
-      'OS', // Oversighters
-      'TE', // Template Editors
-      'STEW', // Stewards
-      'ARBC', // Arbitration Committee Members
-      'BOT',
-    ], // Semi-protected (autoconfirmed users can edit)
-    'EXTENDED': [
-      'EC', // Extended Confirmed Users
-      'ADMIN', // Administrators
-      'BUC', // Bureaucrats
-      'CU', // Checkusers
-      'OS', // Oversighters
-      'TE', // Template Editors
-      'STEW', // Stewards
-      'ARBC', // Arbitration Committee Members
-      'BOT',
-    ], // Extended confirmed users can edit
-    'FULL': ['ADMIN'], // Only admins can edit
+    'NONE': ['IP', 'REG', 'AC', 'EC', 'ADMIN', 'BUC', 'CU', 'OS', 'TE', 'STEW', 'ARBC', 'BOT'],
+    'SEMI': ['AC', 'EC', 'ADMIN', 'BUC', 'CU', 'OS', 'TE', 'STEW', 'ARBC', 'BOT'],
+    'EXTENDED': ['EC', 'ADMIN', 'BUC', 'CU', 'OS', 'TE', 'STEW', 'ARBC', 'BOT'],
+    'FULL': ['ADMIN'],
     'CASCADE': ['ADMIN'],
   }
-  // logic for - can edit this article?
-  const [isEditableForMe,setEFM]= useState(false)
   
+  const [isEditableForMe, setEFM] = useState(false)
   
   const handlePublish = async (payload: any) => {
     if (!payload) return null
@@ -122,14 +88,19 @@ export const Viewer = function({ __data }: Props) {
     return null
   }
   
-  // Fetch & set data from props
   useEffect(() => {
     if (__data?.data) {
+      const d = __data.data
+      setData(d)
       
-      setData(__data.data)
-      setEFM(session?.user && whoCanEdit[data.protection_level]?.includes(session.user.role))
+      if (session?.user) {
+        const allowedRoles = whoCanEdit[d.protection_level ?? 'NONE'] || []
+        setEFM(allowedRoles.includes(session.user.role))
+      } else {
+        setEFM(false)
+      }
     }
-  }, [__data,session])
+  }, [__data, session])
   
   if (!data) {
     return <div>Loading...</div>
@@ -142,7 +113,7 @@ export const Viewer = function({ __data }: Props) {
           <Header navList={NavList} />
           <div className="p-4 w-full flex h-full items-start gap-2 justify-between">
             <CreateNew
-              __data = {data}
+              __data={data}
               onPublish={handlePublish}
               ExpandedIs={isExpanded}
               record_name={data.title}
@@ -168,34 +139,32 @@ export const Viewer = function({ __data }: Props) {
         <div className="flex items-center w-full flex-1"></div>
         <div className="flex items-center border-l pl-2">
           {isEditableForMe ? (
-            
-          
-          <button
-            className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
-            aria-label="Edit document"
-            type="button"
-            onClick={() => gotoEditPage(true)}
-            title="Edit Article"
-          >
-            Edit Article
-          </button>):(
             <button
-            disabled = {true}
-            className = "px-4 py-2 bg-gray-100 text-black transition-colors m-2 rounded-full">
-              <Fai icon= 'lock'/>
+              className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
+              aria-label="Edit document"
+              type="button"
+              onClick={() => gotoEditPage(true)}
+              title="Edit Article"
+            >
+              Edit Article
             </button>
-      
+          ) : (
+            <button
+              disabled={true}
+              className="px-4 py-2 bg-gray-100 text-black transition-colors m-2 rounded-full"
+            >
+              <Fai icon="lock" />
+            </button>
           )}
         </div>
       </div>
-      <div className = 'flex items-start justify-between'>
-      <div
-        className="flex-1 overflow-auto bg-white relative p-4 prose max-w-none"
-        dangerouslySetInnerHTML={{ __html: data?.content || '' }}
-      />
-      <div className='flex flex-col items-center p-4'>
-        
-      </div>
+
+      <div className="flex items-start justify-between">
+        <div
+          className="flex-1 overflow-auto bg-white relative p-4 prose max-w-none"
+          dangerouslySetInnerHTML={{ __html: data?.content || '' }}
+        />
+        <div className="flex flex-col items-center p-4"></div>
       </div>
     </div>
   )
