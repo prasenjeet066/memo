@@ -107,24 +107,24 @@ export const Viewer = function({ __data }: Props) {
   }
   
   useEffect(() => {
-  if (__data?.data) {
-    const d = __data.data
-    setData(d)
-    
-    const protectionLevel = d.protection_level || 'NONE'
-    const allowedRoles = whoCanEdit[protectionLevel] || []
-    
-    if (session?.user) {
-      const userRoles = Array.isArray(session.user.role) ? session.user.role : [session.user.role]
-      // Check if any of the user's roles are allowed to edit
-      const canEdit = userRoles.some(role => allowedRoles.includes(role))
-      setEFM(canEdit)
-    } else {
-      // Check if anonymous users (IP) can edit
-      setEFM(allowedRoles.includes('IP'))
+    if (__data?.data) {
+      const d = __data.data
+      setData(d)
+      
+      const protectionLevel = d.protection_level || 'NONE'
+      const allowedRoles = whoCanEdit[protectionLevel] || []
+      
+      if (session?.user) {
+        const userRoles = Array.isArray(session.user.role) ? session.user.role : [session.user.role]
+        // Check if any of the user's roles are allowed to edit
+        const canEdit = userRoles.some(role => allowedRoles.includes(role))
+        setEFM(canEdit)
+      } else {
+        // Check if anonymous users (IP) can edit
+        setEFM(allowedRoles.includes('IP'))
+      }
     }
-  }
-}, [__data, session])
+  }, [__data, session])
   
   if (!data) {
     return <div>Loading...</div>
@@ -148,45 +148,49 @@ export const Viewer = function({ __data }: Props) {
     )
   }
   
-  return (
-    <div className="w-full h-full flex flex-col">
-      <div className="px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h1 className={`font-bold text-gray-900 sm:text-md text-lg`}>{data.title}</h1>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2 py-1">
-        <div className="flex items-center w-full flex-1"></div>
-        <div className="flex items-center border-l pl-2">
-          {isEditableForMe ? (
-            <button
-              className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
-              aria-label="Edit document"
-              type="button"
-              onClick={() => gotoEditPage(true)}
-              title="Edit Article"
-            >
-              Edit Article
-            </button>
-          ) : (
-            <button
-              disabled={true}
-              className="px-4 py-2 bg-gray-100 text-black transition-colors m-2 rounded-full text-sm"
-            >
-              <Fai icon="lock" className='mr-2' />
-              {'Only View'}
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="flex items-start justify-between">
-        <div
-          className={`flex-1 overflow-auto bg-white relative prose max-w-none ${isMobile ? 'p-2' : 'p-4'}`}
-          dangerouslySetInnerHTML={{ __html: data?.content || '' }}
-        />
-      </div>
+  return (<div className="w-full h-full flex flex-col">
+  {/* Header / Title */}
+  <div className="px-4 py-3 flex items-center justify-between">
+    <div className="flex items-center gap-4">
+      <h1 className="font-bold text-gray-900 text-lg sm:text-xl md:text-2xl">
+        {data.title || 'Untitled Article'}
+      </h1>
     </div>
-  )
+  </div>
+
+  {/* Action Buttons */}
+  <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2 py-1">
+    <div className="flex items-center w-full flex-1"></div>
+    <div className="flex items-center border-l pl-2">
+      {isEditableForMe ? (
+        <button
+          className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full text-sm sm:text-base"
+          aria-label="Edit document"
+          type="button"
+          onClick={() => gotoEditPage(true)}
+          title="Edit Article"
+        >
+          Edit Article
+        </button>
+      ) : (
+        <button
+          disabled={true}
+          className="px-4 py-2 bg-gray-100 text-gray-600 transition-colors m-2 rounded-full text-sm sm:text-base flex items-center"
+          title="Read-only access"
+        >
+          <Fai icon="lock" className="mr-2" />
+          View Only
+        </button>
+      )}
+    </div>
+  </div>
+
+  {/* Article Content */}
+  <div className="flex items-start justify-between">
+    <div
+      className={`flex-1 overflow-auto bg-white relative prose max-w-none ${isMobile ? 'p-2' : 'p-4'}`}
+      dangerouslySetInnerHTML={{ __html: data?.content || '<p>No content available yet.</p>' }}
+    />
+  </div>
+</div>)
 }
