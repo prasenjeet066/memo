@@ -32,7 +32,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
   ], [])
   
   // Use useMemo for Sidebar (prevents re-renders)
-  const Sidebar = useMemo(() => !isMobile && (
+  const Sidebar = useMemo(() =>
     <div className='w-auto max-w-64 h-full bg-white mr-2 flex flex-col justify-between rounded-2xl'>
       <div className='p-4 border-b border-gray-200'>
         <button
@@ -82,7 +82,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
           })()}
         </div>
       </nav>
-    </div>), [isExpanded, NavList])
+    </div>, [isExpanded, NavList])
   
   const [currentSidebar, setCurrentSidebar] = useState < React.ReactNode > (Sidebar)
   const [isSuccesfullCreated, setIsSuccesfullCreated] = useState < any > (null)
@@ -207,7 +207,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
           <Header navList={NavList} />
          
           <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
-            {Sidebar}
+            { ! isMobile && Sidebar}
             <Viewer __data={recordJdata} />
           </div>
         </div>
@@ -221,7 +221,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
     <Header navList={NavList} />  
     
     <div className='p-4 w-full flex h-full items-start justify-between'>  
-      {Sidebar}  
+      {!isMobile && Sidebar}  
       <div className='flex-1 flex flex-col gap-4 p-4 w-full h-full'>  
         <h1 className='text-base sm:text-lg md:text-xl lg:text-2xl font-semibold'>
           No Articles Available
