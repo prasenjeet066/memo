@@ -218,9 +218,9 @@ export default function EnhancedEditor({
 }: EditorProps) {
   const [editorMode, setEditorMode] = useState<'visual' | 'code'>(editor_mode);
   const [payload, setPayload] = useState({ 
-    slug: '',
-    title: '', 
-    content: '' 
+    slug: __data?.data.slug || '',
+    title: __data?.data.title || '', 
+    content: __data?.data.content || '' 
   });
   const editSummary = useRef()
   const [isGenerating, setIsGenerating] = useState(false);
@@ -389,15 +389,6 @@ export default function EnhancedEditor({
     `;
   }, [citations]);
   
-  useEffect(()=>{
-    if (__data.data) {
-      setPayload({
-        slug: __data.data.slug,
-        title : __data.data.title,
-        content: __data.data.content
-      })
-    }
-  },[__data])
   
   // Execute commands
   const executeCommand = useCallback((action: string, args?: any[]) => {
@@ -1026,8 +1017,13 @@ export default function EnhancedEditor({
       setPublishStatus({ type: 'loading', message: 'Publishing...' });
       
       try {
+        if (__data || __data?.data) {
+          const d = __data.data;
+          setPayload((prev)=>({...prev,slug:d.slug,id:d.id}))
+        }
         const result = await onPublish?.({
           ...payload,
+          
           summary: localSummary,
         });
       } catch (error) {
