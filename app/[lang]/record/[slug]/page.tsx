@@ -227,13 +227,13 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
           No Articles Available
         </h1>  
         
-        <div className='p-4 flex items-center gap-4 justify-between bg-white rounded'>  
+        <div className='p-4 flex items-start gap-4 justify-center bg-white rounded'>  
           <h1 className='text-sm sm:text-base md:text-lg'>
             It looks like you don’t have any articles yet. Would you like to create a new one?
           </h1>   
           <a 
             href={`/record/create?new=${ArticleName}`} 
-            className='text-sm sm:text-base md:text-lg text-blue-600 hover:underline'
+            className='text-sm sm:text-base md:text-lg text-blue-600 font-bold hover:underline'
           >
             Create Article
           </a>  
@@ -244,10 +244,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
         </h1>  
         
         <div className='w-full p-4'>
-          <p className='text-sm sm:text-base md:text-lg text-gray-600'>
-            Here you will find articles related to your interests or previous activity.  
-            Explore the content below to gain insights and inspiration.
-          </p>  
+           
         </div>  
       </div>  
     </div>  
