@@ -14,13 +14,13 @@ export async function OPTIONS() {
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    let imageUrl = searchParams.get("url") ||
+    let imageUrl = 
       "https://www.pngitem.com/pimgs/m/333-3332655_lionel-messi-png-shot-transparent-png.png";
     
     const img = await loadImage(imageUrl);
     const WIDTH = img.width;
     const HEIGHT = img.height;
-    const MAX_POINTS = 9000 + (HEIGHT * WIDTH);
+    const MAX_POINTS = 9000000 + (HEIGHT * WIDTH);
     
     // 🔹 Load and process image
     const imgCanvas = createCanvas(WIDTH, HEIGHT);
