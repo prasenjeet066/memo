@@ -20,7 +20,7 @@ export async function GET(request) {
     const img = await loadImage(imageUrl);
     const WIDTH = img.width;
     const HEIGHT = img.height;
-    const MAX_POINTS = 900000 + (HEIGHT * WIDTH);
+    const MAX_POINTS = 90000 + (HEIGHT * WIDTH);
     
     // 🔹 Load and process image
     const imgCanvas = createCanvas(WIDTH, HEIGHT);
@@ -28,7 +28,7 @@ export async function GET(request) {
     imgCtx.drawImage(img, 0, 0, WIDTH, HEIGHT);
     imgCtx.font = 'bold 110pt Sans'
     imgCtx.textAlign = 'center'
-    imgCtx.fillStyle = '#fff'
+    imgCtx.fillStyle = '#000'
     imgCtx.fillText('Sistorica' , WIDTH / 2, HEIGHT - 10)
     
     const data = imgCtx.getImageData(0, 0, WIDTH, HEIGHT).data;
