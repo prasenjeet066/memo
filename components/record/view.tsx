@@ -73,8 +73,8 @@ export const Viewer = function({ __data }: Props) {
         body: JSON.stringify({
           ...payload,
           title: payload.title || data?.title || 'Untitled',
-          articleId: payload.id,
-          editSummary: payload.editSummary || 'Updated article',
+          articleId: payload.id || data.id,
+          editSummary: payload.summary || 'Updated article',
           isMinorEdit: payload.isMinorEdit || false,
         }),
       })

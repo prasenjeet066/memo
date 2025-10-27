@@ -17,7 +17,8 @@ async function storeArticle(
     // -------------------
     // UPDATE existing article
     // -------------------
-    if (articleData.articleId) {
+    if (articleData.articleId || articleData.articleId!==''
+    ) {
       console.log(`🛠 Updating existing article: ${articleData.articleId}`);
 
       const updatedRecord = await RecordDAL.updateRecord(
@@ -66,7 +67,7 @@ async function storeArticle(
     // -------------------
     // CREATE new article
     // -------------------
-    console.log(`📝 Creating new article: ${articleData.title}`);
+    //console.log(`📝 Creating new article: ${articleData.title}`);
     
     const record = await RecordDAL.createRecord(
       {
@@ -95,7 +96,7 @@ async function storeArticle(
       reason: "Initial publication"
     });
 
-    console.log(`✅ New article stored successfully: ${record.slug}`);
+    //console.log(`✅ New article stored successfully: ${record.slug}`);
 
     return {
       id: record._id.toString(),
@@ -104,7 +105,7 @@ async function storeArticle(
       status: "PUBLISHED",
     };
   } catch (error: any) {
-    console.error("❌ Failed to store article:", error);
+   // console.error("❌ Failed to store article:", error);
     throw new Error(`Storage failed: ${error.message}`);
   }
 }
@@ -145,6 +146,9 @@ memoFlow.createFunction(
 
     const storageResult = await step.run(
       "store-article",
+      
+      
+      
       async () =>
         await storeArticle(
           {
