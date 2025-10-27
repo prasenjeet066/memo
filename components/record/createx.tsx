@@ -1017,8 +1017,8 @@ export default function EnhancedEditor({
       setPublishStatus({ type: 'loading', message: 'Publishing...' });
       
       try {
-        if (__data || __data?.data) {
-          const d = __data.data;
+        if (__data) {
+          const d = __data;
           setPayload((prev)=>({...prev,slug:d.slug,id:d.id}))
         }
         const result = await onPublish?.({
