@@ -108,7 +108,7 @@ export default function MainPage() {
   ];
   
   return ( <Suspense fallback={<Spinner/>}>
-      <main className="min-h-screen w-full bg-gray-50 flex flex-col">
+      <main className="min-h-screen w-full bg-gray-900 flex flex-col">
         <Header navlist={NavList} isMobile={isMobile} />
         
         <div className="flex-1 flex overflow-hidden">
@@ -126,9 +126,12 @@ export default function MainPage() {
               
               {/* Search Section */}
               <div className={`w-full ${isMobile ? 'max-w-full' : 'max-w-2xl'}`}>
-                <h1 className="text-center text-2xl sm:text-3xl md:text-4xl font-semibold mb-6 bg-[radial-gradient(ellipse_at_right,_var(--tw-gradient-stops))] from-amber-300 via-slate-100 to-black bg-clip-text text-transparent">
-                  Find Anything.
+                <h1 className="text-center text-2xl sm:text-3xl md:text-4xl font-semibold mb-6 ">
+                  {
+                    "Search anything..."
+                  }
                 </h1>
+                
                 <div className="w-full p-[1px] rounded-full bg-blue-600">
                   <div className="w-full p-2 flex items-center gap-2 bg-white rounded-full">
                     <input
