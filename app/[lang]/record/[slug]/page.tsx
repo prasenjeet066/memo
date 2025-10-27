@@ -216,21 +216,23 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
   }
   
   return (
-<ErrorBoundary>  
+  <ErrorBoundary>  
   <div className='min-h-screen w-full bg-gray-50 h-screen'>  
     <Header navList={NavList} />  
     
     <div className='p-4 w-full flex h-full items-start justify-between'>  
       {!isMobile && Sidebar}  
       <div className='flex-1 flex flex-col gap-4 p-4 w-full h-full'>  
+        <h1 className='text-2xl sm:text-xl md:text-lg lg:text-2xl font-bold '>
+          Sorry!
+        </h1>
         <h1 className='text-base sm:text-lg md:text-xl lg:text-2xl font-semibold'>
-          No Articles Available
+          Your request not found.
         </h1>  
-        
         <div className='p-4 flex items-start gap-4 justify-center bg-white rounded'>  
           <h1 className='text-sm sm:text-base md:text-lg'>
             It looks like you don’t have any articles yet. Would you like to create a new one?
-          </h1>   
+          </h1>   <br/>
           <a 
             href={`/record/create?new=${slug.trim()}`} 
             className='text-sm sm:text-base md:text-lg text-blue-600 font-bold hover:underline'
