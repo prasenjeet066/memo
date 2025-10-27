@@ -205,7 +205,9 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
       <ErrorBoundary>
         <div className='min-h-screen w-full bg-gray-50 h-screen'>
           <Header navList={NavList} />
+         
           <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
+            {Sidebar}
             <Viewer __data={recordJdata} />
           </div>
         </div>
@@ -217,9 +219,17 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
     <ErrorBoundary>
       <div className='min-h-screen w-full bg-gray-50 h-screen'>
         <Header navList={NavList} />
-        <div className='p-4 w-full flex h-full items-center justify-center'>
-          <div className='text-gray-500'>Record not found</div>
-        </div>
+        
+        <div className='p-4 w-full flex h-full items-start justify-between'>
+          {Sidebar}
+          <div className = 'flex-1 p-4 w-full h-full'>
+            <h1 className='text-md'> Not have any article</h1>
+            <div className = 'p-4 flex items-center gap-4 justify-between bg-white rounded'>
+              <h1>Are you want to create?</h1> 
+              <a href = {`/record/create?new=${encodeURIComponent(ArticleName)}`}>Create Now</a>
+            </div>
+          </div>
+          </div>
       </div>
     </ErrorBoundary>
   )
