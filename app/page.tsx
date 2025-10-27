@@ -111,22 +111,21 @@ export default function MainPage() {
         <Header navlist={NavList} isMobile={isMobile} />
         
         <div className="flex-1 flex overflow-hidden">
-          {Sidebar}
-          
+    
           <div className="flex-1 flex flex-col overflow-y-auto">
             <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
               {/* Image Section */}
-              <div className="flex items-center justify-center w-full max-w-2xl mb-8">
+              <div className="flex items-center justify-center w-full mb-8">
                 <img
                   alt="Sample"
-                  className={`h-auto object-contain rounded-lg ${isMobile ? 'w-full' : 'w-2/3'}`}
+                  className={`h-auto object-contain rounded-lg ${isMobile ? 'w-full' : 'w-full'}`}
                   src="https://memoorg.vercel.app/api/img/vor?url=https://aspiringshe.com/wp-content/uploads/2022/09/8k-4k-priyanka-chopra-wallpaper-preview.jpg"
                 />
               </div>
               
               {/* Search Section */}
               <div className={`w-full ${isMobile ? 'max-w-full' : 'max-w-2xl'}`}>
-                <h1 className="text-center text-2xl sm:text-3xl md:text-4xl font-semibold mb-6">
+                <h1 className="text-center text-2xl sm:text-3xl md:text-4xl font-semibold mb-6 bg-[radial-gradient(ellipse_at_right,_var(--tw-gradient-stops))] from-amber-300 via-slate-100 to-black bg-clip-text text-transparent">
                   Find Anything.
                 </h1>
                 <div className="w-full p-[1px] rounded-full bg-blue-600">
