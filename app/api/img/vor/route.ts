@@ -41,7 +41,7 @@ function getConfig(searchParams: URLSearchParams): VoronoiConfig {
     lineWidth: parseFloat(searchParams.get("lineWidth") || "1"),
     opacity: parseFloat(searchParams.get("opacity") || "0.9"),
     backgroundColor: searchParams.get("bg") || "transparent",
-    edgeDetection: searchParams.get("edges") === "true",
+    edgeDetection: searchParams.get("edges") === "false",
     adaptiveDensity: searchParams.get("adaptive") !== "false",
     cellSize: (searchParams.get("cellSize") as VoronoiConfig['cellSize']) || "adaptive"
   };
