@@ -56,7 +56,7 @@ export async function GET(request) {
       const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
       
       // Skip bright points
-      if (brightness > 0.7) continue;
+      if (brightness > 0.5) continue;
       
       ctx.beginPath();
       ctx.moveTo(cell[0][0], cell[0][1]);
