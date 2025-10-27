@@ -1,6 +1,7 @@
 'use client'
 import { Suspense } from 'react'
 import * as d3 from "d3";
+import Spinner from '/components/utils/spinner'
 import Image from 'next/image'
 import { Fai } from '@/components/Fontawesome';
 import VA from '@/components/d3/VoronoiArt'
@@ -106,7 +107,7 @@ export default function MainPage() {
     { label: 'APIs', href: '/api-docs' },
   ];
   
-  return ( <Suspense fallback={<div>Loading...</div>}>
+  return ( <Suspense fallback={<Spinner/>}>
       <main className="min-h-screen w-full bg-gray-50 flex flex-col">
         <Header navlist={NavList} isMobile={isMobile} />
         
