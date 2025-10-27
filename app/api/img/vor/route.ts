@@ -61,7 +61,7 @@ export async function GET(request) {
       ctx.closePath();
       
       ctx.strokeStyle =
-        brightness < 1 ? `rgba(${r},${g},${b},0.9)` : `rgba(255,255,255,0.0)`;
+        brightness < 1 ? `rgba(${r},${g},${b},0.9)` : `none`;
       ctx.lineWidth = 1;
       ctx.stroke();
     }
