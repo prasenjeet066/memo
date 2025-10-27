@@ -106,22 +106,24 @@ export const Viewer = function({ __data }: Props) {
   }
   
   useEffect(() => {
-    if (__data?.data) {
-      const d = __data.data
-      setData(d)
-      
-      if (session?.user) {
-        const protectionLevel = d.protection_level || 'NONE'
-        const allowedRoles = whoCanEdit[protectionLevel] || []
-        setEFM(allowedRoles.includes(session.user.role))
-      } else {
-        // Check if anonymous users can edit
-        const protectionLevel = d.protection_level || 'NONE'
-        const allowedRoles = whoCanEdit[protectionLevel] || []
-        setEFM(allowedRoles.includes('IP'))
-      }
+  if (__data?.data) {
+    const d = __data.data
+    setData(d)
+    
+    const protectionLevel = d.protection_level || 'NONE'
+    const allowedRoles = whoCanEdit[protectionLevel] || []
+    
+    if (session?.user) {
+      const userRoles = Array.isArray(session.user.role) ? session.user.role : [session.user.role]
+      // Check if any of the user's roles are allowed to edit
+      const canEdit = userRoles.some(role => allowedRoles.includes(role))
+      setEFM(canEdit)
+    } else {
+      // Check if anonymous users (IP) can edit
+      setEFM(allowedRoles.includes('IP'))
     }
-  }, [__data, session])
+  }
+}, [__data, session])
   
   if (!data) {
     return <div>Loading...</div>
@@ -152,7 +154,7 @@ export const Viewer = function({ __data }: Props) {
     <div className="w-full h-full flex flex-col">
       <div className="px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold text-gray-900">{data.title}</h1>
+          <h1 className={`font-bold text-gray-900 sm:text-md text-lg`}>{data.title}</h1>
         </div>
       </div>
 
