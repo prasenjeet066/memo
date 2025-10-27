@@ -61,7 +61,7 @@ async function storeArticle(
         url: `/record/${updatedRecord.slug}`,
         status: "PUBLISHED",
       };
-    }
+    }else {
 
     // -------------------
     // CREATE new article
@@ -103,6 +103,7 @@ async function storeArticle(
       url: `/record/${record.slug}`,
       status: "PUBLISHED",
     };
+    }
   } catch (error: any) {
     console.error("❌ Failed to store article:", error);
     throw new Error(`Storage failed: ${error.message}`);
