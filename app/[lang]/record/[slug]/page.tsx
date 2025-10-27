@@ -232,7 +232,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
             It looks like you don’t have any articles yet. Would you like to create a new one?
           </h1>   
           <a 
-            href={`/record/create?new=${ArticleName}`} 
+            href={`/record/create?new=${slug.trim()}`} 
             className='text-sm sm:text-base md:text-lg text-blue-600 font-bold hover:underline'
           >
             Create Article
