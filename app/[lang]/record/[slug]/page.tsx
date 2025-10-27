@@ -228,6 +228,12 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
               <h1>Are you want to create?</h1> 
               <a href = {`/record/create?new=${ArticleName}`}>Create Now</a>
             </div>
+            <h1 className='text-lg border-b p-2 font-bold'>
+              Related Articles
+            </h1>
+            <div className = 'w-full p-4'>
+              
+            </div>
           </div>
           </div>
       </div>
