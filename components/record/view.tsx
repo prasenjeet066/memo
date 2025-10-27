@@ -1,5 +1,5 @@
 'use client'
-
+import { useMobile } from "@/lib/units/use-mobile";
 import { useState, useEffect, useMemo } from 'react'
 import { useSession } from 'next-auth/react';
 import { Fai } from '@/components/Fontawesome';
@@ -30,6 +30,7 @@ export const Viewer = function({ __data }: Props) {
   const [editPage, gotoEditPage] = useState < boolean > (false)
   
   const [isExpanded, setIsExpanded] = useState(true)
+  const isMobile = useMobile()
   const { data: session } = useSession();
   const [isSuccesfullCreated, setIsSuccesfullCreated] = useState < any > (null)
   const [isPublishing, setIsPublishing] = useState(false)
@@ -185,7 +186,7 @@ export const Viewer = function({ __data }: Props) {
 
       <div className="flex items-start justify-between">
         <div
-          className="flex-1 overflow-auto bg-white relative prose max-w-none p-6"
+          className={`flex-1 overflow-auto bg-white relative prose max-w-none ${isMobile ? 'p-2' : 'p-4'}`}
           dangerouslySetInnerHTML={{ __html: data?.content || '' }}
         />
       </div>
