@@ -33,7 +33,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
   
   // Use useMemo for Sidebar (prevents re-renders)
   const Sidebar = useMemo(() =>
-    <div className='w-auto max-w-64 h-full bg-white mr-2 flex flex-col justify-between rounded-2xl'>
+    <div className='w-auto max-w-64 h-full bg-white mr-2 flex flex-col justify-between rounded-2xl rounded-l-none'>
       <div className='p-4 border-b border-gray-200'>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
