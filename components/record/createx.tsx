@@ -389,6 +389,16 @@ export default function EnhancedEditor({
     `;
   }, [citations]);
   
+  useEffect(()=>{
+    if (__data.data) {
+      setPayload({
+        slug: __data.data.slug,
+        title : __data.data.title,
+        content: __data.data.content
+      })
+    }
+  },[__data])
+  
   // Execute commands
   const executeCommand = useCallback((action: string, args?: any[]) => {
     if (editorMode !== 'visual' || !lexicalEditorRef.current) return;
