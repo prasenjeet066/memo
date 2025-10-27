@@ -14,7 +14,7 @@ export async function OPTIONS() {
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    let imageUrl = 
+    let imageUrl =
       "https://www.pngitem.com/pimgs/m/333-3332655_lionel-messi-png-shot-transparent-png.png";
     
     const img = await loadImage(imageUrl);
@@ -55,13 +55,15 @@ export async function GET(request) {
       const [r, g, b] = [data[idx], data[idx + 1], data[idx + 2]];
       const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
       
+      // Skip bright points
+      if (brightness > 0.7) continue;
+      
       ctx.beginPath();
       ctx.moveTo(cell[0][0], cell[0][1]);
       for (let j = 1; j < cell.length; j++) ctx.lineTo(cell[j][0], cell[j][1]);
       ctx.closePath();
       
-      ctx.strokeStyle =
-        brightness < 1 ? `rgba(${r},${g},${b},0.9)` : `none`;
+      ctx.strokeStyle = `rgba(${r},${g},${b},0.9)`;
       ctx.lineWidth = 1;
       ctx.stroke();
     }
