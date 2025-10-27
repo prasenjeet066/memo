@@ -192,7 +192,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
       <ErrorBoundary>
         <div className='min-h-screen w-full bg-gray-50 h-screen'>
           <Header navList={NavList} />
-          <div className='p-4 w-full flex h-full items-center justify-center'>
+          <div className='p-4  w-full flex h-full items-center justify-center'>
             <div className='text-gray-500'>Loading...</div>
           </div>
         </div>
@@ -222,7 +222,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
     
     <div className='p-1 w-full flex h-full items-start justify-between'>  
       {!isMobile && Sidebar}  
-      <div className='flex-1 flex flex-col gap-4 p-4 w-full h-full'>  
+      <div className='flex-1 flex bg-white flex-col gap-4 p-4 w-full h-full'>  
         <h1 className='text-2xl sm:text-xl md:text-lg lg:text-2xl font-bold '>
           Sorry!
         </h1>

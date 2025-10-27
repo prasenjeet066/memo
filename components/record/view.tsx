@@ -155,13 +155,7 @@ export const Viewer = function({ __data }: Props) {
       <h1 className="font-bold text-gray-900 text-lg sm:text-xl md:text-2xl">
         {data.title || 'Untitled Article'}
       </h1>
-    </div>
-  </div>
-
-  {/* Action Buttons */}
-  <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2 py-1">
-    <div className="flex items-center w-full flex-1"></div>
-    <div className="flex items-center border-l pl-2">
+      <div className="flex items-center border-l pl-2">
       {isEditableForMe ? (
         <button
           className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full text-sm sm:text-base"
@@ -183,7 +177,11 @@ export const Viewer = function({ __data }: Props) {
         </button>
       )}
     </div>
+    </div>
   </div>
+
+  {/* Action Buttons */}
+
 
   {/* Article Content */}
   <div className="flex items-start justify-between">
