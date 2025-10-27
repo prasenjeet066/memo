@@ -7,23 +7,23 @@ import { getToken } from 'next-auth/jwt';
 const SUPPORTED_LANGUAGES = ['en', 'es', 'fr', 'de', 'bn', 'hi', 'ar', 'zh', 'ja', 'ko'];
 const DEFAULT_LANGUAGE = 'en';
 
-// Protected and auth routes
+// Route groups
 const PROTECTED_ROUTES = ['/account'];
 const AUTH_ROUTES = ['/login', '/register', '/signup', '/signin'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Handle OPTIONS (CORS preflight)
+  // --- Handle OPTIONS (CORS preflight) ---
   if (request.method === 'OPTIONS') {
-    const response = new NextResponse(null, { status: 204 });
-    response.headers.set('Access-Control-Allow-Origin', '*');
-    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    return response;
+    const res = new NextResponse(null, { status: 204 });
+    res.headers.set('Access-Control-Allow-Origin', '*');
+    res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    return res;
   }
   
-  // Skip static / API / internal
+  // --- Skip internal/static/api files ---
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
@@ -33,7 +33,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   
-  // Parse language
+  // --- Parse language from URL ---
   const pathSegments = pathname.split('/').filter(Boolean);
   const potentialLang = pathSegments[0];
   let lang = DEFAULT_LANGUAGE;
@@ -49,49 +49,49 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
   
-  // Get auth token
+  // --- Auth token ---
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
   });
-  
   const isAuthenticated = !!token;
+  
   const normalizedPath = restOfPath === '' ? '/' : restOfPath;
+  const isProtectedRoute = PROTECTED_ROUTES.some((r) => normalizedPath.startsWith(r));
+  const isAuthRoute = AUTH_ROUTES.some((r) => normalizedPath.startsWith(r));
   
-  const isProtectedRoute = PROTECTED_ROUTES.some((route) => normalizedPath.startsWith(route));
-  const isAuthRoute = AUTH_ROUTES.some((route) => normalizedPath.startsWith(route));
-  
-  // Unauthenticated user accessing protected route
+  // --- Protect routes ---
   if (isProtectedRoute && !isAuthenticated) {
     const url = request.nextUrl.clone();
-    // Do NOT add lang for auth routes
     url.pathname = `/login`;
     url.searchParams.set('callbackUrl', encodeURIComponent(request.url));
     return NextResponse.redirect(url);
   }
   
-  // Authenticated user accessing auth routes
+  // --- Authenticated user visiting auth routes ---
   if (isAuthRoute && isAuthenticated) {
     const url = request.nextUrl.clone();
-    // Add lang prefix for redirect to account
     url.pathname = `/${lang}/account`;
     return NextResponse.redirect(url);
   }
   
-  // --- Language normalization for non-auth routes ---
-  // If no lang prefix and route is not auth or protected, redirect with default lang
+  // --- Language normalization ---
   const isMissingLang = !SUPPORTED_LANGUAGES.includes(potentialLang);
-  const isSystemRoute = isAuthRoute || isProtectedRoute;
-  if (isMissingLang && !isSystemRoute) {
+  
+  // ✅ এখানে শর্ত:
+  // যদি route টা blank ('/') বা auth route হয়, তাহলে language prefix যোগ করো না।
+  const isRoot = pathname === '/' || pathname === '';
+  const shouldSkipLangPrefix = isAuthRoute || isRoot;
+  
+  if (isMissingLang && !shouldSkipLangPrefix) {
     const url = request.nextUrl.clone();
     url.pathname = `/${DEFAULT_LANGUAGE}${pathname.startsWith('/') ? pathname : '/' + pathname}`;
     return NextResponse.redirect(url);
   }
   
-  // Build response with CORS and language headers
-  const requestHeaders = new Headers(request.headers);
+  // --- Response headers ---
   const response = NextResponse.next({
-    request: { headers: requestHeaders },
+    request: { headers: new Headers(request.headers) },
   });
   
   response.headers.set('Access-Control-Allow-Origin', '*');
