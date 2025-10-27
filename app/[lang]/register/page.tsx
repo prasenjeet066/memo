@@ -116,7 +116,7 @@ export default function RegisterPage() {
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-1">
               <h1 className="logo-style-font text-2xl font-semibold text-gray-800 cursor-pointer">
-                memo
+                Sistorica
               </h1>
             </Link>
           </div>
