@@ -70,6 +70,18 @@ export default function MainPage() {
       </nav>
     </div>
   )
+  // display most popular article in region...
+  
+  useEffect(()=>{
+    const fRecords = async function(){
+      
+    }
+    fRecords()
+  },[])
+  
+  
+  
+  
   
   return (
     <main className="min-h-screen w-full h-screen bg-gray-50 flex flex-col">
@@ -77,9 +89,7 @@ export default function MainPage() {
       <div className="flex h-full w-full gap-2">
         {Sidebar}
         <div className='flex-1 p-6'>
-          <div className='max-w-4xl mx-auto'>
           
-          </div>
         </div>
       </div>
     </main>

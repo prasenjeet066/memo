@@ -82,13 +82,15 @@ export default function Header({ navlist , replacement }: HeaderProps) {
                 >
                   <Bell className="w-5 h-5" />
                 </button>
-                <button
-                  onClick={() => signOut()}
-                  className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-gray-100 text-sm text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Logout</span>
-                </button>
+                <div className = 'flex items-center gap-1 p-2 border-l'>
+                <span class = 'h-4 w-4 rounded-full bg-gray-500'>
+                  
+                </span>
+                <div className = 'flex flex-col items-start justify-center text-xs text-gray-800'>
+                  <h1>{session.user.name}</h1>
+                  <small>Account</small>
+                </div>
+                </div>
               </div>
             ) : (
               <div className="flex items-center gap-2">
@@ -169,3 +171,13 @@ export default function Header({ navlist , replacement }: HeaderProps) {
     </>
   )
 }
+
+/*"
+                <button
+                  onClick={() => signOut()}
+                  className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-gray-100 text-sm text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Logout</span>
+                </button>
+"**/

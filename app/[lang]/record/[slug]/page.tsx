@@ -185,7 +185,9 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
       <div className='min-h-screen w-full bg-gray-50 h-screen'>
       <Header navList={NavList} />
       <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
-        <Viewer __data={recordJdata}/>
+        <Viewer __data={recordJdata}
+  
+        />
       </div>
     </div>
     </ErrorBoundary>

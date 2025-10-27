@@ -1,4 +1,12 @@
-import { useState, useEffect } from 'react'
+'use client'
+
+import { useState, useEffect, useMemo } from 'react'
+import { useSession } from 'next-auth/react';
+import { Fai } from '@/components/Fontawesome';
+import CreateNew from '@/components/record/createx'
+import { Home, Compass, HandHeart, Settings } from 'lucide-react'
+import Header from '@/components/header'
+import ErrorBoundary from '@/components/ErrorBoundary'
 
 interface Props {
   __data: {
@@ -9,11 +17,113 @@ interface Props {
   }
 }
 
-export const Viewer = function({
-  __data
-}: Props) {
+export const Viewer = function({ __data }: Props) {
   const [data, setData] = useState < any > (null)
+  const [editPage, gotoEditPage] = useState < boolean > (false)
   
+  // States & logic brought from RecordWithSlug
+  const [isExpanded, setIsExpanded] = useState(true)
+  const { data: session } = useSession();
+  const [isSuccesfullCreated, setIsSuccesfullCreated] = useState < any > (null)
+  const [isPublishing, setIsPublishing] = useState(false)
+  const [currentSidebar, setCurrentSidebar] = useState < React.ReactNode > (null)
+  
+  // Sidebar & Nav
+  const NavList = useMemo(
+    () => [
+      { name: 'Home', icon: Home, href: '/' },
+      { name: 'Explore', icon: Compass, href: '/explore' },
+      { name: 'Contribute', icon: HandHeart, href: '/contribute' },
+      { name: 'Settings', icon: Settings, href: '/settings' },
+    ],
+    []
+  )
+  
+  const handleSideBarTools = (arg: React.ReactNode) => {
+    setCurrentSidebar(arg)
+  }
+  const whoCanEdit = {
+    'NONE': ['IP', // Unregistered Users
+      'REG', // Registered Users
+      'AC', // Autoconfirmed Users
+      'EC', // Extended Confirmed Users
+      'ADMIN', // Administrators
+      'BUC', // Bureaucrats
+      'CU', // Checkusers
+      'OS', // Oversighters
+      'TE', // Template Editors
+      'STEW', // Stewards
+      'ARBC', // Arbitration Committee Members
+      'BOT',
+    ], // No protection
+    'SEMI': [
+      'AC', // Autoconfirmed Users
+      'EC', // Extended Confirmed Users
+      'ADMIN', // Administrators
+      'BUC', // Bureaucrats
+      'CU', // Checkusers
+      'OS', // Oversighters
+      'TE', // Template Editors
+      'STEW', // Stewards
+      'ARBC', // Arbitration Committee Members
+      'BOT',
+    ], // Semi-protected (autoconfirmed users can edit)
+    'EXTENDED': [
+      'EC', // Extended Confirmed Users
+      'ADMIN', // Administrators
+      'BUC', // Bureaucrats
+      'CU', // Checkusers
+      'OS', // Oversighters
+      'TE', // Template Editors
+      'STEW', // Stewards
+      'ARBC', // Arbitration Committee Members
+      'BOT',
+    ], // Extended confirmed users can edit
+    'FULL': ['ADMIN'], // Only admins can edit
+    'CASCADE': ['ADMIN'],
+  }
+  // logic for - can edit this article?
+  const isEditableForMe =
+  session?.user && whoCanEdit[data.protection_level]?.includes(session.user.role);
+  
+  
+  const handlePublish = async (payload: any) => {
+    if (!payload) return null
+    
+    setIsPublishing(true)
+    setIsSuccesfullCreated(null)
+    
+    try {
+      const response = await fetch(`/api/publish/article/${data?.title || 'untitled'}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...payload,
+          title: data?.title || 'Untitled',
+          articleId: (data?.title || 'untitled').replace(/\s+/g, '-').toLowerCase(),
+        }),
+      })
+      
+      const resData = await response.json()
+      
+      if (response.ok) {
+        setIsSuccesfullCreated({ success: true })
+        console.log('Article published successfully:', resData)
+      } else {
+        setIsSuccesfullCreated({ success: false, message: resData.error })
+        console.error('Publish failed:', resData.error)
+      }
+    } catch (error) {
+      console.error('Publish error:', error)
+      setIsSuccesfullCreated({ success: false, message: 'An error occurred' })
+    } finally {
+      setIsPublishing(false)
+    }
+    
+    return null
+  }
+  
+  // Fetch & set data from props
   useEffect(() => {
     if (__data?.data) {
       setData(__data.data)
@@ -24,31 +134,68 @@ export const Viewer = function({
     return <div>Loading...</div>
   }
   
+  if (editPage) {
+    return (
+      <ErrorBoundary>
+        <main className="h-screen w-full max-h-screen max-w-screen bg-gray-50">
+          <Header navList={NavList} />
+          <div className="p-4 w-full flex h-full items-start gap-2 justify-between">
+            <CreateNew
+              __data = {data}
+              onPublish={handlePublish}
+              ExpandedIs={isExpanded}
+              record_name={data.title}
+              sideBarTools={handleSideBarTools}
+              isSuccesfullCreated={isSuccesfullCreated}
+              IsExpandedSet={setIsExpanded}
+            />
+          </div>
+        </main>
+      </ErrorBoundary>
+    )
+  }
+  
   return (
     <div className="w-full h-full flex flex-col">
-      
       <div className="px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold text-gray-900">
-            {data.title}
-          </h1>
+          <h1 className="text-xl font-bold text-gray-900">{data.title}</h1>
         </div>
       </div>
-      
+
       <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2 py-1">
+        <div className="flex items-center w-full flex-1"></div>
         <div className="flex items-center border-l pl-2">
+          {isEditableForMe ? (
+            
+          
           <button
             className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
             aria-label="Edit document"
             type="button"
+            onClick={() => gotoEditPage(true)}
             title="Edit Article"
           >
-            Edit Article 
-          </button>
+            Edit Article
+          </button>):(
+            <button
+            disabled = {true}
+            className = "px-4 py-2 bg-gray-100 text-black transition-colors m-2 rounded-full">
+              <Fai icon= 'lock'/>
+            </button>
+      
+          )}
         </div>
       </div>
-
-      <div className="flex-1 overflow-auto bg-white relative" dangerouslySetInnerHTML={{ __html: data?.content || '' }}/>
+      <div className = 'flex items-start justify-between'>
+      <div
+        className="flex-1 overflow-auto bg-white relative p-4 prose max-w-none"
+        dangerouslySetInnerHTML={{ __html: data?.content || '' }}
+      />
+      <div className='flex flex-col items-center p-4'>
+        
+      </div>
+      </div>
     </div>
   )
 }

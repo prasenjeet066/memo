@@ -1122,7 +1122,6 @@ export default function EnhancedEditor({
       </Dialog>
     );
   };
-
   useEffect(() => {
     if (isSuccesfullCreated !== null) {
       if (isSuccesfullCreated.success === true) {
@@ -1143,7 +1142,6 @@ export default function EnhancedEditor({
     }
   }, [isSuccesfullCreated]);
   
-  const datasView = __data || null;
   
   return (
     <div className="w-full h-full flex flex-col">
@@ -1151,10 +1149,10 @@ export default function EnhancedEditor({
       <div className="px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold text-gray-900">
-            {datasView !== null ? datasView.title : record_name || 'Untitled Document'}
+          { record_name || 'Untitled Document'}
           </h1>
         </div>
-        {datasView === null && (
+      
           <div className="flex items-center justify-end gap-2">
             <button
               onClick={handleUndo}
@@ -1212,14 +1210,14 @@ export default function EnhancedEditor({
               <Fai icon="gear" style="fal" />
             </button>
           </div>
-        )}
+      
       </div>
       
       <div className="flex items-center w-full p-2 gap-2 text-xs text-gray-500">
         <span className='p-2 border-r'>{wordCount} words</span>
         <span className='p-2 border-r'>{characterCount} characters</span>
         <span className='p-2 border-r'>{readingTime} min read</span>
-        {datasView === null && (
+      
           <span className={`font-medium ${
             autoSaveStatus === 'saved' ? 'text-green-600' : 
             autoSaveStatus === 'saving' ? 'text-yellow-600' : 
@@ -1229,12 +1227,11 @@ export default function EnhancedEditor({
              autoSaveStatus === 'saving' ? 'Saving...' : 
              'Unsaved'}
           </span>
-        )}
+      
       </div>
       
       <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2 py-1">
-        {datasView === null && (
-          <>
+      
             {editorMode === 'visual' ? ( 
               <div className="flex items-center gap-1 overflow-x-auto flex-1">
                 {toolbarBlocks.map((block: any, index: number) => {
@@ -1323,10 +1320,9 @@ export default function EnhancedEditor({
             ) : (
               <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2" />
             )}
-          </>
-        )}
+          
         <div className="flex items-center border-l pl-2">
-          {datasView === null ? (
+          
             <button
               className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
               onClick={handlePublish}
@@ -1336,22 +1332,12 @@ export default function EnhancedEditor({
             >
               Publish
             </button>
-          ) : (
-            <button
-              className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
-              aria-label="Edit document"
-              type="button"
-              title="Edit Article"
-            >
-              Edit Article 
-            </button>
-          )}
+          
         </div>
       </div>
 
       <div className="flex-1 overflow-auto bg-white relative">
-        {datasView === null ? (
-          <>
+        
             {showPreview ? (
               <div className="p-8 w-full min-h-full prose max-w-none" style={{ maxWidth: '900px', margin: '0 auto' }}>
                 <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
@@ -1417,18 +1403,9 @@ export default function EnhancedEditor({
                 </LexicalComposer>
               </div>
             )}
-          </>
-        ) : (
-          <div className="p-8 w-full min-h-full" style={{ maxWidth: '900px', margin: '0 auto' }}>
-            <div className="prose max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(datasView.content || '') }} />
-            </div>
-          </div>
-        )}
+         
       </div>
-      
-      {datasView === null && (
-        <>
+
           {isGenerating && (
             <div 
               className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2"
@@ -1475,8 +1452,7 @@ export default function EnhancedEditor({
           <VideoDialog />
           <FindReplaceDialog />
           <PublishDialog />
-        </>
-      )}
+      
     </div>
   );
 }
