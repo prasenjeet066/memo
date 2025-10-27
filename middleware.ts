@@ -3,18 +3,16 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
-// Supported languages
 const SUPPORTED_LANGUAGES = ['en', 'es', 'fr', 'de', 'bn', 'hi', 'ar', 'zh', 'ja', 'ko'];
 const DEFAULT_LANGUAGE = 'en';
 
-// Route groups
 const PROTECTED_ROUTES = ['/account'];
 const AUTH_ROUTES = ['/login', '/register', '/signup', '/signin'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // --- Handle OPTIONS (CORS preflight) ---
+  // Handle OPTIONS (CORS preflight)
   if (request.method === 'OPTIONS') {
     const res = new NextResponse(null, { status: 204 });
     res.headers.set('Access-Control-Allow-Origin', '*');
@@ -23,7 +21,7 @@ export async function middleware(request: NextRequest) {
     return res;
   }
   
-  // --- Skip internal/static/api files ---
+  // Skip static / api / internal
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
@@ -33,7 +31,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   
-  // --- Parse language from URL ---
+  // Detect language prefix
   const pathSegments = pathname.split('/').filter(Boolean);
   const potentialLang = pathSegments[0];
   let lang = DEFAULT_LANGUAGE;
@@ -43,11 +41,17 @@ export async function middleware(request: NextRequest) {
     lang = potentialLang;
     restOfPath = '/' + pathSegments.slice(1).join('/');
   } else if (potentialLang && !SUPPORTED_LANGUAGES.includes(potentialLang)) {
-    // Redirect unknown language to default
     const url = request.nextUrl.clone();
     url.pathname = `/${DEFAULT_LANGUAGE}${pathname.startsWith('/') ? pathname : '/' + pathname}`;
     return NextResponse.redirect(url);
   }
+  
+  // --- Identify route types before auth check ---
+  const isRoot = pathname === '/' || pathname === '';
+  const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
+  const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
+    restOfPath.startsWith(route)
+  );
   
   // --- Auth token ---
   const token = await getToken({
@@ -56,11 +60,7 @@ export async function middleware(request: NextRequest) {
   });
   const isAuthenticated = !!token;
   
-  const normalizedPath = restOfPath === '' ? '/' : restOfPath;
-  const isProtectedRoute = PROTECTED_ROUTES.some((r) => normalizedPath.startsWith(r));
-  const isAuthRoute = AUTH_ROUTES.some((r) => normalizedPath.startsWith(r));
-  
-  // --- Protect routes ---
+  // --- Auth protection ---
   if (isProtectedRoute && !isAuthenticated) {
     const url = request.nextUrl.clone();
     url.pathname = `/login`;
@@ -68,28 +68,23 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
   
-  // --- Authenticated user visiting auth routes ---
   if (isAuthRoute && isAuthenticated) {
     const url = request.nextUrl.clone();
     url.pathname = `/${lang}/account`;
     return NextResponse.redirect(url);
   }
   
-  // --- Language normalization ---
+  // --- Language redirect logic ---
   const isMissingLang = !SUPPORTED_LANGUAGES.includes(potentialLang);
   
-  // ✅ এখানে শর্ত:
-  // যদি route টা blank ('/') বা auth route হয়, তাহলে language prefix যোগ করো না।
-  const isRoot = pathname === '/' || pathname === '';
-  const shouldSkipLangPrefix = isAuthRoute || isRoot;
-  
-  if (isMissingLang && !shouldSkipLangPrefix) {
+  // ✅ Do NOT add lang prefix for auth routes or blank root
+  if (isMissingLang && !isAuthRoute && !isRoot) {
     const url = request.nextUrl.clone();
     url.pathname = `/${DEFAULT_LANGUAGE}${pathname.startsWith('/') ? pathname : '/' + pathname}`;
     return NextResponse.redirect(url);
   }
   
-  // --- Response headers ---
+  // --- Add headers ---
   const response = NextResponse.next({
     request: { headers: new Headers(request.headers) },
   });
