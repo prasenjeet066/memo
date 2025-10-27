@@ -143,10 +143,10 @@ export default function MainPage() {
                       onKeyPress={(e) => e.key === 'Enter' && handleSearchSubmit()}
                     />
                     <button
-                      className="bg-indigo-600 px-2 hover:bg-indigo-700 text-white p-2 sm:p-3 rounded-full transition-colors flex-shrink-0"
+                      className="bg-none px-2 hover:bg-indigo-700 text-white p-2 sm:p-3 rounded-full transition-colors flex-shrink-0"
                       onClick={handleSearchSubmit}
                     >
-                      <Fai icon={'arrow-up'} className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <Fai icon={'arrow-up'} className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
                     </button>
                   </div>
                 </div>
@@ -157,7 +157,7 @@ export default function MainPage() {
             
           </div>
         </div>
-           <footer className="w-full bg-white py-6 px-4 mt-auto">
+           <footer className="w-full py-6 px-4 mt-auto text-white">
               <div className="max-w-6xl mx-auto">
                 {!isMobile && (
                 <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row justify-center gap-8'} items-center`}>
@@ -165,13 +165,13 @@ export default function MainPage() {
                     <a
                       key={item.label}
                       href={item.href}
-                      className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                      className="text-sm text-whitw  transition-colors"
                     >
                       {item.label}
                     </a>
                   ))}
                 </div>)}
-                <div className="text-center mt-6 text-xs text-gray-500">
+                <div className="text-center mt-6 text-xs text-white">
                   © 2025 All rights reserved.
                 </div>
               </div>
