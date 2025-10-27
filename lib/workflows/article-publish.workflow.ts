@@ -1,50 +1,97 @@
 import { memoFlow } from "@/lib/workflow";
-import { RecordDAL } from '@/lib/dal/record.dal';
+import { RecordDAL } from "@/lib/dal/record.dal";
 
 // -------------------
 // Storage Function
 // -------------------
 async function storeArticle(
-  articleData: any, 
-  userId: string, 
+  articleData: any,
+  userId: string,
   username: string
 ): Promise<{ id: string; slug: string; url: string; status: string }> {
   try {
     console.log(`💾 Storing article: ${articleData.title}`);
-    
-    // Extract text content if HTML is provided
-    const content = articleData.htmlContent 
-      ? articleData.htmlContent.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
-      : articleData.content;
-    
-    // Create record in database
+
+    const content = articleData.htmlContent || articleData.content || "";
+
+    // -------------------
+    // UPDATE existing article
+    // -------------------
+    if (articleData.articleId) {
+      console.log(`🛠 Updating existing article: ${articleData.articleId}`);
+
+      const updatedRecord = await RecordDAL.updateRecord(
+        articleData.articleId,
+        {
+          title: articleData.title || "",
+          content,
+          summary: articleData.summary || content.slice(0, 300),
+          categories: Array.isArray(articleData.categories)
+            ? articleData.categories
+            : [],
+          tags: Array.isArray(articleData.tags) ? articleData.tags : [],
+          infobox: articleData.infobox || "",
+          references: Array.isArray(articleData.references)
+            ? articleData.references
+            : [],
+          externalLinks: Array.isArray(articleData.externalLinks)
+            ? articleData.externalLinks
+            : [],
+          editSummary: articleData.editSummary || "Updated via workflow",
+          isMinorEdit: !!articleData.isMinorEdit,
+        },
+        userId,
+        username
+      );
+
+      await RecordDAL.updateStatus(articleData.articleId, {
+        status: "DRAFT",
+      });
+
+      console.log(`✅ Article updated successfully: ${updatedRecord.slug}`);
+      return {
+        id: updatedRecord._id.toString(),
+        slug: updatedRecord.slug,
+        url: `/record/${updatedRecord.slug}`,
+        status: "DRAFT",
+      };
+    }
+
+    // -------------------
+    // CREATE new article
+    // -------------------
     const record = await RecordDAL.createRecord(
       {
         title: articleData.title,
-        content: content,
+        content,
         summary: articleData.summary || content.slice(0, 300),
-        categories: Array.isArray(articleData.categories) ? articleData.categories : [],
+        categories: Array.isArray(articleData.categories)
+          ? articleData.categories
+          : [],
         tags: Array.isArray(articleData.tags) ? articleData.tags : [],
-        infobox: articleData.infobox,
-        references: Array.isArray(articleData.references) ? articleData.references : [],
-        externalLinks: Array.isArray(articleData.externalLinks) ? articleData.externalLinks : [],
+        infobox: articleData.infobox || "",
+        references: Array.isArray(articleData.references)
+          ? articleData.references
+          : [],
+        externalLinks: Array.isArray(articleData.externalLinks)
+          ? articleData.externalLinks
+          : [],
       },
       userId,
       username
     );
 
-    // Set status to DRAFT initially
     await RecordDAL.updateStatus(record._id.toString(), {
-      status: 'DRAFT',
+      status: "DRAFT",
     });
 
-    console.log(`✅ Article stored successfully: ${record.slug} (Status: DRAFT)`);
+    console.log(`✅ New article stored successfully: ${record.slug}`);
 
     return {
       id: record._id.toString(),
       slug: record.slug,
       url: `/record/${record.slug}`,
-      status: 'DRAFT',
+      status: "DRAFT",
     };
   } catch (error: any) {
     console.error("❌ Failed to store article:", error);
@@ -53,21 +100,21 @@ async function storeArticle(
 }
 
 // -------------------
-// Simple Workflow - Just Store to DB
+// Workflow Definition
 // -------------------
 memoFlow.createFunction(
-  { 
-    id: "ai-article-review-workflow", 
-    name: "Store Article to Database", 
-    retries: 2 
+  {
+    id: "ai-article-review-workflow",
+    name: "Store Article to Database",
+    retries: 2,
   },
   { event: "article.submitted" },
   async ({ event, step }) => {
-    const { 
-      articleId, 
-      htmlContent, 
+    const {
+      articleId,
+      htmlContent,
       content,
-      title, 
+      title,
       summary,
       categories,
       tags,
@@ -75,32 +122,33 @@ memoFlow.createFunction(
       externalLinks,
       infobox,
       created_by,
-      created_by_username 
+      created_by_username,
     } = event.data;
 
     console.log(`\n🚀 Starting article storage workflow`);
     console.log(`📄 Article: "${title}"`);
     console.log(`👤 Author: ${created_by_username}`);
-    console.log(`🆔 Article ID: ${articleId}`);
+    console.log(`🆔 Article ID: ${articleId || "NEW"}`);
 
-    // Single step: Store article in database
     const storageResult = await step.run(
-      "store-article", 
-      async () => storeArticle(
-        {
-          title,
-          content,
-          htmlContent,
-          summary,
-          categories,
-          tags,
-          references,
-          externalLinks,
-          infobox,
-        }, 
-        created_by, 
-        created_by_username
-      ),
+      "store-article",
+      async () =>
+        await storeArticle(
+          {
+            articleId,
+            title,
+            content,
+            htmlContent,
+            summary,
+            categories,
+            tags,
+            references,
+            externalLinks,
+            infobox,
+          },
+          created_by,
+          created_by_username
+        ),
       { maxRetries: 2 }
     );
 
@@ -108,7 +156,6 @@ memoFlow.createFunction(
     console.log(`🔗 Article URL: ${storageResult.url}`);
     console.log(`📊 Final Status: ${storageResult.status}\n`);
 
-    // Return result
     return {
       success: true,
       articleId: storageResult.id,

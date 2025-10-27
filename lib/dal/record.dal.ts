@@ -74,11 +74,6 @@ export class RecordDAL {
     let counter = 1;
 
     // Ensure unique slug
-    while (!(await this.isSlugAvailable(slug))) {
-      slug = `${this.generateSlug(data.title)}-${counter}`;
-      counter++;
-    }
-
     const record = new Record({
       title: data.title,
       slug,

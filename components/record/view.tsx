@@ -65,7 +65,7 @@ export const Viewer = function({ __data }: Props) {
         body: JSON.stringify({
           ...payload,
           title: data?.title || 'Untitled',
-          articleId: (data?.title || 'untitled').replace(/\s+/g, '-').toLowerCase(),
+          articleId: data._id,
         }),
       })
       
@@ -138,7 +138,7 @@ export const Viewer = function({ __data }: Props) {
       <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2 py-1">
         <div className="flex items-center w-full flex-1"></div>
         <div className="flex items-center border-l pl-2">
-          {isEditableForMe ? (
+          { isEditableForMe ? (
             <button
               className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
               aria-label="Edit document"
@@ -154,6 +154,7 @@ export const Viewer = function({ __data }: Props) {
               className="px-4 py-2 bg-gray-100 text-black transition-colors m-2 rounded-full"
             >
               <Fai icon="lock" />
+              {'Only View'}
             </button>
           )}
         </div>
@@ -161,10 +162,10 @@ export const Viewer = function({ __data }: Props) {
 
       <div className="flex items-start justify-between">
         <div
-          className="flex-1 overflow-auto bg-white relative p-4 prose max-w-none"
+          className="flex-1 overflow-auto bg-white relative prose max-w-none"
           dangerouslySetInnerHTML={{ __html: data?.content || '' }}
         />
-        <div className="flex flex-col items-center p-4"></div>
+        
       </div>
     </div>
   )
