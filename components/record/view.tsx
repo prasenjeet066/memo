@@ -151,9 +151,9 @@ export const Viewer = function({ __data }: Props) {
           ) : (
             <button
               disabled={true}
-              className="px-4 py-2 bg-gray-100 text-black transition-colors m-2 rounded-full"
+              className="px-4 py-2 bg-gray-100 text-black transition-colors m-2 rounded-full text-sm"
             >
-              <Fai icon="lock" />
+              <Fai icon="lock" className='mr-2' />
               {'Only View'}
             </button>
           )}

@@ -83,11 +83,11 @@ export default function Header({ navlist , replacement }: HeaderProps) {
                   <Bell className="w-5 h-5" />
                 </button>
                 <div className = 'flex items-center gap-1 p-2 border-l'>
-                <span class = 'h-4 w-4 rounded-full bg-gray-500'>
+                <span class = 'h-5 w-5 rounded-full bg-gray-500'>
                   
                 </span>
                 <div className = 'flex flex-col items-start justify-center text-xs text-gray-800'>
-                  <h1>{session.user.name}</h1>
+                  <h1>{session.user.username}</h1>
                   <small>Account</small>
                 </div>
                 </div>

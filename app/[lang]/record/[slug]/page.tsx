@@ -105,7 +105,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
         body: JSON.stringify({
           ...payload,
           title: ArticleName,
-          articleId: ArticleName.replace(/\s+/g, '-').toLowerCase(),
+          //articleId: ArticleName.replace(/\s+/g, '-').toLowerCase(),
         })
       })
       

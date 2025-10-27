@@ -53,7 +53,7 @@ export async function POST(req: Request, context: RouteContext) {
 
     // Prepare workflow payload
     const workflowPayload = {
-      articleId: slug,
+    
       htmlContent: body.htmlContent || body.content,
       title: body.title,
       summary: body.summary || '',
@@ -66,7 +66,9 @@ export async function POST(req: Request, context: RouteContext) {
       created_by: session.user.id,
       created_by_username: session.user.username || session.user.name,
     };
-
+    if (body.articleId) {
+      workflowPayload['articleId'] = body.articleId
+    }
     console.log(`📤 Sending article to workflow: ${workflowPayload.title}`);
     
     // Trigger the workflow
