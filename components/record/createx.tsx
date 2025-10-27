@@ -218,9 +218,9 @@ export default function EnhancedEditor({
 }: EditorProps) {
   const [editorMode, setEditorMode] = useState<'visual' | 'code'>(editor_mode);
   const [payload, setPayload] = useState({ 
-    slug: __data?.data.slug || '',
-    title: __data?.data.title || '', 
-    content: __data?.data.content || '' 
+    slug: __data?.slug || '',
+    title: __data?.title || '', 
+    content: __data?.content || '' 
   });
   const editSummary = useRef()
   const [isGenerating, setIsGenerating] = useState(false);
