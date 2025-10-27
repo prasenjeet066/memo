@@ -22,7 +22,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
   const slug = params.slug
   const ArticleName = searchParams?.new?.trim() || ''
   const isMobile = useMobile()
-  const [isExpanded, setIsExpanded] = useState(true)
+  const [isExpanded, setIsExpanded] = useState(false)
   const footerList = [
     { label: 'Terms & Conditions', href: '/terms' },
     { label: 'Content Security', href: '/security' },
