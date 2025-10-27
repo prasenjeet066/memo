@@ -25,12 +25,12 @@ async function storeArticle(
         {
           title: articleData.title || "",
           content,
-          summary: articleData.summary || content.slice(0, 300),
+          summary: articleData.summary || content.replace(/<[^>]*>/g, '').slice(0, 300),
           categories: Array.isArray(articleData.categories)
             ? articleData.categories
             : [],
           tags: Array.isArray(articleData.tags) ? articleData.tags : [],
-          infobox: articleData.infobox || "",
+          infobox: articleData.infobox || undefined,
           references: Array.isArray(articleData.references)
             ? articleData.references
             : [],
@@ -44,8 +44,14 @@ async function storeArticle(
         username
       );
 
-      await RecordDAL.updateStatus(articleData.articleId, {
-        status: "DRAFT",
+      if (!updatedRecord) {
+        throw new Error(`Article not found: ${articleData.articleId}`);
+      }
+
+      // Update status to PUBLISHED after successful edit
+      await RecordDAL.updateStatus(updatedRecord._id.toString(), {
+        status: "PUBLISHED",
+        reason: "Updated via workflow"
       });
 
       console.log(`✅ Article updated successfully: ${updatedRecord.slug}`);
@@ -53,23 +59,25 @@ async function storeArticle(
         id: updatedRecord._id.toString(),
         slug: updatedRecord.slug,
         url: `/record/${updatedRecord.slug}`,
-        status: "DRAFT",
+        status: "PUBLISHED",
       };
     }
 
     // -------------------
     // CREATE new article
     // -------------------
+    console.log(`📝 Creating new article: ${articleData.title}`);
+    
     const record = await RecordDAL.createRecord(
       {
         title: articleData.title,
         content,
-        summary: articleData.summary || content.slice(0, 300),
+        summary: articleData.summary || content.replace(/<[^>]*>/g, '').slice(0, 300),
         categories: Array.isArray(articleData.categories)
           ? articleData.categories
           : [],
         tags: Array.isArray(articleData.tags) ? articleData.tags : [],
-        infobox: articleData.infobox || "",
+        infobox: articleData.infobox || undefined,
         references: Array.isArray(articleData.references)
           ? articleData.references
           : [],
@@ -81,8 +89,10 @@ async function storeArticle(
       username
     );
 
+    // Set status to PUBLISHED for new articles
     await RecordDAL.updateStatus(record._id.toString(), {
-      status: "DRAFT",
+      status: "PUBLISHED",
+      reason: "Initial publication"
     });
 
     console.log(`✅ New article stored successfully: ${record.slug}`);
@@ -91,7 +101,7 @@ async function storeArticle(
       id: record._id.toString(),
       slug: record.slug,
       url: `/record/${record.slug}`,
-      status: "DRAFT",
+      status: "PUBLISHED",
     };
   } catch (error: any) {
     console.error("❌ Failed to store article:", error);
@@ -123,12 +133,15 @@ memoFlow.createFunction(
       infobox,
       created_by,
       created_by_username,
+      editSummary,
+      isMinorEdit,
     } = event.data;
 
     console.log(`\n🚀 Starting article storage workflow`);
     console.log(`📄 Article: "${title}"`);
     console.log(`👤 Author: ${created_by_username}`);
     console.log(`🆔 Article ID: ${articleId || "NEW"}`);
+    console.log(`✏️ Edit Type: ${articleId ? (isMinorEdit ? "Minor Edit" : "Major Edit") : "New Article"}`);
 
     const storageResult = await step.run(
       "store-article",
@@ -145,6 +158,8 @@ memoFlow.createFunction(
             references,
             externalLinks,
             infobox,
+            editSummary,
+            isMinorEdit,
           },
           created_by,
           created_by_username
@@ -167,6 +182,7 @@ memoFlow.createFunction(
         summary,
         categories,
         tags,
+        isUpdate: !!articleId,
       },
       timestamp: new Date().toISOString(),
     };

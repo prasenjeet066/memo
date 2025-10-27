@@ -52,8 +52,7 @@ export async function POST(req: Request, context: RouteContext) {
     }
 
     // Prepare workflow payload
-    const workflowPayload = {
-    
+    const workflowPayload: any = {
       htmlContent: body.htmlContent || body.content,
       title: body.title,
       summary: body.summary || '',
@@ -66,10 +65,23 @@ export async function POST(req: Request, context: RouteContext) {
       created_by: session.user.id,
       created_by_username: session.user.username || session.user.name,
     };
+    
+    // Include articleId if updating existing article
     if (body.articleId) {
-      workflowPayload['articleId'] = body.articleId
+      workflowPayload.articleId = body.articleId;
     }
+    
+    // Include edit summary for updates
+    if (body.editSummary) {
+      workflowPayload.editSummary = body.editSummary;
+    }
+    
+    if (body.isMinorEdit !== undefined) {
+      workflowPayload.isMinorEdit = body.isMinorEdit;
+    }
+    
     console.log(`📤 Sending article to workflow: ${workflowPayload.title}`);
+    console.log(`🆔 Article ID: ${workflowPayload.articleId || 'NEW'}`);
     
     // Trigger the workflow
     const results = await memoFlow.send("article.submitted", workflowPayload);
@@ -78,9 +90,10 @@ export async function POST(req: Request, context: RouteContext) {
     
     return NextResponse.json({
       success: true,
-      message: "Article submitted successfully for AI review",
+      message: body.articleId ? "Article updated successfully" : "Article created successfully",
       results,
-      articleId: slug,
+      articleId: results?.[0]?.output?.articleId || slug,
+      slug: results?.[0]?.output?.slug || slug,
     }, { status: 200 });
     
   } catch (error: any) {

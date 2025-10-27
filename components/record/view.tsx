@@ -11,9 +11,16 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 interface Props {
   __data: {
     data: {
+      _id ? : string
       title ? : string
       content ? : string
       protection_level ? : string
+      summary ? : string
+      categories ? : string[]
+      tags ? : string[]
+      infobox ? : any
+      references ? : any[]
+      external_links ? : any[]
     }
   }
 }
@@ -53,7 +60,7 @@ export const Viewer = function({ __data }: Props) {
   const [isEditableForMe, setEFM] = useState(false)
   
   const handlePublish = async (payload: any) => {
-    if (!payload) return null
+    if (!payload || !data) return null
     
     setIsPublishing(true)
     setIsSuccesfullCreated(null)
@@ -64,16 +71,26 @@ export const Viewer = function({ __data }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...payload,
-          title: data?.title || 'Untitled',
+          title: payload.title || data?.title || 'Untitled',
           articleId: data._id,
+          editSummary: payload.editSummary || 'Updated article',
+          isMinorEdit: payload.isMinorEdit || false,
         }),
       })
       
       const resData = await response.json()
       
       if (response.ok) {
-        setIsSuccesfullCreated({ success: true })
+        setIsSuccesfullCreated({
+          success: true,
+          message: 'Article updated successfully'
+        })
         console.log('Article published successfully:', resData)
+        
+        // Optionally refresh the page or update state
+        setTimeout(() => {
+          window.location.href = `/record/${resData.slug || data._id}`
+        }, 1500)
       } else {
         setIsSuccesfullCreated({ success: false, message: resData.error })
         console.error('Publish failed:', resData.error)
@@ -94,10 +111,14 @@ export const Viewer = function({ __data }: Props) {
       setData(d)
       
       if (session?.user) {
-        const allowedRoles = whoCanEdit[d.protection_level ?? 'NONE'] || []
+        const protectionLevel = d.protection_level || 'NONE'
+        const allowedRoles = whoCanEdit[protectionLevel] || []
         setEFM(allowedRoles.includes(session.user.role))
       } else {
-        setEFM(false)
+        // Check if anonymous users can edit
+        const protectionLevel = d.protection_level || 'NONE'
+        const allowedRoles = whoCanEdit[protectionLevel] || []
+        setEFM(allowedRoles.includes('IP'))
       }
     }
   }, [__data, session])
@@ -138,7 +159,7 @@ export const Viewer = function({ __data }: Props) {
       <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2 py-1">
         <div className="flex items-center w-full flex-1"></div>
         <div className="flex items-center border-l pl-2">
-          { isEditableForMe ? (
+          {isEditableForMe ? (
             <button
               className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
               aria-label="Edit document"
@@ -162,10 +183,9 @@ export const Viewer = function({ __data }: Props) {
 
       <div className="flex items-start justify-between">
         <div
-          className="flex-1 overflow-auto bg-white relative prose max-w-none"
+          className="flex-1 overflow-auto bg-white relative prose max-w-none p-6"
           dangerouslySetInnerHTML={{ __html: data?.content || '' }}
         />
-        
       </div>
     </div>
   )
