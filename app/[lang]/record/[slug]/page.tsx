@@ -222,11 +222,11 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
         
         <div className='p-4 w-full flex h-full items-start justify-between'>
           {Sidebar}
-          <div className = 'flex-1 p-4 w-full h-full'>
-            <h1 className='text-md'> Not have any article</h1>
-            <div className = 'p-4 flex items-center gap-4 justify-between bg-white rounded'>
+          <div className = 'flex-1 flex flex-col gap-4 p-4 w-full h-full'>
+            <h1 className='text-lg font-semibold'> Not have any article</h1>
+            <div className = 'p-4  flex items-center gap-4 justify-between bg-white rounded'>
               <h1>Are you want to create?</h1> 
-              <a href = {`/record/create?new=${encodeURIComponent(ArticleName)}`}>Create Now</a>
+              <a href = {`/record/create?new=${ArticleName}`}>Create Now</a>
             </div>
           </div>
           </div>
