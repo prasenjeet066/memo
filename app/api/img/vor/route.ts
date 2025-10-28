@@ -1,5 +1,6 @@
 import { createCanvas, loadImage } from "canvas";
 import { Delaunay } from "d3-delaunay";
+import type { NextRequest } from "next/server";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,126 +12,172 @@ export async function OPTIONS() {
   return new Response(null, { status: 204, headers: corsHeaders });
 }
 
-export async function GET(request: Request) {
+interface VoronoiConfig {
+  imageUrl: string;
+  maxPoints: number;
+  minBrightness: number;
+  maxBrightness: number;
+  style: 'filled' | 'outlined' | 'mixed' | 'gradient';
+  colorMode: 'original' | 'grayscale' | 'inverted' | 'enhanced';
+  lineWidth: number;
+  opacity: number;
+  backgroundColor: string;
+  edgeDetection: boolean;
+  adaptiveDensity: boolean;
+  cellSize: 'adaptive' | 'uniform';
+}
+
+function getConfig(searchParams: URLSearchParams): VoronoiConfig {
+  const imageUrl = searchParams.get("url") ||
+    "https://www.pngitem.com/pimgs/m/333-3332655_lionel-messi-png-shot-transparent-png.png";
+  
+  return {
+    imageUrl,
+    maxPoints: parseInt(searchParams.get("points") || "5000"),
+    minBrightness: parseFloat(searchParams.get("minBright") || "0.2"),
+    maxBrightness: parseFloat(searchParams.get("maxBright") || "0.8"),
+    style: (searchParams.get("style") as VoronoiConfig['style']) || "outlined",
+    colorMode: (searchParams.get("colorMode") as VoronoiConfig['colorMode']) || "original",
+    lineWidth: parseFloat(searchParams.get("lineWidth") || "1"),
+    opacity: parseFloat(searchParams.get("opacity") || "0.9"),
+    backgroundColor: searchParams.get("bg") || "transparent",
+    edgeDetection: searchParams.get("edges") === "true",
+    adaptiveDensity: searchParams.get("adaptive") !== "false",
+    cellSize: (searchParams.get("cellSize") as VoronoiConfig['cellSize']) || "adaptive"
+  };
+}
+
+function detectEdges(data: Uint8ClampedArray, width: number, height: number): number[][] {
+  const edges: number[][] = [];
+  const threshold = 30;
+  
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const idx = (y * width + x) * 4;
+      const curr = data[idx];
+      
+      const right = data[idx + 4];
+      const down = data[idx + width * 4];
+      
+      if (Math.abs(curr - right) > threshold || Math.abs(curr - down) > threshold) {
+        edges.push([x, y]);
+      }
+    }
+  }
+  
+  return edges;
+}
+
+function processColor(r: number, g: number, b: number, mode: VoronoiConfig['colorMode']): [number, number, number] {
+  switch (mode) {
+    case 'grayscale': {
+      const gray = Math.floor(0.299 * r + 0.587 * g + 0.114 * b);
+      return [gray, gray, gray];
+    }
+    case 'inverted':
+      return [255 - r, 255 - g, 255 - b];
+    case 'enhanced':
+      return [
+        Math.min(255, r * 1.2),
+        Math.min(255, g * 1.2),
+        Math.min(255, b * 1.2)
+      ];
+    default:
+      return [r, g, b];
+  }
+}
+
+function calculateAdaptiveDensity(brightness: number, edgeWeight: number): number {
+  // More points in dark areas and edges
+  const brightnessFactor = 1 - brightness;
+  const densityScore = (brightnessFactor * 0.7) + (edgeWeight * 0.3);
+  return Math.pow(densityScore, 2); // Square for more dramatic effect
+}
+
+export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    const config = getConfig(request.nextUrl.searchParams);
     
-    // Enhanced parameters with defaults
-    const imageUrl = searchParams.get("url") || 
-      "https://www.pngitem.com/pimgs/m/333-3332655_lionel-messi-png-shot-transparent-png.png";
-    const pointDensity = parseInt(searchParams.get("density") || "1000000");
-    const style = searchParams.get("style") || "stroke"; // stroke, fill, mixed, stipple
-    const colorMode = searchParams.get("color") || "original"; // original, grayscale, inverted, vibrant
-    const edgeDetection = searchParams.get("edges") === "true";
-    const addWatermark = searchParams.get("watermark") !== "false";
-    const watermarkText = searchParams.get("watermarkText") || "Sistorica";
-    const quality = searchParams.get("quality") || "high"; // low, medium, high
-    
-    // Load image
-    const img = await loadImage(imageUrl);
+    // Load and process image
+    const img = await loadImage(config.imageUrl);
     const WIDTH = img.width;
     const HEIGHT = img.height;
     
-    // Adaptive point count based on image size and quality
-    const basePoints = Math.min(pointDensity, 2000000);
-    const MAX_POINTS = quality === "low" ? basePoints * 0.5 : 
-                       quality === "medium" ? basePoints * 0.75 : basePoints;
-    
-    // Process source image
     const imgCanvas = createCanvas(WIDTH, HEIGHT);
     const imgCtx = imgCanvas.getContext("2d");
     imgCtx.drawImage(img, 0, 0, WIDTH, HEIGHT);
     
-    // Optional watermark
-    if (addWatermark) {
-      const fontSize = Math.max(24, Math.min(WIDTH, HEIGHT) * 0.08);
-      imgCtx.font = `bold ${fontSize}pt Sans-serif`;
-      imgCtx.textAlign = "center";
-      imgCtx.fillStyle = "rgba(255, 255, 255, 0.7)";
-      imgCtx.strokeStyle = "rgba(0, 0, 0, 0.5)";
-      imgCtx.lineWidth = 2;
-      imgCtx.strokeText(watermarkText, WIDTH / 2, HEIGHT - fontSize / 2);
-      imgCtx.fillText(watermarkText, WIDTH / 2, HEIGHT - fontSize / 2);
-    }
-    
     const imageData = imgCtx.getImageData(0, 0, WIDTH, HEIGHT);
     const data = imageData.data;
     
-    // Edge detection preprocessing (optional)
-    let edgeMap: number[] = [];
-    if (edgeDetection) {
-      edgeMap = detectEdges(data, WIDTH, HEIGHT);
+    // Edge detection
+    const edgeMap = new Set < string > ();
+    if (config.edgeDetection) {
+      const edges = detectEdges(data, WIDTH, HEIGHT);
+      edges.forEach(([x, y]) => edgeMap.add(`${x},${y}`));
     }
     
-    // Generate points with improved distribution
+    // Generate points with adaptive density
     const points: [number, number][] = [];
-    const colors: [number, number, number][] = [];
+    const attempts = config.maxPoints * 3; // More attempts for better distribution
     
-    for (let i = 0; i < MAX_POINTS; i++) {
+    for (let i = 0; i < attempts && points.length < config.maxPoints; i++) {
       const x = Math.random() * WIDTH;
       const y = Math.random() * HEIGHT;
       const idx = (Math.floor(y) * WIDTH + Math.floor(x)) * 4;
       
-      let r = data[idx];
-      let g = data[idx + 1];
-      let b = data[idx + 2];
-      const a = data[idx + 3];
+      const [r, g, b, a] = [data[idx], data[idx + 1], data[idx + 2], data[idx + 3]];
       
-      // Skip fully transparent pixels
+      // Skip transparent pixels
       if (a < 10) continue;
       
-      // Calculate brightness
       const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
       
-      // Edge-aware sampling: place more points on edges
-      let threshold = Math.max(0.15, brightness);
-      if (edgeDetection && edgeMap[Math.floor(y) * WIDTH + Math.floor(x)] > 100) {
-        threshold *= 0.3; // Increase point density on edges
+      // Brightness filtering
+      if (brightness < config.minBrightness || brightness > config.maxBrightness) {
+        continue;
       }
       
-      if (Math.random() > threshold) {
-        // Apply color modes
-        if (colorMode === "grayscale") {
-          const gray = Math.round(brightness * 255);
-          r = g = b = gray;
-        } else if (colorMode === "inverted") {
-          r = 255 - r;
-          g = 255 - g;
-          b = 255 - b;
-        } else if (colorMode === "vibrant") {
-          // Enhance saturation
-          const max = Math.max(r, g, b);
-          if (max > 0) {
-            r = Math.min(255, r * (255 / max) * 0.9);
-            g = Math.min(255, g * (255 / max) * 0.9);
-            b = Math.min(255, b * (255 / max) * 0.9);
-          }
-        }
-        
+      // Adaptive density calculation
+      let acceptProbability = 1;
+      if (config.adaptiveDensity) {
+        const isEdge = edgeMap.has(`${Math.floor(x)},${Math.floor(y)}`);
+        const edgeWeight = isEdge ? 1 : 0;
+        acceptProbability = calculateAdaptiveDensity(brightness, edgeWeight);
+      }
+      
+      if (Math.random() < acceptProbability) {
         points.push([x, y]);
-        colors.push([r, g, b]);
       }
     }
     
-    // Create Voronoi diagram
+    // Add corner points for better boundary handling
+    points.push([0, 0], [WIDTH, 0], [0, HEIGHT], [WIDTH, HEIGHT]);
+    
+    // Generate Voronoi diagram
     const delaunay = Delaunay.from(points);
     const voronoi = delaunay.voronoi([0, 0, WIDTH, HEIGHT]);
     
-    // Render output
+    // Render canvas
     const canvas = createCanvas(WIDTH, HEIGHT);
     const ctx = canvas.getContext("2d");
     
     // Background
-    ctx.fillStyle = "none";
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    if (config.backgroundColor !== "transparent") {
+      ctx.fillStyle = config.backgroundColor;
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    }
     
-    // Render cells based on style
-    for (let i = 0; i < points.length; i++) {
+    // Render cells
+    for (let i = 0; i < points.length - 4; i++) { // Exclude corner points
       const cell = voronoi.cellPolygon(i);
       if (!cell) continue;
       
-      const [r, g, b] = colors[i];
-      const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      const [cx, cy] = points[i];
+      const idx = (Math.floor(cy) * WIDTH + Math.floor(cx)) * 4;
+      let [r, g, b] = [data[idx], data[idx + 1], data[idx + 2]];
+      
+      [r, g, b] = processColor(r, g, b, config.colorMode);
       
       ctx.beginPath();
       ctx.moveTo(cell[0][0], cell[0][1]);
@@ -139,93 +186,73 @@ export async function GET(request: Request) {
       }
       ctx.closePath();
       
-      // Apply rendering style
-      if (style === "fill") {
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${brightness > 0.95 ? 0.3 : 0.95})`;
-        ctx.fill();
-      } else if (style === "stroke") {
-        ctx.strokeStyle = brightness < 0.95 
-          ? `rgba(${r}, ${g}, ${b}, 0.85)` 
-          : `rgba(${r}, ${g}, ${b}, 0.25)`;
-        ctx.lineWidth = brightness > 0.7 ? 0.5 : 1;
-        ctx.stroke();
-      } else if (style === "mixed") {
-        // Fill with lighter color
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${brightness > 0.9 ? 0.15 : 0.4})`;
-        ctx.fill();
-        // Stroke with darker color
-        ctx.strokeStyle = `rgba(${Math.round(r * 0.7)}, ${Math.round(g * 0.7)}, ${Math.round(b * 0.7)}, 0.7)`;
-        ctx.lineWidth = 0.5;
-        ctx.stroke();
-      } else if (style === "stipple") {
-        // Draw a small dot at each point instead of full cells
-        const [px, py] = points[i];
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.8)`;
-        ctx.beginPath();
-        ctx.arc(px, py, brightness > 0.8 ? 0.5 : 1.5, 0, Math.PI * 2);
-        ctx.fill();
+      // Style application
+      switch (config.style) {
+        case 'filled':
+          ctx.fillStyle = `rgba(${r},${g},${b},${config.opacity})`;
+          ctx.fill();
+          break;
+          
+        case 'outlined':
+          ctx.strokeStyle = `rgba(${r},${g},${b},${config.opacity})`;
+          ctx.lineWidth = config.lineWidth;
+          ctx.stroke();
+          break;
+          
+        case 'mixed':
+          ctx.fillStyle = `rgba(${r},${g},${b},${config.opacity * 0.3})`;
+          ctx.fill();
+          ctx.strokeStyle = `rgba(${r},${g},${b},${config.opacity})`;
+          ctx.lineWidth = config.lineWidth;
+          ctx.stroke();
+          break;
+          
+        case 'gradient': {
+          // Calculate cell center
+          const centerX = cell.reduce((sum, p) => sum + p[0], 0) / cell.length;
+          const centerY = cell.reduce((sum, p) => sum + p[1], 0) / cell.length;
+          const radius = Math.sqrt(
+            Math.pow(cell[0][0] - centerX, 2) + Math.pow(cell[0][1] - centerY, 2)
+          );
+          
+          const gradient = ctx.createRadialGradient(
+            centerX, centerY, 0,
+            centerX, centerY, radius
+          );
+          gradient.addColorStop(0, `rgba(${r},${g},${b},${config.opacity})`);
+          gradient.addColorStop(1, `rgba(${r},${g},${b},0)`);
+          
+          ctx.fillStyle = gradient;
+          ctx.fill();
+          break;
+        }
       }
     }
     
-    // Generate output buffer
-    const outputBuffer = canvas.toBuffer("image/png");
+    const buffer = canvas.toBuffer('image/png');
     
-    return new Response(outputBuffer, {
+    return new Response(buffer, {
       status: 200,
       headers: {
         "Content-Type": "image/png",
         "Cache-Control": "public, max-age=3600",
-        "Content-Length": outputBuffer.length.toString(),
         ...corsHeaders,
       },
     });
   } catch (err) {
     console.error("Voronoi Error:", err);
     return new Response(
-      JSON.stringify({ 
-        error: "Error generating Voronoi art", 
-        message: err instanceof Error ? err.message : "Unknown error" 
-      }), 
+      JSON.stringify({
+        error: "Error generating Voronoi art",
+        message: err instanceof Error ? err.message : String(err)
+      }),
       {
         status: 500,
         headers: {
           "Content-Type": "application/json",
-          ...corsHeaders,
+          ...corsHeaders
         },
       }
     );
   }
-}
-
-/**
- * Simple edge detection using Sobel operator
- */
-function detectEdges(data: Uint8ClampedArray, width: number, height: number): number[] {
-  const edges = new Array(width * height).fill(0);
-  
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
-      const idx = y * width + x;
-      
-      // Get grayscale values of surrounding pixels
-      const getGray = (dx: number, dy: number) => {
-        const i = ((y + dy) * width + (x + dx)) * 4;
-        return 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-      };
-      
-      // Sobel operators
-      const gx = 
-        -1 * getGray(-1, -1) + 1 * getGray(1, -1) +
-        -2 * getGray(-1, 0) + 2 * getGray(1, 0) +
-        -1 * getGray(-1, 1) + 1 * getGray(1, 1);
-      
-      const gy = 
-        -1 * getGray(-1, -1) - 2 * getGray(0, -1) - 1 * getGray(1, -1) +
-        1 * getGray(-1, 1) + 2 * getGray(0, 1) + 1 * getGray(1, 1);
-      
-      edges[idx] = Math.sqrt(gx * gx + gy * gy);
-    }
-  }
-  
-  return edges;
 }
