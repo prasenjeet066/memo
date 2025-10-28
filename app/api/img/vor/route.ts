@@ -121,7 +121,7 @@ export async function GET(request: Request) {
     const ctx = canvas.getContext("2d");
     
     // Background
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = "none";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
     
     // Render cells based on style
