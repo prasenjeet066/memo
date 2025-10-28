@@ -183,7 +183,7 @@ export const Viewer = function({ __data }: Props) {
   </div>
 
   {/* Action Buttons */}
-  <div className = 'flex items-center justify-start'>
+  <div className = 'flex px-4  items-center justify-start'>
     <button onClick={()=>setActivePaper((prev)=> prev!=='overview' ? 'overview': prev)} className={'bg-none p-2 px-3 font-semibold ' + activePaper === 'overview' ? 'text-gray-900':'text-gray-500'}>{'Overview'}</button>
     <button onClick={()=>setActivePaper((prev)=> prev!=='discussion' ? 'discussion' : prev)} className={'bg-none p-2 px-3 font-semibold ' + activePaper === 'discussion' ? 'text-gray-900' : 'text-gray-500'}>{'Discussion'}</button>
   </div>
