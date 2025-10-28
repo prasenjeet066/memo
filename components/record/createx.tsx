@@ -26,7 +26,120 @@ import { Fai } from '@/components/Fontawesome';
 import { InfoBox, InfoBoxItem, InfoBoxField, ComplexValue } from '@/lib/editor/templates/infobox';
 import { toolbarBlocks } from '@/lib/editor/toolbarConfig';
 import DOMPurify from 'dompurify';
+import { HorizontalRuleNode } from '@lexical/react/LexicalHorizontalRuleNode';
+import { INSERT_HORIZONTAL_RULE_COMMAND } from '@lexical/react/LexicalHorizontalRuleNode';
+import { ImageNode } from '@lexical/react/LexicalImageNode';
+import { INSERT_IMAGE_COMMAND } from '@lexical/react/LexicalImageNode';
 
+class MathNode extends DecoratorNode < JSX.Element > {
+  __formula: string;
+  
+  static getType(): string {
+    return 'math';
+  }
+  
+  static clone(node: MathNode): MathNode {
+    return new MathNode(node.__formula, node.__key);
+  }
+  
+  constructor(formula: string, key ? : NodeKey) {
+    super(key);
+    this.__formula = formula;
+  }
+  
+  createDOM(): HTMLElement {
+    const element = document.createElement('span');
+    element.className = 'math-node';
+    return element;
+  }
+  
+  updateDOM(): false {
+    return false;
+  }
+  
+  decorate(): JSX.Element {
+    return <span className="math-formula">{this.__formula}</span>;
+  }
+}
+
+class InfoBoxNode extends DecoratorNode < JSX.Element > {
+  __data: InfoBox;
+  
+  static getType(): string {
+    return 'infobox';
+  }
+  
+  static clone(node: InfoBoxNode): InfoBoxNode {
+    return new InfoBoxNode(node.__data, node.__key);
+  }
+  
+  constructor(data: InfoBox, key ? : NodeKey) {
+    super(key);
+    this.__data = data;
+  }
+  
+  createDOM(): HTMLElement {
+    const element = document.createElement('div');
+    element.className = 'infobox';
+    return element;
+  }
+  
+  updateDOM(): false {
+    return false;
+  }
+  
+  decorate(): JSX.Element {
+    return (
+      <div className="infobox border rounded p-4 bg-gray-50 my-4">
+        <h3 className="font-bold text-lg mb-2">{this.__data.title}</h3>
+        {this.__data.items.map((item, idx) => (
+          <div key={idx} className="flex gap-2 mb-1">
+            <span className="font-semibold">{item.field}:</span>
+            <span>{typeof item.value === 'string' ? item.value : JSON.stringify(item.value)}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+}
+
+class TemplateNode extends DecoratorNode < JSX.Element > {
+  __type: string;
+  __content: string;
+  
+  static getType(): string {
+    return 'template';
+  }
+  
+  static clone(node: TemplateNode): TemplateNode {
+    return new TemplateNode(node.__type, node.__content, node.__key);
+  }
+  
+  constructor(templateType: string, content: string, key ? : NodeKey) {
+    super(key);
+    this.__type = templateType;
+    this.__content = content;
+  }
+  
+  createDOM(): HTMLElement {
+    const element = document.createElement('div');
+    element.className = 'template-node';
+    return element;
+  }
+  
+  updateDOM(): false {
+    return false;
+  }
+  
+  decorate(): JSX.Element {
+    return (
+      <div className="template border-2 border-dashed border-blue-300 rounded p-4 my-4 bg-blue-50">
+        <div className="text-xs text-blue-600 uppercase font-bold mb-2">Template: {this.__type}</div>
+        <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(this.__content) }} />
+      </div>
+    );
+  }
+}
 // Lexical imports
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
@@ -113,7 +226,7 @@ const sanitizeHTML = (html: string): string => {
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'code', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
       'ul', 'ol', 'li', 'a', 'img', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
-      'div', 'span', 'iframe', 'sup','style','link', 'sub', 'hr', 'blockquote', 'cite', 'abbr', 'mark'
+      'div', 'span', 'iframe', 'sup', 'style', 'link', 'sub', 'hr', 'blockquote', 'cite', 'abbr', 'mark'
     ],
     ALLOWED_ATTR: ['href', 'src', 'alt', 'width', 'height', 'style', 'class', 'contenteditable',
       'data-table-id', 'colspan', 'border', 'frameborder', 'allowfullscreen', 'id', 'title',
@@ -250,6 +363,23 @@ export default function EnhancedEditor({
     url: '',
     date: ''
   });
+  const [mathDialog, setMathDialog] = useState({ open: false, formula: '' });
+const [infoBoxDialog, setInfoBoxDialog] = useState<{
+  open: boolean;
+  title: string;
+  items: InfoBoxItem[];
+}>({ open: false, title: '', items: [] });
+const [templateDialog, setTemplateDialog] = useState({ 
+  open: false, 
+  type: 'citation', 
+  content: '' 
+});
+const [tableDialog, setTableDialog] = useState({
+  open: false,
+  rows: 3,
+  columns: 3,
+  hasHeader: true
+});
   const [imageDialog, setImageDialog] = useState({ open: false, url: '' });
   const [videoDialog, setVideoDialog] = useState({ open: false, url: '' });
   const [findReplaceDialog, setFindReplaceDialog] = useState({
@@ -296,18 +426,23 @@ export default function EnhancedEditor({
       console.error('Lexical error:', error);
     },
     nodes: [
-      HeadingNode,
-      ListNode,
-      ListItemNode,
-      QuoteNode,
-      CodeNode,
-      CodeHighlightNode,
-      TableNode,
-      TableCellNode,
-      TableRowNode,
-      AutoLinkNode,
-      LinkNode,
-    ],
+  HeadingNode,
+  ListNode,
+  ListItemNode,
+  QuoteNode,
+  CodeNode,
+  CodeHighlightNode,
+  TableNode,
+  TableCellNode,
+  TableRowNode,
+  AutoLinkNode,
+  LinkNode,
+  HorizontalRuleNode,
+  ImageNode,
+  MathNode,
+  InfoBoxNode,
+  TemplateNode,
+],
   };
   useEffect(()=>{
     if (__data) {
@@ -522,34 +657,85 @@ export default function EnhancedEditor({
           break;
           
         case 'horizontalRule':
-          editor.update(() => {
-            const selection = $getSelection();
-            if ($isRangeSelection(selection)) {
-              const paragraph = $createParagraphNode();
-              const hr = $createTextNode('---');
-              paragraph.append(hr);
-              selection.insertNodes([paragraph]);
-            }
-          });
-          break;
-          
-        case 'reference':
-          editor.update(() => {
-            const selection = $getSelection();
-            if ($isRangeSelection(selection)) {
-              const refNode = $createTextNode('[1]');
-              selection.insertNodes([refNode]);
-            }
-          });
-          break;
-          
-        case 'table':
-          editor.dispatchCommand(INSERT_TABLE_COMMAND, { columns: 3, rows: 3, includeHeaders: true });
-          break;
-          
-        case 'template':
-          break;
-          
+editor.dispatchCommand(INSERT_HORIZONTAL_RULE_COMMAND, undefined);
+break;
+
+case 'image':
+setImageDialog({ open: true, url: '' });
+break;
+
+case 'video':
+setVideoDialog({ open: true, url: '' });
+break;
+
+case 'math':
+setMathDialog({ open: true, formula: 'E = mc^2' });
+break;
+
+case 'table':
+setTableDialog({ open: true, rows: 3, columns: 3, hasHeader: true });
+break;
+
+case 'template':
+setTemplateDialog({ open: true, type: 'citation', content: '' });
+break;
+
+case 'infobox':
+setInfoBoxDialog({
+  open: true,
+  title: 'Information Box',
+  items: [
+    { field: 'Field 1', value: 'Value 1' },
+    { field: 'Field 2', value: 'Value 2' }
+  ]
+});
+break;
+
+case 'reference':
+// Insert reference marker
+editor.update(() => {
+  const selection = $getSelection();
+  if ($isRangeSelection(selection)) {
+    const refNumber = citations.length + 1;
+    const supNode = $createTextNode(`[${refNumber}]`);
+    selection.insertNodes([supNode]);
+  }
+});
+// Open citation dialog
+setCitationDialog({ open: true, author: '', title: '', url: '', date: '' });
+break;
+
+case 'strikethrough':
+editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough');
+break;
+
+case 'subscript':
+editor.update(() => {
+  const selection = $getSelection();
+  if ($isRangeSelection(selection)) {
+    const text = selection.getTextContent() || 'sub';
+    const subHtml = `<sub>${text}</sub>`;
+    const parser = new DOMParser();
+    const dom = parser.parseFromString(subHtml, 'text/html');
+    const nodes = $generateNodesFromDOM(editor, dom);
+    selection.insertNodes(nodes);
+  }
+});
+break;
+
+case 'superscript':
+editor.update(() => {
+  const selection = $getSelection();
+  if ($isRangeSelection(selection)) {
+    const text = selection.getTextContent() || 'sup';
+    const supHtml = `<sup>${text}</sup>`;
+    const parser = new DOMParser();
+    const dom = parser.parseFromString(supHtml, 'text/html');
+    const nodes = $generateNodesFromDOM(editor, dom);
+    selection.insertNodes(nodes);
+  }
+});
+break;
         default:
           console.log(`Unknown command: ${action}`);
       }
@@ -722,7 +908,297 @@ export default function EnhancedEditor({
   }, []);
   
   const hasRegisteredRole = Array.isArray(session?.user?.role) && session.user.role.includes('ADMIN');
+  const MathDialog = () => {
+  const [formula, setFormula] = useState('');
   
+  return (
+    <Dialog open={mathDialog.open} onOpenChange={(open) => setMathDialog({ open, formula: '' })}>
+      <DialogContent className='rounded bg-white'>
+        <DialogHeader>
+          <DialogTitle>Insert Math Formula</DialogTitle>
+          <DialogDescription>Enter LaTeX or plain text formula</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="math-formula">Formula</Label>
+            <Input
+              id="math-formula"
+              placeholder="E = mc^2"
+              value={formula}
+              onChange={(e) => setFormula(e.target.value)}
+            />
+            <p className="text-xs text-gray-500">Preview: {formula || 'E = mc^2'}</p>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setMathDialog({ open: false, formula: '' })}>
+            Cancel
+          </Button>
+          <Button onClick={() => {
+            if (formula && lexicalEditorRef.current) {
+              lexicalEditorRef.current.update(() => {
+                const mathHtml = `<span class="math-formula bg-gray-100 px-2 py-1 rounded font-mono">${formula}</span>`;
+                const parser = new DOMParser();
+                const dom = parser.parseFromString(mathHtml, 'text/html');
+                const nodes = $generateNodesFromDOM(lexicalEditorRef.current!, dom);
+                const selection = $getSelection();
+                if ($isRangeSelection(selection)) {
+                  selection.insertNodes(nodes);
+                }
+              });
+            }
+            setMathDialog({ open: false, formula: '' });
+            setFormula('');
+          }}>
+            Insert
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+  const TableDialog = () => (
+  <Dialog open={tableDialog.open} onOpenChange={(open) => 
+    setTableDialog({ open, rows: 3, columns: 3, hasHeader: true })
+  }>
+    <DialogContent className='rounded bg-white'>
+      <DialogHeader>
+        <DialogTitle>Insert Table</DialogTitle>
+        <DialogDescription>Configure table dimensions</DialogDescription>
+      </DialogHeader>
+      <div className="grid gap-4 py-4">
+        <div className="grid gap-2">
+          <Label htmlFor="table-rows">Rows</Label>
+          <Input
+            id="table-rows"
+            type="number"
+            min="1"
+            max="20"
+            value={tableDialog.rows}
+            onChange={(e) => setTableDialog(prev => ({ ...prev, rows: parseInt(e.target.value) || 3 }))}
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="table-columns">Columns</Label>
+          <Input
+            id="table-columns"
+            type="number"
+            min="1"
+            max="10"
+            value={tableDialog.columns}
+            onChange={(e) => setTableDialog(prev => ({ ...prev, columns: parseInt(e.target.value) || 3 }))}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            id="table-header"
+            type="checkbox"
+            checked={tableDialog.hasHeader}
+            onChange={(e) => setTableDialog(prev => ({ ...prev, hasHeader: e.target.checked }))}
+          />
+          <Label htmlFor="table-header">Include Header Row</Label>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={() => 
+          setTableDialog({ open: false, rows: 3, columns: 3, hasHeader: true })
+        }>
+          Cancel
+        </Button>
+        <Button onClick={() => {
+          if (lexicalEditorRef.current) {
+            lexicalEditorRef.current.dispatchCommand(INSERT_TABLE_COMMAND, {
+              columns: tableDialog.columns.toString(),
+              rows: tableDialog.rows.toString(),
+              includeHeaders: tableDialog.hasHeader
+            });
+          }
+          setTableDialog({ open: false, rows: 3, columns: 3, hasHeader: true });
+        }}>
+          Insert Table
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+);
+  const TemplateDialog = () => (
+  <Dialog open={templateDialog.open} onOpenChange={(open) => 
+    setTemplateDialog({ open, type: 'citation', content: '' })
+  }>
+    <DialogContent className='rounded bg-white max-w-2xl'>
+      <DialogHeader>
+        <DialogTitle>Insert Template</DialogTitle>
+        <DialogDescription>Choose a template type</DialogDescription>
+      </DialogHeader>
+      <div className="grid gap-4 py-4">
+        <div className="grid gap-2">
+          <Label htmlFor="template-type">Template Type</Label>
+          <select
+            id="template-type"
+            className="border rounded px-3 py-2"
+            value={templateDialog.type}
+            onChange={(e) => setTemplateDialog(prev => ({ ...prev, type: e.target.value }))}
+          >
+            <option value="citation">Citation Needed</option>
+            <option value="stub">Stub Article</option>
+            <option value="clarify">Clarification Needed</option>
+            <option value="merge">Merge Proposal</option>
+            <option value="update">Needs Update</option>
+          </select>
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="template-content">Additional Content (Optional)</Label>
+          <Textarea
+            id="template-content"
+            placeholder="Add any additional notes..."
+            value={templateDialog.content}
+            onChange={(e) => setTemplateDialog(prev => ({ ...prev, content: e.target.value }))}
+            rows={3}
+          />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={() => 
+          setTemplateDialog({ open: false, type: 'citation', content: '' })
+        }>
+          Cancel
+        </Button>
+        <Button onClick={() => {
+          if (lexicalEditorRef.current) {
+            const templateMap: Record<string, string> = {
+              citation: '⚠️ [Citation Needed]',
+              stub: '📝 This article is a stub. You can help by expanding it.',
+              clarify: '❓ [Clarification Needed]',
+              merge: '🔀 It has been suggested that this article be merged with another.',
+              update: '🔄 This article needs to be updated.'
+            };
+            
+            const templateText = templateMap[templateDialog.type] || templateDialog.type;
+            const content = templateDialog.content ? `${templateText} - ${templateDialog.content}` : templateText;
+            
+            lexicalEditorRef.current.update(() => {
+              const templateHtml = `<div class="template-notice border-2 border-yellow-400 bg-yellow-50 rounded p-3 my-4"><strong>${content}</strong></div>`;
+              const parser = new DOMParser();
+              const dom = parser.parseFromString(templateHtml, 'text/html');
+              const nodes = $generateNodesFromDOM(lexicalEditorRef.current!, dom);
+              const selection = $getSelection();
+              if ($isRangeSelection(selection)) {
+                selection.insertNodes(nodes);
+              }
+            });
+          }
+          setTemplateDialog({ open: false, type: 'citation', content: '' });
+        }}>
+          Insert Template
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+);
+  const InfoBoxDialog = () => (
+  <Dialog open={infoBoxDialog.open} onOpenChange={(open) => 
+    setInfoBoxDialog({ open, title: '', items: [] })
+  }>
+    <DialogContent className='rounded bg-white max-w-2xl max-h-[80vh] overflow-y-auto'>
+      <DialogHeader>
+        <DialogTitle>Insert InfoBox</DialogTitle>
+        <DialogDescription>Create an information box with structured data</DialogDescription>
+      </DialogHeader>
+      <div className="grid gap-4 py-4">
+        <div className="grid gap-2">
+          <Label htmlFor="infobox-title">Title</Label>
+          <Input
+            id="infobox-title"
+            placeholder="Information Box Title"
+            value={infoBoxDialog.title}
+            onChange={(e) => setInfoBoxDialog(prev => ({ ...prev, title: e.target.value }))}
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label>Fields</Label>
+          {infoBoxDialog.items.map((item, idx) => (
+            <div key={idx} className="flex gap-2">
+              <Input
+                placeholder="Field name"
+                value={item.field}
+                onChange={(e) => {
+                  const newItems = [...infoBoxDialog.items];
+                  newItems[idx].field = e.target.value;
+                  setInfoBoxDialog(prev => ({ ...prev, items: newItems }));
+                }}
+              />
+              <Input
+                placeholder="Value"
+                value={typeof item.value === 'string' ? item.value : ''}
+                onChange={(e) => {
+                  const newItems = [...infoBoxDialog.items];
+                  newItems[idx].value = e.target.value;
+                  setInfoBoxDialog(prev => ({ ...prev, items: newItems }));
+                }}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const newItems = infoBoxDialog.items.filter((_, i) => i !== idx);
+                  setInfoBoxDialog(prev => ({ ...prev, items: newItems }));
+                }}
+              >
+                Remove
+              </Button>
+            </div>
+          ))}
+          <Button
+            variant="outline"
+            onClick={() => {
+              setInfoBoxDialog(prev => ({
+                ...prev,
+                items: [...prev.items, { field: '', value: '' }]
+              }));
+            }}
+          >
+            Add Field
+          </Button>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={() => 
+          setInfoBoxDialog({ open: false, title: '', items: [] })
+        }>
+          Cancel
+        </Button>
+        <Button onClick={() => {
+          if (infoBoxDialog.title && lexicalEditorRef.current) {
+            lexicalEditorRef.current.update(() => {
+              const infoboxHtml = `
+                <div class="infobox border-2 rounded-lg p-4 bg-blue-50 my-4 float-right ml-4 max-w-xs">
+                  <h3 class="font-bold text-lg mb-3 border-b pb-2">${sanitizeHTML(infoBoxDialog.title)}</h3>
+                  ${infoBoxDialog.items.map(item => `
+                    <div class="mb-2">
+                      <span class="font-semibold text-sm">${sanitizeHTML(item.field)}:</span>
+                      <span class="text-sm ml-2">${sanitizeHTML(typeof item.value === 'string' ? item.value : '')}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              `;
+              const parser = new DOMParser();
+              const dom = parser.parseFromString(infoboxHtml, 'text/html');
+              const nodes = $generateNodesFromDOM(lexicalEditorRef.current!, dom);
+              const selection = $getSelection();
+              if ($isRangeSelection(selection)) {
+                selection.insertNodes(nodes);
+              }
+            });
+          }
+          setInfoBoxDialog({ open: false, title: '', items: [] });
+        }}>
+          Insert InfoBox
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+);
+
   // Dialog Components
   const LinkDialog = () => {
     const [url, setUrl] = useState('');
@@ -1458,6 +1934,10 @@ export default function EnhancedEditor({
           <CitationDialog />
           <ImageDialog />
           <VideoDialog />
+          <MathDialog />
+          <TableDialog />
+          <TemplateDialog />
+<InfoBoxDialog />
           <FindReplaceDialog />
           <PublishDialog />
       
