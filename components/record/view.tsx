@@ -45,7 +45,7 @@ export const Viewer = function({ __data }: Props) {
     ],
     []
   )
-  
+  const [activePaper , setActivePaper] = useState('overview')
   const handleSideBarTools = (arg: React.ReactNode) => {
     setCurrentSidebar(arg)
   }
@@ -157,14 +157,16 @@ export const Viewer = function({ __data }: Props) {
       </h1>
       <div className="flex items-center border-l pl-2">
       {isEditableForMe ? (
+      
         <button
-          className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full text-sm sm:text-base"
+          className="px-4 py-2 bg-gray-900 text-white  m-2 rounded-full text-sm sm:text-base"
           aria-label="Edit document"
           type="button"
           onClick={() => gotoEditPage(true)}
           title="Edit Article"
         >
-          Edit Article
+          <Fai icon = 'arrow-right' className='mr-2'/>
+          {'Edit Article'}
         </button>
       ) : (
         <button
@@ -181,14 +183,18 @@ export const Viewer = function({ __data }: Props) {
   </div>
 
   {/* Action Buttons */}
-
-
+  <div className = 'flex items-center justify-start'>
+    <button onClick={()=>setActivePaper((prev)=> prev!=='overview' ? 'overview': prev)} className={'bg-none p-2 px-3 font-semibold ' + activePaper === 'overview' ? 'text-gray-900':'text-gray-500'}>{'Overview'}</button>
+    <button onClick={()=>setActivePaper((prev)=> prev!=='discussion' ? 'discussion' : prev)} className={'bg-none p-2 px-3 font-semibold ' + activePaper === 'discussion' ? 'text-gray-900' : 'text-gray-500'}>{'Discussion'}</button>
+  </div>
   {/* Article Content */}
   <div className="flex items-start justify-between">
+    {activePaper === 'overview' ? (
     <div
       className={`flex-1 overflow-x-scroll bg-white relative prose max-w-none ${isMobile ? 'p-2' : 'p-4'}`}
       dangerouslySetInnerHTML={{ __html: data?.content || '<p>No content available yet.</p>' }}
     />
+    ):null}
   </div>
 </div>)
 }
