@@ -1238,11 +1238,11 @@ break;
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="edit-summary" className="font-medium">
-                Edit Summary *
+                Edit Summary
               </Label>
               <Textarea
                 id="edit-summary"
-                className='border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
+                className='rounded bg-gray-50'
                 placeholder="e.g., Added new section on methodology, fixed typos, updated references..."
                 value={localSummary}
                 onChange={(e) => setLocalSummary(e.target.value)}
@@ -1390,9 +1390,8 @@ break;
               className="border-none rounded-full p-2 text-black flex items-center hover:bg-gray-100"
               aria-label="Settings"
               onClick={() => {
-                const enabled = confirm('Enable spell check? (Currently ' + (spellCheckEnabled ? 'enabled' : 'disabled') + ')');
-                setSpellCheckEnabled(enabled);
-              }}
+              
+                }}
             >
               <Fai icon="gear" style="fal" />
             </button>
@@ -1635,14 +1634,12 @@ break;
               <div><kbd className="px-1 py-0.5 bg-gray-100 rounded">Ctrl+Shift+P</kbd> Preview</div>
             </div>
           </div>
-          
           <LinkDialog />
           <CitationDialog />
           <ImageDialog />
           <VideoDialog />
           <FindReplaceDialog />
           <PublishDialog />
-      
     </div>
   );
 }
