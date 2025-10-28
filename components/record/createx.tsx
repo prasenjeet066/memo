@@ -1449,8 +1449,9 @@ break;
                     />
                     <HistoryPlugin />
                     <LinkPlugin />
+                    <ImagesPlugin/>
                     <ListPlugin />
-                    <TablePlugin />
+                    <TablePlugin/>
                     <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
                     <HtmlPlugin 
                       initialHtml={payload.content}
