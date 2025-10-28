@@ -31,115 +31,7 @@ import { INSERT_HORIZONTAL_RULE_COMMAND } from '@lexical/react/LexicalHorizontal
 import { ImageNode } from '@lexical/react/LexicalImageNode';
 import { INSERT_IMAGE_COMMAND } from '@lexical/react/LexicalImageNode';
 
-class MathNode extends DecoratorNode < JSX.Element > {
-  __formula: string;
-  
-  static getType(): string {
-    return 'math';
-  }
-  
-  static clone(node: MathNode): MathNode {
-    return new MathNode(node.__formula, node.__key);
-  }
-  
-  constructor(formula: string, key ? : NodeKey) {
-    super(key);
-    this.__formula = formula;
-  }
-  
-  createDOM(): HTMLElement {
-    const element = document.createElement('span');
-    element.className = 'math-node';
-    return element;
-  }
-  
-  updateDOM(): false {
-    return false;
-  }
-  
-  decorate(): JSX.Element {
-    return <span className="math-formula">{this.__formula}</span>;
-  }
-}
 
-class InfoBoxNode extends DecoratorNode < JSX.Element > {
-  __data: InfoBox;
-  
-  static getType(): string {
-    return 'infobox';
-  }
-  
-  static clone(node: InfoBoxNode): InfoBoxNode {
-    return new InfoBoxNode(node.__data, node.__key);
-  }
-  
-  constructor(data: InfoBox, key ? : NodeKey) {
-    super(key);
-    this.__data = data;
-  }
-  
-  createDOM(): HTMLElement {
-    const element = document.createElement('div');
-    element.className = 'infobox';
-    return element;
-  }
-  
-  updateDOM(): false {
-    return false;
-  }
-  
-  decorate(): JSX.Element {
-    return (
-      <div className="infobox border rounded p-4 bg-gray-50 my-4">
-        <h3 className="font-bold text-lg mb-2">{this.__data.title}</h3>
-        {this.__data.items.map((item, idx) => (
-          <div key={idx} className="flex gap-2 mb-1">
-            <span className="font-semibold">{item.field}:</span>
-            <span>{typeof item.value === 'string' ? item.value : JSON.stringify(item.value)}</span>
-          </div>
-        ))}
-      </div>
-    );
-  }
-}
-
-class TemplateNode extends DecoratorNode < JSX.Element > {
-  __type: string;
-  __content: string;
-  
-  static getType(): string {
-    return 'template';
-  }
-  
-  static clone(node: TemplateNode): TemplateNode {
-    return new TemplateNode(node.__type, node.__content, node.__key);
-  }
-  
-  constructor(templateType: string, content: string, key ? : NodeKey) {
-    super(key);
-    this.__type = templateType;
-    this.__content = content;
-  }
-  
-  createDOM(): HTMLElement {
-    const element = document.createElement('div');
-    element.className = 'template-node';
-    return element;
-  }
-  
-  updateDOM(): false {
-    return false;
-  }
-  
-  decorate(): JSX.Element {
-    return (
-      <div className="template border-2 border-dashed border-blue-300 rounded p-4 my-4 bg-blue-50">
-        <div className="text-xs text-blue-600 uppercase font-bold mb-2">Template: {this.__type}</div>
-        <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(this.__content) }} />
-      </div>
-    );
-  }
-}
 // Lexical imports
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
@@ -257,7 +149,115 @@ function CustomCommandsPlugin({
   
   return null;
 }
+class MathNode extends DecoratorNode < JSX.Element > {
+  __formula: string;
+  
+  static getType(): string {
+    return 'math';
+  }
+  
+  static clone(node: MathNode): MathNode {
+    return new MathNode(node.__formula, node.__key);
+  }
+  
+  constructor(formula: string, key ? : NodeKey) {
+    super(key);
+    this.__formula = formula;
+  }
+  
+  createDOM(): HTMLElement {
+    const element = document.createElement('span');
+    element.className = 'math-node';
+    return element;
+  }
+  
+  updateDOM(): false {
+    return false;
+  }
+  
+  decorate(): JSX.Element {
+    return <span className="math-formula">{this.__formula}</span>;
+  }
+}
 
+class InfoBoxNode extends DecoratorNode < JSX.Element > {
+  __data: InfoBox;
+  
+  static getType(): string {
+    return 'infobox';
+  }
+  
+  static clone(node: InfoBoxNode): InfoBoxNode {
+    return new InfoBoxNode(node.__data, node.__key);
+  }
+  
+  constructor(data: InfoBox, key ? : NodeKey) {
+    super(key);
+    this.__data = data;
+  }
+  
+  createDOM(): HTMLElement {
+    const element = document.createElement('div');
+    element.className = 'infobox';
+    return element;
+  }
+  
+  updateDOM(): false {
+    return false;
+  }
+  
+  decorate(): JSX.Element {
+    return (
+      <div className="infobox border rounded p-4 bg-gray-50 my-4">
+        <h3 className="font-bold text-lg mb-2">{this.__data.title}</h3>
+        {this.__data.items.map((item, idx) => (
+          <div key={idx} className="flex gap-2 mb-1">
+            <span className="font-semibold">{item.field}:</span>
+            <span>{typeof item.value === 'string' ? item.value : JSON.stringify(item.value)}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+}
+
+class TemplateNode extends DecoratorNode < JSX.Element > {
+  __type: string;
+  __content: string;
+  
+  static getType(): string {
+    return 'template';
+  }
+  
+  static clone(node: TemplateNode): TemplateNode {
+    return new TemplateNode(node.__type, node.__content, node.__key);
+  }
+  
+  constructor(templateType: string, content: string, key ? : NodeKey) {
+    super(key);
+    this.__type = templateType;
+    this.__content = content;
+  }
+  
+  createDOM(): HTMLElement {
+    const element = document.createElement('div');
+    element.className = 'template-node';
+    return element;
+  }
+  
+  updateDOM(): false {
+    return false;
+  }
+  
+  decorate(): JSX.Element {
+    return (
+      <div className="template border-2 border-dashed border-blue-300 rounded p-4 my-4 bg-blue-50">
+        <div className="text-xs text-blue-600 uppercase font-bold mb-2">Template: {this.__type}</div>
+        <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(this.__content) }} />
+      </div>
+    );
+  }
+}
 // HTML Import/Export Plugin
 function HtmlPlugin({
   initialHtml,
@@ -1937,7 +1937,7 @@ break;
           <MathDialog />
           <TableDialog />
           <TemplateDialog />
-<InfoBoxDialog />
+          <InfoBoxDialog />
           <FindReplaceDialog />
           <PublishDialog />
       
