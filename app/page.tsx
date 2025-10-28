@@ -120,7 +120,7 @@ export default function MainPage() {
                 <img
                   alt="Sample"
                   className={`h-auto object-contain rounded-lg ${isMobile ? 'w-full' : 'w-full'}`}
-                  src="https://memoorg.vercel.app/api/img/vor?points=100000"
+                  src="https://memoorg.vercel.app/api/img/vor"
                 />
               </div>
               
