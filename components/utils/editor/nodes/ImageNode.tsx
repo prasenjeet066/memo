@@ -1,46 +1,138 @@
-import { DecoratorNode, $applyNodeReplacement, createCommand, LexicalCommand, NodeKey } from "lexical";
-import React from "react";
+import {
+  DecoratorNode,
+  $applyNodeReplacement,
+  createCommand,
+  LexicalCommand,
+  NodeKey,
+  $getSelection,
+} from "lexical";
+import React, { useRef, useState } from "react";
 
-/** Command payload type */
+/** Payload for inserting an image */
 export interface InsertImagePayload {
   src: string;
   altText?: string;
-  width?: number | string;
-  height?: number | string;
+  width?: number;
+  height?: number;
 }
 
-/** Command definition */
-export const INSERT_IMAGE_COMMAND: LexicalCommand<InsertImagePayload> = createCommand("INSERT_IMAGE_COMMAND");
+/** Command for inserting an image */
+export const INSERT_IMAGE_COMMAND: LexicalCommand<InsertImagePayload> = createCommand(
+  "INSERT_IMAGE_COMMAND"
+);
 
-/** React component used to render the image inside the editor */
+/** React component to render + handle resize + actions */
 function ImageComponent({
   src,
   altText,
   width,
   height,
+  nodeKey,
 }: {
   src: string;
   altText?: string;
-  width?: number | string;
-  height?: number | string;
+  width?: number;
+  height?: number;
+  nodeKey: NodeKey;
 }) {
+  const imgRef = useRef<HTMLImageElement | null>(null);
+  const [isSelected, setIsSelected] = useState(false);
+  const [size, setSize] = useState({ width: width || 300, height: height || 200 });
+  const [isResizing, setIsResizing] = useState(false);
+  const startRef = useRef<{ x: number; width: number }>({ x: 0, width: 0 });
+
+  const startResize = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsResizing(true);
+    startRef.current = { x: e.clientX, width: size.width };
+  };
+
+  const handleResize = (e: MouseEvent) => {
+    if (!isResizing) return;
+    const deltaX = e.clientX - startRef.current.x;
+    const newWidth = Math.max(100, startRef.current.width + deltaX);
+    setSize((prev) => ({
+      width: newWidth,
+      height: prev.height,
+    }));
+  };
+
+  const stopResize = () => {
+    setIsResizing(false);
+  };
+
+  React.useEffect(() => {
+    if (isResizing) {
+      window.addEventListener("mousemove", handleResize);
+      window.addEventListener("mouseup", stopResize);
+    }
+    return () => {
+      window.removeEventListener("mousemove", handleResize);
+      window.removeEventListener("mouseup", stopResize);
+    };
+  }, [isResizing]);
+
   return (
-    <img
-      src={src}
-      alt={altText ?? ""}
-      width={width}
-      height={height}
-      style={{ maxWidth: "100%", display: "block", margin: "0 auto" }}
-    />
+    <div
+      className={`relative inline-block ${
+        isSelected ? "ring-2 ring-blue-500" : ""
+      }`}
+      onClick={() => setIsSelected((prev) => !prev)}
+    >
+      <img
+        ref={imgRef}
+        src={src}
+        alt={altText ?? ""}
+        width={size.width}
+        height={size.height}
+        className="rounded-md"
+        style={{ display: "block", maxWidth: "100%", margin: "auto" }}
+      />
+
+      {/* Resize handle (bottom-right corner) */}
+      {isSelected && (
+        <div
+          onMouseDown={startResize}
+          className="absolute bottom-1 right-1 w-3 h-3 bg-blue-500 cursor-se-resize rounded-sm"
+        />
+      )}
+
+      {/* Toolbar actions */}
+      {isSelected && (
+        <div className="absolute top-1 right-1 bg-white/90 shadow-md rounded-md flex gap-1 p-1">
+          <button
+            onClick={() => {
+              const newUrl = window.prompt("Enter new image URL:", src);
+              if (newUrl && imgRef.current) {
+                imgRef.current.src = newUrl;
+              }
+            }}
+            className="text-xs text-blue-600 hover:underline"
+          >
+            Replace
+          </button>
+          <button
+            onClick={() => {
+              if (imgRef.current?.parentElement) {
+                imgRef.current.parentElement.remove();
+              }
+            }}
+            className="text-xs text-red-500 hover:underline"
+          >
+            Delete
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
-/** The ImageNode class for Lexical */
+/** Lexical ImageNode definition */
 export class ImageNode extends DecoratorNode<JSX.Element> {
   __src: string;
   __altText: string;
-  __width?: number | string;
-  __height?: number | string;
+  __width: number;
+  __height: number;
 
   static getType(): string {
     return "image";
@@ -56,13 +148,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     );
   }
 
-  constructor(
-    src: string,
-    altText: string = "",
-    width?: number | string,
-    height?: number | string,
-    key?: NodeKey
-  ) {
+  constructor(src: string, altText = "", width = 300, height = 200, key?: NodeKey) {
     super(key);
     this.__src = src;
     this.__altText = altText;
@@ -71,8 +157,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   }
 
   createDOM(): HTMLElement {
-    const div = document.createElement("div");
-    return div;
+    return document.createElement("div");
   }
 
   updateDOM(): boolean {
@@ -86,6 +171,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
         altText={this.__altText}
         width={this.__width}
         height={this.__height}
+        nodeKey={this.__key}
       />
     );
   }
@@ -107,12 +193,12 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   }
 }
 
-/** Helper function to create an ImageNode */
+/** Helper to create a new ImageNode */
 export function $createImageNode({
   src,
   altText = "",
-  width,
-  height,
+  width = 300,
+  height = 200,
 }: InsertImagePayload): ImageNode {
   return $applyNodeReplacement(new ImageNode(src, altText, width, height));
 }

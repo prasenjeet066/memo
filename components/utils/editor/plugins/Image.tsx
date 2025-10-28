@@ -1,6 +1,11 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import React, { useEffect } from "react";
-import { INSERT_IMAGE_COMMAND, $createImageNode, InsertImagePayload, ImageNode } from "@/components/utils/editor/nodes/ImageNode";
+import {
+  $createImageNode,
+  ImageNode,
+  INSERT_IMAGE_COMMAND,
+  InsertImagePayload,
+} from "../nodes/ImageNode";
 import { $getSelection } from "lexical";
 
 export function ImagesPlugin(): JSX.Element | null {
@@ -8,7 +13,7 @@ export function ImagesPlugin(): JSX.Element | null {
   
   useEffect(() => {
     if (!editor.hasNodes([ImageNode])) {
-      throw new Error("ImagesPlugin: ImageNode not registered on editor");
+      throw new Error("ImageNode not registered on editor");
     }
     
     return editor.registerCommand < InsertImagePayload > (
@@ -17,9 +22,7 @@ export function ImagesPlugin(): JSX.Element | null {
         const imageNode = $createImageNode(payload);
         editor.update(() => {
           const selection = $getSelection();
-          if (selection) {
-            selection.insertNodes([imageNode]);
-          }
+          if (selection) selection.insertNodes([imageNode]);
         });
         return true;
       },
