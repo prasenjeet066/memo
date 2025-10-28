@@ -21,8 +21,11 @@ export const articleSubmissionFunction = inngest.createFunction(
     const validatedData = await step.run("validate-article", async () => {
       console.log(`🔍 Validating article: ${data.title}`);
       
+      // FIX: Use htmlContent field that's actually sent
+      const content = data.htmlContent || data.content;
+      
       // Validate required fields
-      if (!data.content || !data.title || !data.created_by) {
+      if (!content || !data.title || !data.created_by) {
         throw new Error("Invalid article data: missing required fields");
       }
 
@@ -42,6 +45,7 @@ export const articleSubmissionFunction = inngest.createFunction(
       
       return {
         ...data,
+        content, // Normalize to 'content' field
         username: user.user_handler,
       };
     });
@@ -182,13 +186,6 @@ export const articleSubmissionFunction = inngest.createFunction(
       console.log(`📈 Article stats:`, stats);
       console.log(`🔗 Related articles found: ${relatedArticles.length}`);
       
-      // You can add:
-      // - Search index updates
-      // - Email notifications to watchers
-      // - Cache invalidation
-      // - Analytics tracking
-      // - Social media sharing
-      
       return { 
         success: true,
         stats,
@@ -236,7 +233,7 @@ export const articleDeletionFunction = inngest.createFunction(
         throw new Error(`User not found: ${userId}`);
       }
 
-      // Check permissions (you can add role checks here)
+      // Check permissions
       if (article.created_by.toString() !== userId && !user.user_role.includes('ADMIN')) {
         throw new Error("Insufficient permissions to delete article");
       }
@@ -249,11 +246,9 @@ export const articleDeletionFunction = inngest.createFunction(
       console.log(`🗑️ Deleting article: ${articleId}`);
       
       if (permanent) {
-        // Hard delete
         const deleted = await RecordDAL.deleteRecordPermanently(articleId);
         return { deleted, type: 'permanent' };
       } else {
-        // Soft delete (mark as DELETED)
         await RecordDAL.updateStatus(articleId, {
           status: 'DELETED',
           reason: 'Deleted by user'
@@ -289,9 +284,8 @@ export const bulkArticleUpdateFunction = inngest.createFunction(
         throw new Error(`User not found: ${userId}`);
       }
 
-      // Verify all articles exist
       const articles = await Promise.all(
-        articleIds.map(id => RecordDAL.findById(id))
+        articleIds.map((id: string) => RecordDAL.findById(id))
       );
 
       const invalidArticles = articles.filter(a => !a);
