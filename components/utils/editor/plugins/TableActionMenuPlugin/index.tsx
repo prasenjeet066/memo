@@ -16,11 +16,11 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
-
 import {
-  useLexicalComposerContext,
-  useLexicalEditable,
+  useLexicalComposerContext
 } from "@lexical/react/LexicalComposerContext";
+import { useLexicalEditable } from "@lexical/react/useLexicalEditable";
+
 import {
   $computeTableMapSkipCellCheck,
   $deleteTableColumnAtSelection,
