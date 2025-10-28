@@ -113,7 +113,7 @@ const sanitizeHTML = (html: string): string => {
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'code', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
       'ul', 'ol', 'li', 'a', 'img', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
-      'div', 'span', 'iframe', 'sup', 'sub', 'hr', 'blockquote', 'cite', 'abbr', 'mark'
+      'div', 'span', 'iframe', 'sup','style','link', 'sub', 'hr', 'blockquote', 'cite', 'abbr', 'mark'
     ],
     ALLOWED_ATTR: ['href', 'src', 'alt', 'width', 'height', 'style', 'class', 'contenteditable',
       'data-table-id', 'colspan', 'border', 'frameborder', 'allowfullscreen', 'id', 'title',
