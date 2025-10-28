@@ -28,9 +28,8 @@ import { toolbarBlocks } from '@/lib/editor/toolbarConfig';
 import DOMPurify from 'dompurify';
 import { HorizontalRuleNode } from '@lexical/react/LexicalHorizontalRuleNode';
 import { INSERT_HORIZONTAL_RULE_COMMAND } from '@lexical/react/LexicalHorizontalRuleNode';
-import { ImageNode } from '@lexical/react/LexicalImageNode';
-import { INSERT_IMAGE_COMMAND } from '@lexical/react/LexicalImageNode';
-
+import { ImagesPlugin } from "@/components/utils/editor/plugins/Image";
+import { ImageNode, INSERT_IMAGE_COMMAND } from "@/components/utils/editor/nodes/ImageNode.tsx";
 
 // Lexical imports
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
@@ -1352,24 +1351,22 @@ break;
             <Button variant="outline" onClick={() => setImageDialog({ open: false, url: '' })}>
               Cancel
             </Button>
-            <Button onClick={() => {
-              if (url && lexicalEditorRef.current) {
-                lexicalEditorRef.current.update(() => {
-                  const parser = new DOMParser();
-                  const imgHtml = `<img src="${encodeURI(url)}" alt="Image" style="max-width: 100%; height: auto;" />`;
-                  const dom = parser.parseFromString(imgHtml, 'text/html');
-                  const nodes = $generateNodesFromDOM(lexicalEditorRef.current!, dom);
-                  const selection = $getSelection();
-                  if ($isRangeSelection(selection)) {
-                    selection.insertNodes(nodes);
-                  }
-                });
-              }
-              setImageDialog({ open: false, url: '' });
-              setUrl('');
-            }}>
-              Insert
-            </Button>
+           <Button
+  onClick={() => {
+    if (url && lexicalEditorRef.current) {
+      lexicalEditorRef.current.dispatchCommand(INSERT_IMAGE_COMMAND, {
+        src: url,
+        altText: "Image",
+        width: "100%",
+        height: "auto",
+      });
+    }
+    setImageDialog({ open: false, url: "" });
+    setUrl("");
+  }}
+>
+  Insert
+</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
