@@ -267,7 +267,7 @@ export default function EnhancedEditor({
   const initialConfig = {
     namespace: 'EnhancedEditor',
     theme: {
-      paragraph: 'mb-2 top-text',
+      paragraph: 'mb-2',
       heading: {
         h1: 'text-4xl font-bold mb-4 mt-6 border-b w-full pb-2',
         h2: 'text-3xl font-bold mb-3 mt-5 border-b w-full pb-2',
