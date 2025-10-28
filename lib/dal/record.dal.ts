@@ -94,46 +94,48 @@ export class RecordDAL {
   }
 
   /**
-   * Update a record
-   */
-  static async updateRecord(
-    recordId: string,
-    data: UpdateRecordDTO,
-    userId: string,
-    username: string
-  ): Promise<IRecord | null> {
-    await this.ensureConnection();
-
-    const record = await this.findById(recordId);
-    if (!record) return null;
-
-    // Update fields
-    if (data.title) {
-      record.title = data.title;
-      record.slug = this.generateSlug(data.title);
-    }
-    if (data.summary) record.summary = data.summary;
-    if (data.categories) record.categories = data.categories;
-    if (data.tags) record.tags = data.tags;
-    if (data.infobox !== undefined) record.infobox = data.infobox;
-    if (data.references) record.references = data.references as any;
-    if (data.externalLinks) record.external_links = data.externalLinks;
-
-    // Add revision if content changed
-    if (data.content) {
-      await record.addRevision(
-        new mongoose.Types.ObjectId(userId),
-        username,
-        data.content,
-        data.editSummary,
-        data.isMinorEdit
-      );
-      record.last_edited_by = new mongoose.Types.ObjectId(userId);
-      record.last_edited_by_username = username;
-    }
-
-    return record.save();
+ * Update a record
+ */
+static async updateRecord(
+  recordId: string,
+  data: UpdateRecordDTO,
+  userId: string,
+  username: string
+): Promise < IRecord | null > {
+  await this.ensureConnection();
+  
+  const record = await this.findById(recordId);
+  if (!record) return null;
+  
+  // Update fields
+  if (data.title) {
+    record.title = data.title;
+    record.slug = this.generateSlug(data.title);
   }
+  if (data.summary) record.summary = data.summary;
+  if (data.categories) record.categories = data.categories;
+  if (data.tags) record.tags = data.tags;
+  if (data.infobox !== undefined) record.infobox = data.infobox;
+  if (data.references) record.references = data.references as any;
+  if (data.externalLinks) record.external_links = data.externalLinks;
+  
+  // Add revision if content changed
+  if (data.content) {
+    // Fix: Pass parameters in correct order
+    // addRevision(editor, content, editor_username, summary?, isMinor?)
+    await record.addRevision(
+      new mongoose.Types.ObjectId(userId),
+      data.content, // content is 2nd parameter
+      username, // editor_username is 3rd parameter
+      data.editSummary, // summary is 4th parameter
+      data.isMinorEdit // isMinor is 5th parameter
+    );
+    record.last_edited_by = new mongoose.Types.ObjectId(userId);
+    record.last_edited_by_username = username;
+  }
+  
+  return record.save();
+}
 
   /**
    * Get paginated records
