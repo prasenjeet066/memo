@@ -184,8 +184,8 @@ export const Viewer = function({ __data }: Props) {
 
   {/* Action Buttons */}
   <div className = 'flex px-4 border-b pb-2 w-full mb-2 items-center gap-4 justify-start'>
-    <button onClick={()=>setActivePaper((prev)=> prev!=='overview' ? 'overview': prev)} className={'bg-none p-2 px-3 font-semibold ' + activePaper === 'overview' ? 'text-gray-900 border-b border-gray-900':'text-gray-500'}>{'Overview'}</button>
-    <button onClick={()=>setActivePaper((prev)=> prev!=='discussion' ? 'discussion' : prev)} className={'bg-none p-2 px-3 font-semibold ' + activePaper === 'discussion' ? 'text-gray-900 border-b border-gray-900' : 'text-gray-500'}>{'Discussion'}</button>
+    <button onClick={()=>setActivePaper((prev)=> prev!=='overview' ? 'overview': prev)} className={'bg-none p-2 px-3 font-semibold ' + activePaper === 'overview' ? ' text-gray-900 border-b border-gray-900':' text-gray-500'}>{'Overview'}</button>
+    <button onClick={()=>setActivePaper((prev)=> prev!=='discussion' ? 'discussion' : prev)} className={'bg-none p-2 px-3 font-semibold ' + activePaper === 'discussion' ? ' text-gray-900 border-b border-gray-900' : ' text-gray-500'}>{'Discussion'}</button>
   </div>
   {/* Article Content */}
   <div className="flex items-start justify-between">

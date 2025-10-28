@@ -48,8 +48,13 @@ import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { TRANSFORMERS } from '@lexical/markdown';
-import { AdvancedTablePlugin } from "@/components/utils/editor/plugins/Table";
-import { TableNode, TableRowNode, TableCellNode } from "@lexical/table";
+import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
+import {
+  TableNode,
+  TableRowNode,
+  TableCellNode,
+  INSERT_TABLE_COMMAND,
+} from "@lexical/table";
 
 import {
   $getRoot,
@@ -1447,7 +1452,7 @@ break;
                     <LinkPlugin />
                     <ImagesPlugin/>
                     <ListPlugin />
-                    <AdvancedTablePlugin/>
+                    <TablePlugin/>
                     <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
                     <HtmlPlugin 
                       initialHtml={payload.content}
