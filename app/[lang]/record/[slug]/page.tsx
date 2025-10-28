@@ -60,7 +60,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
             >
               <nav.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-800 flex-shrink-0' />
               {isExpanded && (
-                <span className='text-sm font-medium text-gray-700 group-hover:text-gray-900 capitalize'>
+                <span className='text-sm font-semibold text-gray-700 group-hover:text-gray-900 capitalize'>
                   {nav.name}
                 </span>
               )}
