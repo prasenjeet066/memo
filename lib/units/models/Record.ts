@@ -291,12 +291,13 @@ const RecordSchema = new Schema<IRecord>(
 RecordSchema.methods.addRevision = async function (
   editor: mongoose.Types.ObjectId,
   content: string,
+  editor_username: string,
   summary?: string,
   isMinor: boolean = false
 ): Promise<void> {
   const revision: IRevision = {
     editor,
-    editor_username: '', // Should be populated from User
+    editor_username: editor_username, // Should be populated from User
     timestamp: new Date(),
     content,
     edit_summary: summary,

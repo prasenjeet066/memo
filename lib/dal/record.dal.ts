@@ -123,6 +123,7 @@ export class RecordDAL {
     if (data.content) {
       await record.addRevision(
         new mongoose.Types.ObjectId(userId),
+        username,
         data.content,
         data.editSummary,
         data.isMinorEdit
