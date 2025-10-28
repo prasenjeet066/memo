@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next"
-import { authOptions } from '@/lib/auth/auth'
-import { memoFlow } from "@/lib/workflow";
-import "@/lib/workflows/article-publish.workflow";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from '@/lib/auth/auth';
+import { inngest } from "@/lib/inngest/client";
 
 interface RouteContext {
   params: Promise<{
@@ -16,13 +15,13 @@ export async function POST(req: Request, context: RouteContext) {
     const { slug } = await context.params;
     
     // Get session first
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: "Unauthorized", success: false }, 
         { status: 401 }
-      )
+      );
     }
 
     // Parse body
@@ -33,7 +32,7 @@ export async function POST(req: Request, context: RouteContext) {
       return NextResponse.json(
         { error: "Invalid JSON body", success: false }, 
         { status: 400 }
-      )
+      );
     }
 
     // Validate required fields
@@ -41,18 +40,18 @@ export async function POST(req: Request, context: RouteContext) {
       return NextResponse.json(
         { error: "Missing content field", success: false }, 
         { status: 400 }
-      )
+      );
     }
 
     if (!body.title) {
       return NextResponse.json(
         { error: "Missing title field", success: false }, 
         { status: 400 }
-      )
+      );
     }
 
     // Prepare workflow payload
-    const workflowPayload: any = {
+    const eventPayload = {
       htmlContent: body.htmlContent || body.content,
       title: body.title,
       summary: body.summary || '',
@@ -64,40 +63,37 @@ export async function POST(req: Request, context: RouteContext) {
       author: session.user.username || session.user.name,
       created_by: session.user.id,
       created_by_username: session.user.username || session.user.name,
+      slug,
+      // Include articleId if updating existing article
+      articleId: body.articleId || undefined,
+      // Include edit summary for updates
+      editSummary: body.editSummary || undefined,
+      isMinorEdit: body.isMinorEdit !== undefined ? body.isMinorEdit : false,
     };
     
-    // Include articleId if updating existing article
-    if (body.articleId) {
-      workflowPayload.articleId = body.articleId;
-    }
+    console.log(`📤 Sending article to Inngest: ${eventPayload.title}`);
+    console.log(`🆔 Article ID: ${eventPayload.articleId || 'NEW'}`);
     
-    // Include edit summary for updates
-    if (body.editSummary) {
-      workflowPayload.editSummary = body.editSummary;
-    }
+    // Send event to Inngest
+    const { ids } = await inngest.send({
+      name: "article/submitted",
+      data: eventPayload,
+    });
     
-    if (body.isMinorEdit !== undefined) {
-      workflowPayload.isMinorEdit = body.isMinorEdit;
-    }
+    console.log(`✅ Event sent to Inngest with ID: ${ids[0]}`);
     
-    console.log(`📤 Sending article to workflow: ${workflowPayload.title}`);
-    console.log(`🆔 Article ID: ${workflowPayload.articleId || 'NEW'}`);
-    
-    // Trigger the workflow
-    const results = await memoFlow.send("article.submitted", workflowPayload);
-    
-    console.log(`✅ Workflow completed for article: ${slug}`);
-    
+    // Return success response immediately
+    // The actual processing will happen asynchronously via Inngest
     return NextResponse.json({
       success: true,
-      message: body.articleId ? "Article updated successfully" : "Article created successfully",
-      results,
-      articleId: results?.[0]?.output?.articleId || slug,
-      slug: results?.[0]?.output?.slug || slug,
-    }, { status: 200 });
+      message: body.articleId ? "Article update queued" : "Article creation queued",
+      eventId: ids[0],
+      articleId: body.articleId || slug,
+      slug: slug,
+    }, { status: 202 }); // 202 Accepted for async processing
     
   } catch (error: any) {
-    console.error("❌ Workflow execution failed:", error);
+    console.error("❌ Failed to send event to Inngest:", error);
     
     // Provide different error messages based on error type
     let errorMessage = "Internal server error";
@@ -109,9 +105,6 @@ export async function POST(req: Request, context: RouteContext) {
     } else if (error.message?.includes("validation")) {
       errorMessage = "Validation error: " + error.message;
       statusCode = 400;
-    } else if (error.message?.includes("duplicate")) {
-      errorMessage = "Article with this slug already exists";
-      statusCode = 409;
     }
     
     return NextResponse.json(
