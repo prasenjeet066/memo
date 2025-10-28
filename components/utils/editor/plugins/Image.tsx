@@ -5,7 +5,7 @@ import {
   ImageNode,
   INSERT_IMAGE_COMMAND,
   InsertImagePayload,
-} from "../nodes/ImageNode";
+} from "#/components/utils/editor/nodes/ImageNode";
 import { $getSelection } from "lexical";
 
 export function ImagesPlugin(): JSX.Element | null {
