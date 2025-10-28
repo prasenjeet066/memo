@@ -1,166 +1,152 @@
-import React, { useCallback, useEffect } from "react";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import type { JSX } from 'react';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
-  $insertNodeToNearestRoot,
-  $getSelection,
-  $isRangeSelection,
-  COMMAND_PRIORITY_EDITOR,
-} from "lexical";
-import {
-  $createTableNodeWithDimensions,
+  INSERT_TABLE_COMMAND,
+  TableCellNode,
   TableNode,
   TableRowNode,
-  TableCellNode,
-  INSERT_TABLE_COMMAND,
-  $getElementForTableNode,
-  mergeTableCellsCommand,
-  splitTableCellCommand,
-  toggleTableRowHeaderCommand,
-  toggleTableColumnHeaderCommand,
-} from "@lexical/table";
-import { Button } from "@/components/ui/button"; // or replace with <button> if not using shadcn
-import { createCommand } from "lexical";
+} from '@lexical/table';
+import { EditorThemeClasses, Klass, LexicalEditor, LexicalNode } from 'lexical';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
-// Custom table management commands
-export const ADD_ROW_COMMAND = createCommand("ADD_ROW_COMMAND");
-export const ADD_COLUMN_COMMAND = createCommand("ADD_COLUMN_COMMAND");
-export const DELETE_TABLE_COMMAND = createCommand("DELETE_TABLE_COMMAND");
-export const DELETE_ROW_COMMAND = createCommand("DELETE_ROW_COMMAND");
-export const DELETE_COLUMN_COMMAND = createCommand("DELETE_COLUMN_COMMAND");
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
-export const AdvancedTablePlugin: React.FC = () => {
-  const [editor] = useLexicalComposerContext();
-  
-  /** Insert 3×3 table */
-  const insertTable = useCallback(() => {
-    editor.update(() => {
-      const selection = $getSelection();
-      if ($isRangeSelection(selection)) {
-        const tableNode = $createTableNodeWithDimensions(3, 3);
-        $insertNodeToNearestRoot(tableNode);
-      }
-    });
-  }, [editor]);
-  
-  /** Add row */
-  const addRow = useCallback(() => {
-    editor.update(() => {
-      const rootMap = editor.getEditorState()._nodeMap;
-      for (const [, node] of rootMap) {
-        if (node instanceof TableNode) {
-          const lastRow = node.getLastChild() as TableRowNode;
-          const columnCount = lastRow.getChildren().length;
-          const newRow = new TableRowNode();
-          for (let i = 0; i < columnCount; i++) {
-            newRow.append(new TableCellNode());
-          }
-          node.append(newRow);
-          break;
-        }
-      }
-    });
-  }, [editor]);
-  
-  /** Add column */
-  const addColumn = useCallback(() => {
-    editor.update(() => {
-      const rootMap = editor.getEditorState()._nodeMap;
-      for (const [, node] of rootMap) {
-        if (node instanceof TableNode) {
-          const rows = node.getChildren < TableRowNode > ();
-          for (const row of rows) {
-            row.append(new TableCellNode());
-          }
-          break;
-        }
-      }
-    });
-  }, [editor]);
-  
-  /** Delete last row */
-  const deleteRow = useCallback(() => {
-    editor.update(() => {
-      const rootMap = editor.getEditorState()._nodeMap;
-      for (const [, node] of rootMap) {
-        if (node instanceof TableNode) {
-          const rows = node.getChildren < TableRowNode > ();
-          const lastRow = rows[rows.length - 1];
-          if (lastRow) lastRow.remove();
-        }
-      }
-    });
-  }, [editor]);
-  
-  /** Delete last column */
-  const deleteColumn = useCallback(() => {
-    editor.update(() => {
-      const rootMap = editor.getEditorState()._nodeMap;
-      for (const [, node] of rootMap) {
-        if (node instanceof TableNode) {
-          const rows = node.getChildren < TableRowNode > ();
-          for (const row of rows) {
-            const cells = row.getChildren < TableCellNode > ();
-            const lastCell = cells[cells.length - 1];
-            if (lastCell) lastCell.remove();
-          }
-        }
-      }
-    });
-  }, [editor]);
-  
-  /** Delete entire table */
-  const deleteTable = useCallback(() => {
-    editor.update(() => {
-      const rootMap = editor.getEditorState()._nodeMap;
-      for (const [, node] of rootMap) {
-        if (node instanceof TableNode) node.remove();
-      }
-    });
-  }, [editor]);
-  
-  /** Merge selected cells */
-  const mergeCells = useCallback(() => {
-    editor.dispatchCommand(mergeTableCellsCommand, undefined);
-  }, [editor]);
-  
-  /** Split merged cell */
-  const splitCell = useCallback(() => {
-    editor.dispatchCommand(splitTableCellCommand, undefined);
-  }, [editor]);
-  
-  /** Toggle header row/column */
-  const toggleHeaders = useCallback(() => {
-    editor.dispatchCommand(toggleTableRowHeaderCommand, undefined);
-    editor.dispatchCommand(toggleTableColumnHeaderCommand, undefined);
-  }, [editor]);
-  
-  /** Register insert table command */
-  useEffect(() => {
-    return editor.registerCommand(
-      INSERT_TABLE_COMMAND,
-      (payload) => {
-        const { rows = 3, columns = 3 } = payload ?? {};
-        editor.update(() => {
-          const tableNode = $createTableNodeWithDimensions(rows, columns);
-          $insertNodeToNearestRoot(tableNode);
-        });
-        return true;
-      },
-      COMMAND_PRIORITY_EDITOR
-    );
-  }, [editor]);
+export type InsertTableCommandPayload = Readonly < {
+  columns: string;
+  rows: string;
+  includeHeaders ? : boolean;
+} > ;
+
+export type CellContextShape = {
+  cellEditorConfig: null | CellEditorConfig;
+  cellEditorPlugins: null | JSX.Element | Array < JSX.Element > ;
+  set: (
+    cellEditorConfig: null | CellEditorConfig,
+    cellEditorPlugins: null | JSX.Element | Array < JSX.Element >
+  ) => void;
+};
+
+export type CellEditorConfig = Readonly < {
+  namespace: string;
+  nodes ? : ReadonlyArray < Klass < LexicalNode >> ;
+  onError: (error: Error, editor: LexicalEditor) => void;
+  readOnly ? : boolean;
+  theme ? : EditorThemeClasses;
+} > ;
+
+export const CellContext = createContext < CellContextShape > ({
+  cellEditorConfig: null,
+  cellEditorPlugins: null,
+  set: () => {},
+});
+
+export function TableContext({ children }: { children: JSX.Element }) {
+  const [contextValue, setContextValue] = useState < {
+    cellEditorConfig: null | CellEditorConfig;
+    cellEditorPlugins: null | JSX.Element | Array < JSX.Element > ;
+  } > ({ cellEditorConfig: null, cellEditorPlugins: null });
   
   return (
-    <div className="flex flex-wrap gap-2 mt-3 p-2 border-t border-gray-300">
-      <Button size="sm" onClick={insertTable}>➕ Insert 3×3 Table</Button>
-      <Button size="sm" variant="secondary" onClick={addRow}>➕ Add Row</Button>
-      <Button size="sm" variant="secondary" onClick={addColumn}>➕ Add Column</Button>
-      <Button size="sm" variant="secondary" onClick={deleteRow}>➖ Delete Row</Button>
-      <Button size="sm" variant="secondary" onClick={deleteColumn}>➖ Delete Column</Button>
-      <Button size="sm" variant="outline" onClick={mergeCells}>🔗 Merge</Button>
-      <Button size="sm" variant="outline" onClick={splitCell}>✂️ Split</Button>
-      <Button size="sm" variant="outline" onClick={toggleHeaders}>🔠 Toggle Headers</Button>
-      <Button size="sm" variant="destructive" onClick={deleteTable}>🗑 Delete Table</Button>
-    </div>
+    <CellContext.Provider
+      value={useMemo(
+        () => ({
+          cellEditorConfig: contextValue.cellEditorConfig,
+          cellEditorPlugins: contextValue.cellEditorPlugins,
+          set: (cellEditorConfig, cellEditorPlugins) => {
+            setContextValue({ cellEditorConfig, cellEditorPlugins });
+          },
+        }),
+        [contextValue.cellEditorConfig, contextValue.cellEditorPlugins]
+      )}
+    >
+      {children}
+    </CellContext.Provider>
   );
-};
+}
+
+export function InsertTableDialog({
+  activeEditor,
+  onClose,
+}: {
+  activeEditor: LexicalEditor;
+  onClose: () => void;
+}): JSX.Element {
+  const [rows, setRows] = useState('5');
+  const [columns, setColumns] = useState('5');
+  const [isDisabled, setIsDisabled] = useState(true);
+  
+  useEffect(() => {
+    const row = Number(rows);
+    const column = Number(columns);
+    setIsDisabled(!(row > 0 && row <= 500 && column > 0 && column <= 50));
+  }, [rows, columns]);
+  
+  const onClick = () => {
+    activeEditor.dispatchCommand(INSERT_TABLE_COMMAND, { columns, rows });
+    onClose();
+  };
+  
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Insert Table</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <Input
+            type="number"
+            placeholder="# of rows (1-500)"
+            value={rows}
+            onChange={(e) => setRows(e.currentTarget.value)}
+            aria-label="Rows"
+          />
+          <Input
+            type="number"
+            placeholder="# of columns (1-50)"
+            value={columns}
+            onChange={(e) => setColumns(e.currentTarget.value)}
+            aria-label="Columns"
+          />
+        </div>
+        <DialogFooter>
+          <Button disabled={isDisabled} onClick={onClick}>
+            Confirm
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function TablePlugin({
+  cellEditorConfig,
+  children,
+}: {
+  cellEditorConfig: CellEditorConfig;
+  children: JSX.Element | Array < JSX.Element > ;
+}): JSX.Element | null {
+  const [editor] = useLexicalComposerContext();
+  const cellContext = useContext(CellContext);
+  
+  useEffect(() => {
+    if (!editor.hasNodes([TableNode, TableRowNode, TableCellNode])) {
+      throw new Error(
+        'TablePlugin: TableNode, TableRowNode, or TableCellNode is not registered on editor'
+      );
+    }
+  }, [editor]);
+  
+  useEffect(() => {
+    cellContext.set(cellEditorConfig, children);
+  }, [cellContext, cellEditorConfig, children]);
+  
+  return null;
+}

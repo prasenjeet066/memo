@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useTransition } from 'react';
-
+import TableActionMenuPlugin from '@/components/utils/editor/plugins/TableActionMenuPlugin'
 import {
   Dialog,
   DialogContent,
@@ -48,7 +48,7 @@ import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { TRANSFORMERS } from '@lexical/markdown';
-import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
+import { TablePlugin } from "@/components/utils/editor/plugins/Table";
 import {
   TableNode,
   TableRowNode,
@@ -193,128 +193,7 @@ function HtmlPlugin({
   );
 }
 // Add this plugin component after HtmlPlugin
-function TableCellActionMenuPlugin() {
-  const [editor] = useLexicalComposerContext();
-  const [tableCellNode, setTableCellNode] = useState<TableCellNode | null>(null);
-  const [showMenu, setShowMenu] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    return editor.registerUpdateListener(({ editorState }) => {
-      editorState.read(() => {
-        const selection = $getSelection();
-        if ($isRangeSelection(selection)) {
-          const anchorNode = selection.anchor.getNode();
-          const element = anchorNode.getKey() !== 'root' 
-            ? editor.getElementByKey(anchorNode.getKey()) 
-            : null;
-          
-          const cellNode = $findMatchingParent(anchorNode, $isTableCellNode);
-          if (cellNode && $isTableCellNode(cellNode)) {
-            setTableCellNode(cellNode);
-            setShowMenu(true);
-          } else {
-            setShowMenu(false);
-          }
-        }
-      });
-    });
-  }, [editor]);
-
-  return showMenu && tableCellNode ? (
-    <div 
-      ref={menuRef}
-      className="absolute z-50 bg-white border shadow-lg rounded-lg p-2 flex gap-1"
-      style={{ top: '60px', right: '20px' }}
-    >
-      <button
-        className="px-2 py-1 text-xs hover:bg-gray-100 rounded"
-        onClick={() => {
-          editor.update(() => {
-            const tableNode = $findMatchingParent(tableCellNode, $isTableNode);
-            if ($isTableNode(tableNode)) {
-              tableNode.insertRowAt(tableCellNode.getParentOrThrow().getIndexWithinParent());
-            }
-          });
-        }}
-      >
-        Insert Row Above
-      </button>
-      <button
-        className="px-2 py-1 text-xs hover:bg-gray-100 rounded"
-        onClick={() => {
-          editor.update(() => {
-            const tableNode = $findMatchingParent(tableCellNode, $isTableNode);
-            if ($isTableNode(tableNode)) {
-              tableNode.insertRowAt(tableCellNode.getParentOrThrow().getIndexWithinParent() + 1);
-            }
-          });
-        }}
-      >
-        Insert Row Below
-      </button>
-      <button
-        className="px-2 py-1 text-xs hover:bg-gray-100 rounded"
-        onClick={() => {
-          editor.update(() => {
-            const tableNode = $findMatchingParent(tableCellNode, $isTableNode);
-            if ($isTableNode(tableNode)) {
-              tableNode.insertColumnAt(tableCellNode.getIndexWithinParent());
-            }
-          });
-        }}
-      >
-        Insert Column Left
-      </button>
-      <button
-        className="px-2 py-1 text-xs hover:bg-gray-100 rounded"
-        onClick={() => {
-          editor.update(() => {
-            const tableNode = $findMatchingParent(tableCellNode, $isTableNode);
-            if ($isTableNode(tableNode)) {
-              tableNode.insertColumnAt(tableCellNode.getIndexWithinParent() + 1);
-            }
-          });
-        }}
-      >
-        Insert Column Right
-      </button>
-      <button
-        className="px-2 py-1 text-xs hover:bg-gray-100 rounded text-red-600"
-        onClick={() => {
-          editor.update(() => {
-            tableCellNode.getParentOrThrow().remove();
-          });
-        }}
-      >
-        Delete Row
-      </button>
-    </div>
-  ) : null;
-}
-
-// Add helper functions at the top of the file
-function $findMatchingParent(
-  node: any,
-  predicate: (node: any) => boolean
-): any | null {
-  let parent = node;
-  while (parent != null) {
-    if (predicate(parent)) {
-      return parent;
-    }
-    parent = parent.getParent();
-  }
-  return null;
-}
-
-function $isTableNode(node: any): node is TableNode {
-  return node instanceof TableNode;
-}
-
-function $isTableCellNode(node: any): node is TableCellNode {
-  return node instanceof TableCellNode;
-}
 // Editor ref plugin to expose editor instance
 function EditorRefPlugin({ 
   editorRef 
@@ -1579,7 +1458,7 @@ break;
                     <ImagesPlugin/>
                     <ListPlugin />
                     <TablePlugin/>
-                    <TableCellActionMenuPlugin/>
+                    <TableActionMenuPlugin/>
                     <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
                     <HtmlPlugin 
                       initialHtml={payload.content}
