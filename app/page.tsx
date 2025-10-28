@@ -120,7 +120,7 @@ export default function MainPage() {
                 <img
                   alt="Sample"
                   className={`h-auto object-contain rounded-lg ${isMobile ? 'w-full' : 'w-full'}`}
-                  src="https://memoorg.vercel.app/api/img/vor"
+                  src="https://memoorg.vercel.app/api/img/vor?points=100000"
                 />
               </div>
               
@@ -136,7 +136,7 @@ export default function MainPage() {
                   <div className="w-full p-2 flex items-center gap-2 bg-white rounded-full">
                     <input
                       type="text"
-                      className="outline-none text-white border-none pl-4 bg-transparent flex-1 text-sm sm:text-base font-semibold"
+                      className="outline-none text-black border-none pl-4 bg-transparent flex-1 text-sm sm:text-base font-semibold"
                       placeholder="About Bangladesh"
                       value={searchQuery}
                       onChange={handleSearch}
