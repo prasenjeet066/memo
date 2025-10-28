@@ -48,15 +48,9 @@ import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { TRANSFORMERS } from '@lexical/markdown';
+import { AdvancedTablePlugin } from "@/components/utils/editor/plugins/Table";
+import { TableNode, TableRowNode, TableCellNode } from "@lexical/table";
 
-import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
-import { TableCellActionMenuPlugin } from '@lexical/react/TableCellActionMenuPlugin';
-import {
-  INSERT_TABLE_COMMAND,
-  TableCellNode,
-  TableRowNode,
-  TableNode,
-} from "@lexical/table";
 import {
   $getRoot,
   $getSelection,
@@ -493,7 +487,9 @@ const [tableDialog, setTableDialog] = useState({
             alert('No citations added yet. Add citations first using the citation tool.');
           }
           break;
-          
+        case 'table':
+          editor.dispatchCommand(INSERT_TABLE_COMMAND, { rows: 3, columns: 3 })
+          break;
         case 'link':
           setLinkDialog({ open: true, text: '' });
           break;
@@ -1451,7 +1447,7 @@ break;
                     <LinkPlugin />
                     <ImagesPlugin/>
                     <ListPlugin />
-                    <TablePlugin/>
+                    <AdvancedTablePlugin/>
                     <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
                     <HtmlPlugin 
                       initialHtml={payload.content}
