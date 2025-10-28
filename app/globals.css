@@ -17,6 +17,30 @@ body {
   content: "";
   color: #210BFF;
 }
+.top-text {
+  margin-bottom: 0.75rem; /* mb-3 */
+  color: #6b7280; /* text-gray-500 */
+}
 
+.dark .top-text {
+  color: #9ca3af; /* dark:text-gray-400 */
+}
+
+.top-text::first-line {
+  text-transform: uppercase; /* first-line:uppercase */
+  letter-spacing: 0.1em; /* first-line:tracking-widest */
+}
+
+.top-text::first-letter {
+  font-size: 4.5rem; /* first-letter:text-7xl */
+  font-weight: 700; /* first-letter:font-bold */
+  color: #111827; /* first-letter:text-gray-900 */
+  margin-inline-end: 0.75rem; /* first-letter:me-3 */
+  float: left; /* first-letter:float-start */
+}
+
+.dark .top-text::first-letter {
+  color: #f3f4f6; /* dark:first-letter:text-gray-100 */
+}
 /* ==================== EDITOR LAYOUT ==================== */
   
