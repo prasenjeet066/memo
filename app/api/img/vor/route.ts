@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     // Enhanced parameters with defaults
     const imageUrl = searchParams.get("url") || 
       "https://www.pngitem.com/pimgs/m/333-3332655_lionel-messi-png-shot-transparent-png.png";
-    const pointDensity = parseInt(searchParams.get("density") || "1000000");
+    const pointDensity = parseInt(searchParams.get("density") || "10000");
     const style = searchParams.get("style") || "stroke"; // stroke, fill, mixed, stipple
     const colorMode = searchParams.get("color") || "original"; // original, grayscale, inverted, vibrant
     const edgeDetection = searchParams.get("edges") === "true";
