@@ -119,7 +119,7 @@ export default function MainPage() {
               <div className="flex items-center justify-center w-full mb-8">
                 <img
                   alt="Sample"
-                  className={`h-auto object-contain rounded-lg ${isMobile ? 'w-full' : 'w-full'}`}
+                  className={`h-auto object-contain rounded-lg ${isMobile ? 'w-full' : 'w-2/3'}`}
                   src="https://memoorg.vercel.app/api/img/vor"
                 />
               </div>
