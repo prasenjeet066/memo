@@ -721,7 +721,7 @@ export default function EnhancedEditor({
     };
   }, []);
   
-  const hasRegisteredRole = Array.isArray(session?.user?.role) && session.user.role.includes('REG');
+  const hasRegisteredRole = Array.isArray(session?.user?.role) && session.user.role.includes('ADMIN');
   
   // Dialog Components
   const LinkDialog = () => {
