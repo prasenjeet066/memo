@@ -186,7 +186,7 @@ export const Viewer = function({ __data }: Props) {
   {/* Article Content */}
   <div className="flex items-start justify-between">
     <div
-      className={`flex-1 overflow-auto bg-white relative prose max-w-none ${isMobile ? 'p-2' : 'p-4'}`}
+      className={`flex-1 overflow-x-scroll bg-white relative prose max-w-none ${isMobile ? 'p-2' : 'p-4'}`}
       dangerouslySetInnerHTML={{ __html: data?.content || '<p>No content available yet.</p>' }}
     />
   </div>
