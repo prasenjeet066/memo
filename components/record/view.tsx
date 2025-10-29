@@ -156,7 +156,8 @@ export const Viewer = function({ __data }: Props) {
       <h1 className="font-bold text-gray-900 text-lg sm:text-xl md:text-2xl">
         {data.title || 'Untitled Article'}
       </h1>
-      <div className="flex flex-1  w-full items-center justify-end border-l pl-2">
+      <div className="flex flex-1  w-full items-center justify-end border-l pl-2 gap-4">
+        <button className='bg-gray-50 p-2 rounded'><Fai icon='language'/></button>
       {isEditableForMe ? (
       
         <button
