@@ -215,7 +215,9 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
   
   if (isLoading) {
     return (
-      <Spinner/>
+      <div className= 'min-h-screen w-full bg-gray-50 h-screen flex items-center justify-center'>
+        <Spinner/>
+      </div>
     )
   }
   

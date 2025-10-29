@@ -5,7 +5,7 @@ import styled from 'styled-components';
 const Spinner = () => {
   return (
     <StyledWrapper>
-      <div className='flex items-center justify-between w-full h-full'>
+      
       <div className="dot-spinner">
         <div className="dot-spinner__dot" />
         <div className="dot-spinner__dot" />
@@ -16,7 +16,7 @@ const Spinner = () => {
         <div className="dot-spinner__dot" />
         <div className="dot-spinner__dot" />
       </div>
-      </div>
+      
     </StyledWrapper>
   );
 }
