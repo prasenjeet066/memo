@@ -41,7 +41,7 @@ const FontAwesomeIcon = ({
     thin: 'fat'
   };
   
-  const prefix = styleMap[style] || 'fas';
+  const prefix = 'far' //styleMap[style] || 'fas';
   
   // Build class names
   const classes = [
