@@ -11,6 +11,7 @@ import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
 import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
+import TableActionMenuPlugin from '@/components/utils/editor/plugins/TableActionMenuPlugin'
 import { TRANSFORMERS } from '@lexical/markdown';
 import { UNDO_COMMAND, REDO_COMMAND, LexicalEditor } from 'lexical';
 
@@ -198,7 +199,8 @@ export default function EnhancedEditor({
     if (!lexicalEditorRef.current) return;
     console.log('Replace functionality - simplified version');
   }, []);
-  
+  const [floatingAnchorElem, setFloatingAnchorElem] =
+    useState<HTMLDivElement | null>(null);
   const handlePublishSubmit = async (summary: string) => {
     setPublishStatus({ type: 'loading', message: 'Publishing...' });
     
@@ -214,7 +216,12 @@ export default function EnhancedEditor({
       });
     }
   };
-  
+  const onRef = (_floatingAnchorElem: HTMLDivElement) => {
+    if (_floatingAnchorElem !== null) {
+      setFloatingAnchorElem(_floatingAnchorElem);
+    }
+  };
+
   // Monitor publish result
   useEffect(() => {
     if (isSuccesfullCreated !== null) {
@@ -355,7 +362,7 @@ export default function EnhancedEditor({
         ) : (
           <div className="p-8 w-full min-h-full" style={{ maxWidth: '900px', margin: '0 auto' }}>
             <LexicalComposer initialConfig={initialConfig}>
-              <div className="relative">
+              <div className="relative" ref= {onRef}>
                 <RichTextPlugin
                   contentEditable={
                     <ContentEditable 
@@ -376,7 +383,12 @@ export default function EnhancedEditor({
                 <ListPlugin />
                
                <TablePlugin/>
-                <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+               {
+                 floatingAnchorElem!==null && (
+                   <TableActionMenuPlugin anchorElem={floatingAnchorElem}
+                  cellMerge={true}/>
+                 )
+               } <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
                 <HtmlPlugin 
                   initialHtml={payload.content}
                   onHtmlChange={handleLexicalChange}
