@@ -1,7 +1,13 @@
 import React, { useCallback, useState, useEffect } from "react";
 import { $createTableNode, $isTableNode, TableNode } from "@/components/utils/editor/nodes/TableNode";
-import { $getSelection, $getNodeByKey, SELECTION_CHANGE_COMMAND } from "lexical";
-import { LexicalEditor } from "lexical";
+import {
+  LexicalEditor,
+  $getSelection,
+  $getNodeByKey,
+  SELECTION_CHANGE_COMMAND,
+  COMMAND_PRIORITY_LOW,
+} from "lexical";
+
 import { Button } from "@/components/ui/button";
 import { Plus, Minus, Table } from "lucide-react";
 
@@ -42,7 +48,7 @@ export function TableToolbar({ editor }: TableToolbarProps) {
         });
         return false;
       },
-      1 // COMMAND_PRIORITY_LOW
+      COMMAND_PRIORITY_LOW
     );
   }, [editor]);
   
