@@ -226,17 +226,18 @@ export default function TableActionMenuPlugin({
     });
   }, [editor]);
   
-  return createPortal(
-    isEditable ? (
-      <motion.div
-        initial={{ opacity: 0, y: -5 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="fixed top-20 right-4 z-50"
-        style={{ position: 'fixed' }}
-      >
-        <TableActionMenu cellMerge={cellMerge} />
-      </motion.div>
-    ) : null,
-    anchorElem
+  if (!isEditable) return null;
+  
+  const menu = (
+    <motion.div
+      initial={{ opacity: 0, y: -5 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="absolute top-20 right-4 z-50"
+    >
+      <TableActionMenu cellMerge={cellMerge} />
+    </motion.div>
   );
+  
+  //  Use portal to render inside `anchorElem`
+  return createPortal(menu, anchorElem);
 }
