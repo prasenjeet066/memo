@@ -48,7 +48,7 @@ import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { TRANSFORMERS } from '@lexical/markdown';
-import { TablePlugin , InsertTableDialog} from "@/components/utils/editor/plugins/Table";
+import { TablePlugin} from "@/components/utils/editor/plugins/Table";
 import {
   TableNode,
   TableRowNode,
@@ -847,7 +847,53 @@ break;
       </Dialog>
     );
   };
+  const InsertTableDialog =()=>{
+  const [rows, setRows] = useState('5');
+  const [columns, setColumns] = useState('5');
+  const [isDisabled, setIsDisabled] = useState(true);
   
+  useEffect(() => {
+    const row = Number(rows);
+    const column = Number(columns);
+    setIsDisabled(!(row > 0 && row <= 500 && column > 0 && column <= 50));
+  }, [rows, columns]);
+  
+  const onClick = () => {
+    lexicalEditorRef.current.dispatchCommand(INSERT_TABLE_COMMAND, { columns, rows });
+    onClose();
+  };
+  
+  return (
+    <Dialog open={isTableDialog} onOpenChange={(open) => setTableDialog(false)}>
+      <DialogContent className="sm:max-w-[425px] bg-white rounded">
+        <DialogHeader>
+          <DialogTitle>Insert Table</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <Input
+            type="number"
+            placeholder="# of rows (1-500)"
+            value={rows}
+            onChange={(e) => setRows(e.currentTarget.value)}
+            aria-label="Rows"
+          />
+          <Input
+            type="number"
+            placeholder="# of columns (1-50)"
+            value={columns}
+            onChange={(e) => setColumns(e.currentTarget.value)}
+            aria-label="Columns"
+          />
+        </div>
+        <DialogFooter>
+          <Button disabled={isDisabled} onClick={onClick}>
+            Confirm
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
   const CitationDialog = () => (
     <Dialog open={citationDialog.open} onOpenChange={(open) => 
       setCitationDialog({ open, author: '', title: '', url: '', date: '' })
@@ -1522,8 +1568,8 @@ break;
           <ImageDialog />
           <VideoDialog />
           <FindReplaceDialog />
-          {isTableDialog && <InsertTableDialog/>
-           }
+          <InsertTableDialog/>
+           
           <PublishDialog />
     </div>
   );
