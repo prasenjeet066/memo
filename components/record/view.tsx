@@ -45,7 +45,7 @@ export const Viewer = function({ __data }: Props) {
     ],
     []
   )
-  const [activePaper , setActivePaper] = useState('overview')
+  const [activePaper, setActivePaper] = useState('overview')
   const handleSideBarTools = (arg: React.ReactNode) => {
     setCurrentSidebar(arg)
   }
@@ -149,40 +149,43 @@ export const Viewer = function({ __data }: Props) {
   }
   
   return (
-  <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col">
   {/* Header / Title */}
   <div className="px-4 w-full py-3 flex items-center justify-between">
-    <div className="flex flex-row items-center justify-between gap-4 ">
-      <h1 className="font-bold text-gray-900 text-lg sm:text-xl w-full md:text-2xl">
-        {data.title || 'Untitled Article'}
-      </h1>
-      <div className="flex items-center justify-end border-l pl-2 gap-4">
-        <button className='border  p-2 rounded'><Fai icon='language'/></button>
-      {isEditableForMe ? (
-      
-        <button
-          className="px-4 py-2 bg-gray-900 text-white  m-2 rounded-full text-sm sm:text-base"
-          aria-label="Edit document"
-          type="button"
-          onClick={() => gotoEditPage(true)}
-          title="Edit Article"
-        >
-          <Fai icon = 'arrow-right' className='mr-2'/>
-          {'Edit Article'}
-        </button>
-      ) : (
-        <button
-          disabled={true}
-          className="px-4 py-2 bg-gray-100 text-gray-600 transition-colors m-2 rounded-full text-sm sm:text-base flex items-center"
-          title="Read-only access"
-        >
-          <Fai icon="lock" className="mr-2" />
-          View Only
-        </button>
-      )}
-    </div>
-    </div>
+  {/* Left section — title */}
+  <h1 className="font-bold text-gray-900 text-lg sm:text-xl md:text-2xl truncate">
+    {data.title || 'Untitled Article'}
+  </h1>
+
+  {/* Right section — actions */}
+  <div className="flex items-center gap-4 border-l pl-4 ml-4">
+    <button className="border p-2 rounded">
+      <Fai icon="language" />
+    </button>
+
+    {isEditableForMe ? (
+      <button
+        className="px-4 py-2 bg-gray-900 text-white rounded-full text-sm sm:text-base flex items-center gap-2"
+        aria-label="Edit document"
+        type="button"
+        onClick={() => gotoEditPage(true)}
+        title="Edit Article"
+      >
+        <Fai icon="arrow-right" />
+        Edit Article
+      </button>
+    ) : (
+      <button
+        disabled
+        className="px-4 py-2 bg-gray-100 text-gray-600 rounded-full text-sm sm:text-base flex items-center gap-2 cursor-not-allowed"
+        title="Read-only access"
+      >
+        <Fai icon="lock" />
+        View Only
+      </button>
+    )}
   </div>
+</div>
 
   {/* Action Buttons */}
   <div className = 'flex px-4 border-b pb-2 w-full mb-2 items-center gap-4 justify-start'>
