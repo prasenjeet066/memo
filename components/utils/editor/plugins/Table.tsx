@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $createTableNode, $isTableNode } from "./TableNode";
+import { $createTableNode, $isTableNode } from "@/components/utils/editor/nodes/TableNode";
 import { $getSelection, $getNodeByKey } from "lexical";
 import { Button } from "@/components/ui/button"; // assuming shadcn/ui
 import { Plus, Minus, Table } from "lucide-react";
