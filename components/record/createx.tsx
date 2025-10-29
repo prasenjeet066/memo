@@ -327,14 +327,14 @@ export default function EnhancedEditor({
         readingTime={readingTime}
         autoSaveStatus={autoSaveStatus}
       />
-      {toolbar !== null ? (
+    
       
       <EditorToolbar
         editorMode={editorMode}
         onAction={executeCommand}
         onPublish={handlePublish}
       />
-      ):toolbar}
+      
 
       <div className="flex-1 overflow-auto bg-white relative">
         {showPreview ? (
