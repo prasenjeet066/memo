@@ -1,13 +1,12 @@
 "use client";
 
 import * as React from "react";
-import {useLexicalEditable} from '@lexical/react/useLexicalEditable';
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuSub,
@@ -15,35 +14,24 @@ import {
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
-import {
-  useLexicalComposerContext
-} from "@lexical/react/LexicalComposerContext";
 
 import {
-  $computeTableMapSkipCellCheck,
   $deleteTableColumnAtSelection,
   $deleteTableRowAtSelection,
   $getNodeTriplet,
-  $getTableCellNodeFromLexicalNode,
-  $getTableColumnIndexFromTableCellNode,
-  $getTableNodeFromLexicalNodeOrThrow,
-  $getTableRowIndexFromTableCellNode,
   $insertTableColumnAtSelection,
   $insertTableRowAtSelection,
   $isTableCellNode,
   $isTableSelection,
   $mergeCells,
   $unmergeCell,
-  TableCellHeaderStates,
   TableCellNode,
 } from "@lexical/table";
 import {
   $getSelection,
   $isRangeSelection,
-  $setSelection,
 } from "lexical";
 import { createPortal } from "react-dom";
 import ColorPicker from "@/components/ui/ColorPicker";
@@ -150,7 +138,7 @@ function TableActionMenu({
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <Button size="sm" variant="ghost" className="flex items-center gap-1">
-            <i className="lucide-chevron-down" /> Table Actions
+            <span className="mr-1">▼</span> Table Actions
           </Button>
         </DropdownMenuTrigger>
 
@@ -220,8 +208,15 @@ export default function TableActionMenuPlugin({
   anchorElem ? : HTMLElement;
   cellMerge ? : boolean;
 }) {
-  const isEditable = useLexicalEditable();
   const [editor] = useLexicalComposerContext();
+  const [isEditable, setIsEditable] = React.useState(false);
+  
+  React.useEffect(() => {
+    setIsEditable(editor.isEditable());
+    return editor.registerEditableListener((editable) => {
+      setIsEditable(editable);
+    });
+  }, [editor]);
   
   return createPortal(
     isEditable ? (
@@ -230,7 +225,7 @@ export default function TableActionMenuPlugin({
         animate={{ opacity: 1, y: 0 }}
         className="absolute top-2 right-2 z-50"
       >
-        <TableActionMenu tableCellNode={new TableCellNode()} cellMerge={cellMerge} />
+        <TableActionMenu cellMerge={cellMerge} />
       </motion.div>
     ) : null,
     anchorElem
