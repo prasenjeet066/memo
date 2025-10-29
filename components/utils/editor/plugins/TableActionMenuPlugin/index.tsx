@@ -1,9 +1,7 @@
-"use client";
-
+'use client'
 import * as React from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { Button } from "@/components/ui/button";
-import { createPortal } from "react-dom";
 import {
   $deleteTableColumnAtSelection,
   $deleteTableRowAtSelection,
@@ -128,7 +126,7 @@ export default function TableActionMenuPlugin({
   anchorElem,
   cellMerge = true,
 }: {
-  anchorElem ? : HTMLElement;
+  anchorElem ? : (menu: React.ReactNode) => void;
   cellMerge ? : boolean;
 }) {
   const [editor] = useLexicalComposerContext();
@@ -139,12 +137,15 @@ export default function TableActionMenuPlugin({
     return editor.registerEditableListener(setIsEditable);
   }, [editor]);
   
+  const menu = React.useMemo(() => <TableActionMenu cellMerge={cellMerge} />, [cellMerge]);
+  
+  React.useEffect(() => {
+    if (isEditable && anchorElem) {
+      anchorElem(menu);
+    }
+  }, [menu, isEditable, anchorElem]);
+  
   if (!isEditable) return null;
   
-  const menu = <TableActionMenu cellMerge={cellMerge} />;
-  React.useEffect(() => {
-    anchorElem(menu)
-  }, [menu])
-  // Properly render inside anchorElem using a portal
-  
+  return null;
 }
