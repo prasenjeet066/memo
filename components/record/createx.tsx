@@ -1457,7 +1457,10 @@ break;
                     <LinkPlugin />
                     <ImagesPlugin/>
                     <ListPlugin />
-                    <TablePlugin/>
+                    <TablePlugin 
+                    cellEditorConfig = {initialConfig}
+                    children = {null}
+                    />
                     <TableActionMenuPlugin/>
                     <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
                     <HtmlPlugin 
