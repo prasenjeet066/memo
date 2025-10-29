@@ -33,9 +33,9 @@ import { ImagesPlugin } from '@/components/utils/editor/plugins/Image';
 import { TablePlugin } from '@/components/utils/editor/plugins/Table';
 import TableActionMenuPlugin from '@/components/utils/editor/plugins/TableActionMenuPlugin';
 
-import { EditorHeader } from './EditorHeader';
-import { EditorToolbar } from './EditorToolbar';
-import { EditorStatusBar } from './EditorStatusBar';
+import { EditorHeader } from '@/components/editor/EditorHeader';
+import { EditorToolbar } from '@/components/editor/EditorToolbar';
+import { EditorStatusBar } from '@/components/editor/EditorStatusBar';
 
 export default function EnhancedEditor({
   editor_mode = 'visual',
