@@ -31,7 +31,6 @@ import {
 
 import { ImagesPlugin } from '@/components/utils/editor/plugins/Image';
 import { TablePlugin } from '@/components/utils/editor/plugins/Table';
-import TableActionMenuPlugin from '@/components/utils/editor/plugins/TableActionMenuPlugin';
 
 import { EditorHeader } from '@/components/editor/EditorHeader';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
@@ -374,8 +373,8 @@ export default function EnhancedEditor({
                 <LinkPlugin />
                 <ImagesPlugin />
                 <ListPlugin />
-                <TablePlugin cellEditorConfig={initialConfig} children={null} />
-                <TableActionMenuPlugin />
+                <TablePlugin/>
+
                 <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
                 <HtmlPlugin 
                   initialHtml={payload.content}
