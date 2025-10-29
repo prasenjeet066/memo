@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import {useLexicalEditable} from '@lexical/react/useLexicalEditable';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,26 +70,12 @@ function $canUnmerge() {
   const [cell] = $getNodeTriplet(selection.anchor);
   return cell.__colSpan > 1 || cell.__rowSpan > 1;
 }
-function useLexicalEditable(): boolean {
-  const [editor] = useLexicalComposerContext();
-  const [isEditable, setIsEditable] = React.useState(editor.isEditable());
-  
-  React.useEffect(() => {
-    return editor.registerEditableListener((editable) => {
-      setIsEditable(editable);
-    });
-  }, [editor]);
-  
-  return isEditable;
-}
+
 function TableActionMenu({
-  tableCellNode,
   cellMerge,
 }: {
-  tableCellNode: TableCellNode;
   cellMerge: boolean;
 }) {
-  
   const [editor] = useLexicalComposerContext();
   const [open, setOpen] = React.useState(false);
   const [colorPickerOpen, setColorPickerOpen] = React.useState(false);
