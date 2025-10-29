@@ -1522,9 +1522,8 @@ break;
           <ImageDialog />
           <VideoDialog />
           <FindReplaceDialog />
-          {
-            isTableDialog && <InsertTableDialog/>
-          }
+          {isTableDialog && <InsertTableDialog/>
+           }
           <PublishDialog />
     </div>
   );
