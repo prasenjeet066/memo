@@ -213,7 +213,11 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
     fetchRecord()
   }, [slug])
   
-  
+  if (isLoading) {
+    return (
+      <Spinner/>
+    )
+  }
   
   if (isExistArticel && recordJdata) {
     return (
@@ -224,9 +228,9 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
          
           <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
             { ! isMobile && Sidebar}
-            {isLoading ? <Spinner/> : 
+             
             <Viewer __data={recordJdata} />
-            }
+            
           </div>
               <footer className="w-full bg-white py-6 px-4 mt-auto">
               <div className="max-w-6xl mx-auto">
