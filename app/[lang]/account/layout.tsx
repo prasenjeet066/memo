@@ -20,7 +20,7 @@ type Props = {
   children: React.ReactNode
 }
 
-export default function LocaleLayout({ children , exist , notfound}: Props) {
+export default function LocaleLayout({ children}: Props) {
   return (
     <html lang="en">
       <head>
