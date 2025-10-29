@@ -1,135 +1,125 @@
-import React from "react";
+import React from 'react';
+import styled from 'styled-components';
 
-interface SpinnerProps {
-  size ? : "sm" | "md" | "lg";
-  fullScreen ? : boolean;
-  className ? : string;
-}
-
-export default function Spinner({
-  size = "md",
-  fullScreen = true,
-  className = ""
-}: SpinnerProps) {
-  const sizeClasses = {
-    sm: "w-4 h-4",
-    md: "w-8 h-8",
-    lg: "w-12 h-12"
-  };
-  
-  const containerClasses = fullScreen ?
-    "min-h-screen w-full flex items-center justify-center bg-red-500" :
-    "flex items-center justify-center p-4";
-  
+const Loader = () => {
   return (
-    <div className={`${containerClasses} ${className}`}>
-      <div className={`relative ${sizeClasses[size]}`}>
-        <style jsx>{`
-          @keyframes spin {
-            0%, 100% {
-              box-shadow: 
-                0em -2.6em 0em 0em currentColor,
-                1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2),
-                2.5em 0em 0 0em rgba(255, 255, 255, 0.2),
-                1.75em 1.75em 0 0em rgba(255, 255, 255, 0.2),
-                0em 2.5em 0 0em rgba(255, 255, 255, 0.2),
-                -1.8em 1.8em 0 0em rgba(255, 255, 255, 0.2),
-                -2.6em 0em 0 0em rgba(255, 255, 255, 0.5),
-                -1.8em -1.8em 0 0em rgba(255, 255, 255, 0.7);
-            }
-            12.5% {
-              box-shadow: 
-                0em -2.6em 0em 0em rgba(255, 255, 255, 0.7),
-                1.8em -1.8em 0 0em currentColor,
-                2.5em 0em 0 0em rgba(255, 255, 255, 0.2),
-                1.75em 1.75em 0 0em rgba(255, 255, 255, 0.2),
-                0em 2.5em 0 0em rgba(255, 255, 255, 0.2),
-                -1.8em 1.8em 0 0em rgba(255, 255, 255, 0.2),
-                -2.6em 0em 0 0em rgba(255, 255, 255, 0.2),
-                -1.8em -1.8em 0 0em rgba(255, 255, 255, 0.5);
-            }
-            25% {
-              box-shadow: 
-                0em -2.6em 0em 0em rgba(255, 255, 255, 0.5),
-                1.8em -1.8em 0 0em rgba(255, 255, 255, 0.7),
-                2.5em 0em 0 0em currentColor,
-                1.75em 1.75em 0 0em rgba(255, 255, 255, 0.2),
-                0em 2.5em 0 0em rgba(255, 255, 255, 0.2),
-                -1.8em 1.8em 0 0em rgba(255, 255, 255, 0.2),
-                -2.6em 0em 0 0em rgba(255, 255, 255, 0.2),
-                -1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2);
-            }
-            37.5% {
-              box-shadow: 
-                0em -2.6em 0em 0em rgba(255, 255, 255, 0.2),
-                1.8em -1.8em 0 0em rgba(255, 255, 255, 0.5),
-                2.5em 0em 0 0em rgba(255, 255, 255, 0.7),
-                1.75em 1.75em 0 0em currentColor,
-                0em 2.5em 0 0em rgba(255, 255, 255, 0.2),
-                -1.8em 1.8em 0 0em rgba(255, 255, 255, 0.2),
-                -2.6em 0em 0 0em rgba(255, 255, 255, 0.2),
-                -1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2);
-            }
-            50% {
-              box-shadow: 
-                0em -2.6em 0em 0em rgba(255, 255, 255, 0.2),
-                1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2),
-                2.5em 0em 0 0em rgba(255, 255, 255, 0.5),
-                1.75em 1.75em 0 0em rgba(255, 255, 255, 0.7),
-                0em 2.5em 0 0em currentColor,
-                -1.8em 1.8em 0 0em rgba(255, 255, 255, 0.2),
-                -2.6em 0em 0 0em rgba(255, 255, 255, 0.2),
-                -1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2);
-            }
-            62.5% {
-              box-shadow: 
-                0em -2.6em 0em 0em rgba(255, 255, 255, 0.2),
-                1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2),
-                2.5em 0em 0 0em rgba(255, 255, 255, 0.2),
-                1.75em 1.75em 0 0em rgba(255, 255, 255, 0.5),
-                0em 2.5em 0 0em rgba(255, 255, 255, 0.7),
-                -1.8em 1.8em 0 0em currentColor,
-                -2.6em 0em 0 0em rgba(255, 255, 255, 0.2),
-                -1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2);
-            }
-            75% {
-              box-shadow: 
-                0em -2.6em 0em 0em rgba(255, 255, 255, 0.2),
-                1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2),
-                2.5em 0em 0 0em rgba(255, 255, 255, 0.2),
-                1.75em 1.75em 0 0em rgba(255, 255, 255, 0.2),
-                0em 2.5em 0 0em rgba(255, 255, 255, 0.5),
-                -1.8em 1.8em 0 0em rgba(255, 255, 255, 0.7),
-                -2.6em 0em 0 0em currentColor,
-                -1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2);
-            }
-            87.5% {
-              box-shadow: 
-                0em -2.6em 0em 0em rgba(255, 255, 255, 0.2),
-                1.8em -1.8em 0 0em rgba(255, 255, 255, 0.2),
-                2.5em 0em 0 0em rgba(255, 255, 255, 0.2),
-                1.75em 1.75em 0 0em rgba(255, 255, 255, 0.2),
-                0em 2.5em 0 0em rgba(255, 255, 255, 0.2),
-                -1.8em 1.8em 0 0em rgba(255, 255, 255, 0.5),
-                -2.6em 0em 0 0em rgba(255, 255, 255, 0.7),
-                -1.8em -1.8em 0 0em currentColor;
-            }
-          }
-          
-          .spinner-element {
-            border-radius: 50%;
-            width: 1em;
-            height: 1em;
-            font-size: 10px;
-            position: relative;
-            text-indent: -9999em;
-            animation: spin 1.1s infinite ease;
-            transform: translateZ(0);
-            color: #ffffff;
-          }
-        `}</style>
-        <span className="spinner-element" />
+    <StyledWrapper>
+      <div className="dot-spinner">
+        <div className="dot-spinner__dot" />
+        <div className="dot-spinner__dot" />
+        <div className="dot-spinner__dot" />
+        <div className="dot-spinner__dot" />
+        <div className="dot-spinner__dot" />
+        <div className="dot-spinner__dot" />
+        <div className="dot-spinner__dot" />
+        <div className="dot-spinner__dot" />
       </div>
-    </div>
+    </StyledWrapper>
   );
 }
+
+const StyledWrapper = styled.div`
+  .dot-spinner {
+    --uib-size: 2.8rem;
+    --uib-speed: .9s;
+    --uib-color: #183153;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    height: var(--uib-size);
+    width: var(--uib-size);
+  }
+
+  .dot-spinner__dot {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100%;
+    width: 100%;
+  }
+
+  .dot-spinner__dot::before {
+    content: '';
+    height: 20%;
+    width: 20%;
+    border-radius: 50%;
+    background-color: var(--uib-color);
+    transform: scale(0);
+    opacity: 0.5;
+    animation: pulse0112 calc(var(--uib-speed) * 1.111) ease-in-out infinite;
+  }
+
+  .dot-spinner__dot:nth-child(2) {
+    transform: rotate(45deg);
+  }
+
+  .dot-spinner__dot:nth-child(2)::before {
+    animation-delay: calc(var(--uib-speed) * -0.875);
+  }
+
+  .dot-spinner__dot:nth-child(3) {
+    transform: rotate(90deg);
+  }
+
+  .dot-spinner__dot:nth-child(3)::before {
+    animation-delay: calc(var(--uib-speed) * -0.75);
+  }
+
+  .dot-spinner__dot:nth-child(4) {
+    transform: rotate(135deg);
+  }
+
+  .dot-spinner__dot:nth-child(4)::before {
+    animation-delay: calc(var(--uib-speed) * -0.625);
+  }
+
+  .dot-spinner__dot:nth-child(5) {
+    transform: rotate(180deg);
+  }
+
+  .dot-spinner__dot:nth-child(5)::before {
+    animation-delay: calc(var(--uib-speed) * -0.5);
+  }
+
+  .dot-spinner__dot:nth-child(6) {
+    transform: rotate(225deg);
+  }
+
+  .dot-spinner__dot:nth-child(6)::before {
+    animation-delay: calc(var(--uib-speed) * -0.375);
+  }
+
+  .dot-spinner__dot:nth-child(7) {
+    transform: rotate(270deg);
+  }
+
+  .dot-spinner__dot:nth-child(7)::before {
+    animation-delay: calc(var(--uib-speed) * -0.25);
+  }
+
+  .dot-spinner__dot:nth-child(8) {
+    transform: rotate(315deg);
+  }
+
+  .dot-spinner__dot:nth-child(8)::before {
+    animation-delay: calc(var(--uib-speed) * -0.125);
+  }
+
+  @keyframes pulse0112 {
+    0%,
+    100% {
+      transform: scale(0);
+      opacity: 0.5;
+    }
+
+    50% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }`;
+
+export default Loader;
