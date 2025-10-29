@@ -74,16 +74,22 @@ function TableActionMenu({
   const [backgroundColor, setBackgroundColor] = React.useState("");
   const [canMerge, setCanMerge] = React.useState(false);
   const [canUnmerge, setCanUnmerge] = React.useState(false);
+  const [showMenu, setShowMenu] = React.useState(false);
   
   React.useEffect(() => {
-    editor.getEditorState().read(() => {
-      const selection = $getSelection();
-      if ($isTableSelection(selection)) {
-        const counts = computeSelectionCount(selection);
-        setSelectionCounts(counts);
-        setCanMerge(counts.columns > 1 || counts.rows > 1);
-      }
-      setCanUnmerge($canUnmerge());
+    return editor.registerUpdateListener(({ editorState }) => {
+      editorState.read(() => {
+        const selection = $getSelection();
+        if ($isTableSelection(selection)) {
+          const counts = computeSelectionCount(selection);
+          setSelectionCounts(counts);
+          setCanMerge(counts.columns > 1 || counts.rows > 1);
+          setShowMenu(true);
+        } else {
+          setShowMenu(false);
+        }
+        setCanUnmerge($canUnmerge());
+      });
     });
   }, [editor]);
   
@@ -132,6 +138,8 @@ function TableActionMenu({
   
   const handleDeleteRow = () => editor.update(() => $deleteTableRowAtSelection());
   const handleDeleteColumn = () => editor.update(() => $deleteTableColumnAtSelection());
+  
+  if (!showMenu) return null;
   
   return (
     <>
@@ -223,7 +231,8 @@ export default function TableActionMenuPlugin({
       <motion.div
         initial={{ opacity: 0, y: -5 }}
         animate={{ opacity: 1, y: 0 }}
-        className="absolute top-2 right-2 z-50"
+        className="fixed top-20 right-4 z-50"
+        style={{ position: 'fixed' }}
       >
         <TableActionMenu cellMerge={cellMerge} />
       </motion.div>
