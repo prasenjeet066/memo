@@ -31,6 +31,7 @@ import {
 
 import { ImagesPlugin } from '@/components/utils/editor/plugins/Image';
 //import { TableToolbar } from '@/components/utils/editor/plugins/Table';
+import {TablePlugin} from '@lexical/react/LexicalTablePlugin';
 
 import { EditorHeader } from '@/components/editor/EditorHeader';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
@@ -374,7 +375,7 @@ export default function EnhancedEditor({
                 <ImagesPlugin />
                 <ListPlugin />
                
-
+               <TablePlugin/>
                 <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
                 <HtmlPlugin 
                   initialHtml={payload.content}

@@ -34,7 +34,7 @@ import {
 interface LinkDialogProps {
   state: LinkDialogState;
   setState: (state: LinkDialogState) => void;
-  editorRef: React.MutableRefObject<LexicalEditor | null>;
+  editorRef: React.MutableRefObject < LexicalEditor | null > ;
 }
 
 export function LinkDialog({ state, setState, editorRef }: LinkDialogProps) {
@@ -163,7 +163,7 @@ export function CitationDialog({ state, setState, onAddCitation }: CitationDialo
 interface ImageDialogProps {
   state: ImageDialogState;
   setState: (state: ImageDialogState) => void;
-  editorRef: React.MutableRefObject<LexicalEditor | null>;
+  editorRef: React.MutableRefObject < LexicalEditor | null > ;
 }
 
 export function ImageDialog({ state, setState, editorRef }: ImageDialogProps) {
@@ -215,7 +215,7 @@ export function ImageDialog({ state, setState, editorRef }: ImageDialogProps) {
 interface VideoDialogProps {
   state: VideoDialogState;
   setState: (state: VideoDialogState) => void;
-  editorRef: React.MutableRefObject<LexicalEditor | null>;
+  editorRef: React.MutableRefObject < LexicalEditor | null > ;
 }
 
 export function VideoDialog({ state, setState, editorRef }: VideoDialogProps) {
@@ -271,7 +271,7 @@ export function VideoDialog({ state, setState, editorRef }: VideoDialogProps) {
 interface TableDialogProps {
   isOpen: boolean;
   setIsOpen: (state: boolean) => void;
-  editorRef: React.MutableRefObject<LexicalEditor | null>;
+  editorRef: React.MutableRefObject < LexicalEditor | null > ;
 }
 
 export function TableDialog({ isOpen, setIsOpen, editorRef }: TableDialogProps) {
@@ -286,7 +286,11 @@ export function TableDialog({ isOpen, setIsOpen, editorRef }: TableDialogProps) 
   }, [rows, columns]);
   
   const onClick = () => {
-    editorRef.current?.dispatchCommand(INSERT_TABLE_COMMAND, { columns, rows });
+    editorRef.current?.dispatchCommand(INSERT_TABLE_COMMAND, {
+      columns: String(columns),
+      includeHeaders: true,
+      rows: String(rows),
+    });
     setIsOpen(false);
   };
   
@@ -488,7 +492,7 @@ export function PublishDialog({ state, setState, publishStatus, onPublish }: Pub
             )}
           </Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </DialogContent> 
+      </Dialog>
   );
 }
