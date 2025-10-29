@@ -32,7 +32,7 @@ import {
 
 import { ImagesPlugin } from '@/components/utils/editor/plugins/Image';
 //import { TableToolbar } from '@/components/utils/editor/plugins/Table';
-import {TablePlugin} from '@lexical/react/LexicalTablePlugin';
+import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
 
 import { EditorHeader } from '@/components/editor/EditorHeader';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
@@ -46,22 +46,22 @@ export default function EnhancedEditor({
   __data,
 }: EditorProps) {
   // States
-  const [editorMode, setEditorMode] = useState<'visual' | 'code'>(editor_mode);
-  const [payload, setPayload] = useState({ 
+  const [editorMode, setEditorMode] = useState < 'visual' | 'code' > (editor_mode);
+  const [payload, setPayload] = useState({
     slug: __data?.slug || '',
-    title: __data?.title || '', 
-    content: __data?.content || '' 
+    title: __data?.title || '',
+    content: __data?.content || ''
   });
   
-  const [citations, setCitations] = useState<Citation[]>([]);
+  const [citations, setCitations] = useState < Citation[] > ([]);
   const [showPreview, setShowPreview] = useState(false);
   const [wordCount, setWordCount] = useState(0);
   const [characterCount, setCharacterCount] = useState(0);
   const [readingTime, setReadingTime] = useState(0);
-  const [autoSaveStatus, setAutoSaveStatus] = useState<AutoSaveStatus>('saved');
+  const [autoSaveStatus, setAutoSaveStatus] = useState < AutoSaveStatus > ('saved');
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
-  const [publishStatus, setPublishStatus] = useState<PublishStatus | null>(null);
+  const [publishStatus, setPublishStatus] = useState < PublishStatus | null > (null);
   
   // Dialog states
   const [linkDialog, setLinkDialog] = useState({ open: false, text: '' });
@@ -84,9 +84,9 @@ export default function EnhancedEditor({
   
   // Refs
   const { data: session } = useSession();
-  const lexicalEditorRef = useRef<LexicalEditor | null>(null);
-  const monacoEditorRef = useRef<any>(null);
-  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lexicalEditorRef = useRef < LexicalEditor | null > (null);
+  const monacoEditorRef = useRef < any > (null);
+  const autoSaveTimerRef = useRef < NodeJS.Timeout | null > (null);
   
   // Initialize data
   useEffect(() => {
@@ -120,7 +120,7 @@ export default function EnhancedEditor({
   }, [calculateStats]);
   
   // Citation management
-  const addCitation = useCallback((citation: Omit<Citation, 'id'>) => {
+  const addCitation = useCallback((citation: Omit < Citation, 'id' > ) => {
     const newCitation: Citation = {
       ...citation,
       id: generateCitationId(),
@@ -143,6 +143,24 @@ export default function EnhancedEditor({
     return newCitation.id;
   }, [citations.length]);
   
+  useEffect(() => {
+    if (!lexicalEditorRef.current) return;
+    
+    const editor = lexicalEditorRef.current;
+    
+    return editor.registerUpdateListener(({ editorState }) => {
+      editorState.read(() => {
+        const selection = editor.getEditorState().read(() => window.getSelection());
+        const tableElem = selection?.anchorNode?.closest?.('table');
+        
+        if (tableElem && floatingAnchorElem !== tableElem) {
+          setFloatingAnchorElem(tableElem as HTMLDivElement);
+        } else if (!tableElem && floatingAnchorElem) {
+          setFloatingAnchorElem(null);
+        }
+      });
+    });
+  }, [floatingAnchorElem]);
   const generateRefs = useCallback(() => {
     return generateReferencesSection(citations);
   }, [citations]);
@@ -161,7 +179,7 @@ export default function EnhancedEditor({
   );
   
   // Code editor change
-  const handleEditorContentChangeCode = useCallback((value?: string) => {
+  const handleEditorContentChangeCode = useCallback((value ? : string) => {
     setPayload(prev => ({ ...prev, content: value || '' }));
     setAutoSaveStatus('unsaved');
     
@@ -200,7 +218,7 @@ export default function EnhancedEditor({
     console.log('Replace functionality - simplified version');
   }, []);
   const [floatingAnchorElem, setFloatingAnchorElem] =
-    useState<HTMLDivElement | null>(null);
+  useState < HTMLDivElement | null > (null);
   const handlePublishSubmit = async (summary: string) => {
     setPublishStatus({ type: 'loading', message: 'Publishing...' });
     
@@ -221,7 +239,7 @@ export default function EnhancedEditor({
       setFloatingAnchorElem(_floatingAnchorElem);
     }
   };
-
+  
   // Monitor publish result
   useEffect(() => {
     if (isSuccesfullCreated !== null) {
