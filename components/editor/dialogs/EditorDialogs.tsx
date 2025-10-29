@@ -298,12 +298,13 @@ export function TableDialog({ isOpen, setIsOpen, editorRef }: TableDialogProps) 
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-[425px] bg-white rounded">
         <DialogHeader>
-          <DialogTitle>Insert Table</DialogTitle>
+          <DialogTitle>Table Options</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="flex flex-row items-center justify-between gap-4 py-4">
           <Input
             type="number"
             placeholder="# of rows (1-500)"
+            className ='outline-none border-gray-50 rounded-r-none'
             value={rows}
             onChange={(e) => setRows(e.currentTarget.value)}
             aria-label="Rows"
@@ -311,14 +312,17 @@ export function TableDialog({ isOpen, setIsOpen, editorRef }: TableDialogProps) 
           <Input
             type="number"
             placeholder="# of columns (1-50)"
+            className ='outline-none border-gray-50 rounded-l-none'
             value={columns}
             onChange={(e) => setColumns(e.currentTarget.value)}
             aria-label="Columns"
           />
         </div>
         <DialogFooter>
-          <Button disabled={isDisabled} onClick={onClick}>
-            Confirm
+          <Button disabled={isDisabled}
+          className='bg-gray-900 text-white outline-none border-none'
+          onClick={onClick}>
+            Insert
           </Button>
         </DialogFooter>
       </DialogContent>
