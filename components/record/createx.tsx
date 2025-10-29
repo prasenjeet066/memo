@@ -102,7 +102,7 @@ export default function EnhancedEditor({
     setCharacterCount(stats.characterCount);
     setReadingTime(stats.readingTime);
   }, []);
-  
+  const [toolbar , setToolbar] = useState(null)
   // Handle content change
   const handleLexicalChange = useCallback((html: string) => {
     setPayload(prev => ({ ...prev, content: html }));
@@ -327,12 +327,14 @@ export default function EnhancedEditor({
         readingTime={readingTime}
         autoSaveStatus={autoSaveStatus}
       />
+      {toolbar !== null ? (
       
       <EditorToolbar
         editorMode={editorMode}
         onAction={executeCommand}
         onPublish={handlePublish}
       />
+      ):toolbar}
 
       <div className="flex-1 overflow-auto bg-white relative">
         {showPreview ? (
@@ -384,12 +386,10 @@ export default function EnhancedEditor({
                 <ListPlugin />
                
                <TablePlugin/>
-               {
-                 floatingAnchorElem!==null && (
-                   <TableActionMenuPlugin anchorElem={floatingAnchorElem}
-                  cellMerge={true}/>
-                 )
-               } <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+              
+                   <TableActionMenuPlugin anchorElem={setToolbar}
+               cellMerge={true}/>
+                 <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
                 <HtmlPlugin 
                   initialHtml={payload.content}
                   onHtmlChange={handleLexicalChange}
