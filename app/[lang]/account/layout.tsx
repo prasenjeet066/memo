@@ -1,6 +1,6 @@
 // app/[locale]/layout.tsx
 import React from 'react'
-import './globals.css'
+import '@/app/globals.css'
 import { Providers } from '@/components/utils/provider/auth'
 
 import { Metadata } from 'next'
