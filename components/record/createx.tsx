@@ -304,24 +304,7 @@ export default function EnhancedEditor({
       }
     };
   }, []);
-  useEffect(() => {
-    if (!lexicalEditorRef.current) return;
-    
-    const editor = lexicalEditorRef.current;
-    
-    return editor.registerUpdateListener(({ editorState }) => {
-      editorState.read(() => {
-        const selection = editor.getEditorState().read(() => window.getSelection());
-        const tableElem = selection?.anchorNode?.closest?.('table');
-        
-        if (tableElem && floatingAnchorElem !== tableElem) {
-          setFloatingAnchorElem(tableElem as HTMLDivElement);
-        } else if (!tableElem && floatingAnchorElem) {
-          setFloatingAnchorElem(null);
-        }
-      });
-    });
-  }, [floatingAnchorElem]);
+  
   const hasRegisteredRole = Array.isArray(session?.user?.role) && session.user.role.includes('ADMIN');
   
   return (

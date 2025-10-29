@@ -22,17 +22,24 @@ import {
   $deleteTableRowAtSelection,
   $getNodeTriplet,
   $insertTableColumnAtSelection,
+  $getNodeByKey,
   $insertTableRowAtSelection,
   $isTableCellNode,
   $isTableSelection,
   $mergeCells,
+  $isTableNode,
   $unmergeCell,
   TableCellNode,
 } from "@lexical/table";
+
 import {
+  $getSelection,
+  $isNodeSelection,
+  SELECTION_CHANGE_COMMAND,
   $getSelection,
   $isRangeSelection,
 } from "lexical";
+
 import { createPortal } from "react-dom";
 import ColorPicker from "@/components/ui/ColorPicker";
 
@@ -209,6 +216,7 @@ function TableActionMenu({
   );
 }
 
+
 export default function TableActionMenuPlugin({
   anchorElem = document.body,
   cellMerge = true,
@@ -217,27 +225,114 @@ export default function TableActionMenuPlugin({
   cellMerge ? : boolean;
 }) {
   const [editor] = useLexicalComposerContext();
+  const [targetTable, setTargetTable] = React.useState < HTMLElement | null > (null);
   const [isEditable, setIsEditable] = React.useState(false);
+  const [position, setPosition] = React.useState < { top: number;left: number } | null > (null);
   
+  // Track editor editable state
   React.useEffect(() => {
     setIsEditable(editor.isEditable());
-    return editor.registerEditableListener((editable) => {
-      setIsEditable(editable);
-    });
+    return editor.registerEditableListener((editable) => setIsEditable(editable));
   }, [editor]);
   
-  if (!isEditable) return null;
+  // Detect table selection or hover
+  React.useEffect(() => {
+    const updateTargetTable = () => {
+      editor.getEditorState().read(() => {
+        const selection = $getSelection();
+        if ($isNodeSelection(selection)) {
+          const node = selection.getNodes()[0];
+          if (node && $isTableNode(node)) {
+            const dom = editor.getElementByKey(node.getKey());
+            setTargetTable(dom);
+            return;
+          }
+        }
+        setTargetTable(null);
+      });
+    };
+    
+    const unregisterSelection = editor.registerCommand(
+      SELECTION_CHANGE_COMMAND,
+      () => {
+        updateTargetTable();
+        return false;
+      },
+      1
+    );
+    
+    const unregisterUpdate = editor.registerUpdateListener(() => updateTargetTable());
+    
+    // Handle hover detection (tables rendered in DOM)
+    const editorElem = editor.getRootElement();
+    if (editorElem) {
+      const handleMouseOver = (e: MouseEvent) => {
+        const target = (e.target as HTMLElement)?.closest("table");
+        if (target) setTargetTable(target as HTMLElement);
+      };
+      const handleMouseOut = (e: MouseEvent) => {
+        if (!(e.relatedTarget as HTMLElement)?.closest("table")) {
+          setTargetTable(null);
+        }
+      };
+      editorElem.addEventListener("mouseover", handleMouseOver);
+      editorElem.addEventListener("mouseout", handleMouseOut);
+      
+      return () => {
+        unregisterSelection();
+        unregisterUpdate();
+        editorElem.removeEventListener("mouseover", handleMouseOver);
+        editorElem.removeEventListener("mouseout", handleMouseOut);
+      };
+    }
+    
+    return () => {
+      unregisterSelection();
+      unregisterUpdate();
+    };
+  }, [editor]);
+  
+  // Reposition menu on scroll or resize
+  React.useEffect(() => {
+    const updatePosition = () => {
+      if (targetTable && anchorElem) {
+        const rect = targetTable.getBoundingClientRect();
+        const anchorRect = anchorElem.getBoundingClientRect();
+        setPosition({
+          top: rect.top - anchorRect.top - 40,
+          left: rect.right - anchorRect.left - 100,
+        });
+      } else {
+        setPosition(null);
+      }
+    };
+    
+    updatePosition();
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [targetTable, anchorElem]);
+  
+  if (!isEditable || !targetTable || !position) return null;
   
   const menu = (
     <motion.div
-      initial={{ opacity: 0, y: -5 }}
+      initial={{ opacity: 0, y: -6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="absolute top-20 right-4 z-50"
+      exit={{ opacity: 0, y: -6 }}
+      transition={{ duration: 0.15 }}
+      className="absolute z-50 p-2 rounded-xl shadow-md border border-gray-200 bg-white"
+      style={{
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+      }}
     >
-      <TableActionMenu cellMerge={cellMerge} />
-    </motion.div>
+      <TableActionMenu cellMerge={cellMerge} /> 
+      </motion.div>
   );
   
-  //  Use portal to render inside `anchorElem`
   return createPortal(menu, anchorElem);
 }
