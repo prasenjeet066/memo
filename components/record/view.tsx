@@ -148,7 +148,8 @@ export const Viewer = function({ __data }: Props) {
     )
   }
   
-  return (<div className="w-full h-full flex flex-col overflow-hidden">
+  return (
+  <div className="w-full h-full flex flex-col">
   {/* Header / Title */}
   <div className="px-4 w-full py-3 flex items-center justify-between">
     <div className="flex items-center gap-4">
