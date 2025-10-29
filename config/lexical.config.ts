@@ -4,8 +4,8 @@ import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { ListNode, ListItemNode } from '@lexical/list';
 import { CodeNode, CodeHighlightNode } from '@lexical/code';
 import { AutoLinkNode, LinkNode } from '@lexical/link';
-import { TableNode } from '@/components/utils/editor/nodes/TableNode'
-import { TableRowNode, TableCellNode } from '@lexical/table';
+
+import { TableRowNode, TableCellNode , TableNode} from '@lexical/table';
 import { HorizontalRuleNode } from '@lexical/react/LexicalHorizontalRuleNode';
 import { ImageNode } from '@/components/utils/editor/nodes/ImageNode';
 

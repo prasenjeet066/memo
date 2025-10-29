@@ -26,7 +26,7 @@ export function EditorToolbar({ editorMode, onAction, onPublish }: EditorToolbar
               if (block.name === 'Paragraph') {
                 return (
                   <DropdownMenu key={`toolbar-dropdown-${index}`}>
-                    <DropdownMenuTrigger className="max-w-[180px] border-l border-r w-auto h-10 border-none px-3 py-2 hover:bg-gray-100 flex items-center gap-2">
+                    <DropdownMenuTrigger className="max-w-[180px] border-l text-semibold border-r w-auto h-10 border-none px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
                       {block.name}
                       <Fai icon="chevron-down" style="fas" />
                     </DropdownMenuTrigger>
@@ -49,7 +49,7 @@ export function EditorToolbar({ editorMode, onAction, onPublish }: EditorToolbar
               
               return (
                 <DropdownMenu key={`toolbar-dropdown-${index}`}>
-                  <DropdownMenuTrigger className="max-w-[180px] border-l border-r w-auto h-10 border-none px-3 py-2 hover:bg-gray-100">
+                  <DropdownMenuTrigger className="max-w-[180px] border-l text-semibold border-r w-auto h-10 border-none px-4 py-2 hover:bg-gray-100 outline-none ">
                     <Fai icon={block.icon} />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
@@ -73,7 +73,7 @@ export function EditorToolbar({ editorMode, onAction, onPublish }: EditorToolbar
               <button
                 key={`toolbar-btn-${index}`}
                 id={block.action}
-                className="px-3 py-2 border-0 hover:bg-gray-100 transition-colors rounded text-gray-700"
+                className="px-3 py-2 border-0 hover:bg-gray-100 transition-colors rounded text-gray-700 outline-none "
                 onClick={() => onAction(block.action)}
                 title={block.label}
                 aria-label={block.label}
@@ -110,7 +110,7 @@ export function EditorToolbar({ editorMode, onAction, onPublish }: EditorToolbar
       
       <div className="flex items-center border-l pl-2">
         <Button
-          className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors m-2 rounded-full"
+          className="px-4 py-2 bg-gray-600 text-white  transition-colors m-2 rounded-full"
           onClick={onPublish}
           aria-label="Publish document"
           type="button"
