@@ -48,7 +48,7 @@ import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { TRANSFORMERS } from '@lexical/markdown';
-import { TablePlugin } from "@/components/utils/editor/plugins/Table";
+import { TablePlugin , InsertTableDialog} from "@/components/utils/editor/plugins/Table";
 import {
   TableNode,
   TableRowNode,
@@ -244,6 +244,7 @@ export default function EnhancedEditor({
   
   const { data: session } = useSession();
   const lexicalEditorRef = useRef<LexicalEditor | null>(null);
+  const [isTableDialog , setIsTableDialog] = useState(false)
   const monacoEditorRef = useRef<any>(null);
   const [, startTransition] = useTransition();
   const [linkDialog, setLinkDialog] = useState({ open: false, text: '' });
@@ -499,7 +500,7 @@ const [tableDialog, setTableDialog] = useState({
           }
           break;
         case 'table':
-          editor.dispatchCommand(INSERT_TABLE_COMMAND, { rows: 3, columns: 3 })
+          setTableDialog(true)
           break;
         case 'link':
           setLinkDialog({ open: true, text: '' });
@@ -1521,6 +1522,9 @@ break;
           <ImageDialog />
           <VideoDialog />
           <FindReplaceDialog />
+          {
+            isTableDialog && <InsertTableDialog/>
+          }
           <PublishDialog />
     </div>
   );
