@@ -18,7 +18,7 @@ export default function Spinner({
   };
   
   const containerClasses = fullScreen ?
-    "min-h-screen w-full flex items-center justify-center" :
+    "min-h-screen w-full flex items-center justify-center bg-red-500" :
     "flex items-center justify-center p-4";
   
   return (

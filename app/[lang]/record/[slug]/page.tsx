@@ -221,6 +221,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
   
   if (isExistArticel && recordJdata) {
     return (
+      
       <ErrorBoundary>
         <div className='min-h-screen w-full bg-gray-50 h-screen'>
           <Header navList={NavList} />
