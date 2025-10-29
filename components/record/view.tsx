@@ -152,12 +152,12 @@ export const Viewer = function({ __data }: Props) {
   <div className="w-full h-full flex flex-col">
   {/* Header / Title */}
   <div className="px-4 w-full py-3 flex items-center justify-between">
-    <div className="flex items-center gap-4">
-      <h1 className="font-bold text-gray-900 text-lg sm:text-xl md:text-2xl">
+    <div className="flex flex-row items-center justify-between gap-4 ">
+      <h1 className="font-bold text-gray-900 text-lg sm:text-xl w-full md:text-2xl">
         {data.title || 'Untitled Article'}
       </h1>
-      <div className="flex flex-1  w-full items-center justify-end border-l pl-2 gap-4">
-        <button className='bg-gray-50 p-2 rounded'><Fai icon='language'/></button>
+      <div className="flex items-center justify-end border-l pl-2 gap-4">
+        <button className='border  p-2 rounded'><Fai icon='language'/></button>
       {isEditableForMe ? (
       
         <button
