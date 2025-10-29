@@ -1,7 +1,8 @@
+'use client'
 import React from 'react';
 import styled from 'styled-components';
 
-const Loader = () => {
+const Spinner = () => {
   return (
     <StyledWrapper>
       <div className="dot-spinner">
@@ -122,4 +123,4 @@ const StyledWrapper = styled.div`
     }
   }`;
 
-export default Loader;
+export default Spinner;
