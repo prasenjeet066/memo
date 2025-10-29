@@ -1,13 +1,49 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $createTableNode, $isTableNode } from "@/components/utils/editor/nodes/TableNode";
-import { $getSelection, $getNodeByKey } from "lexical";
-import { Button } from "@/components/ui/button"; // assuming shadcn/ui
+import { $createTableNode, $isTableNode, TableNode } from "@/components/utils/editor/nodes/TableNode";
+import { $getSelection, $getNodeByKey, COMMAND_PRIORITY_LOW, SELECTION_CHANGE_COMMAND } from "lexical";
+import { Button } from "@/components/ui/button";
 import { Plus, Minus, Table } from "lucide-react";
 
 export default function TablePlugin() {
   const [editor] = useLexicalComposerContext();
-  const [selectedTableKey, setSelectedTableKey] = useState(null);
+  const [selectedTableKey, setSelectedTableKey] = useState < string | null > (null);
+  
+  // Track selection changes to detect when a table is selected
+  useEffect(() => {
+    return editor.registerCommand(
+      SELECTION_CHANGE_COMMAND,
+      () => {
+        editor.getEditorState().read(() => {
+          const selection = $getSelection();
+          if (!selection) {
+            setSelectedTableKey(null);
+            return false;
+          }
+          
+          // Find if any selected node is a table or within a table
+          const nodes = selection.getNodes();
+          let tableNode: TableNode | null = null;
+          
+          for (const node of nodes) {
+            let current = node;
+            while (current) {
+              if ($isTableNode(current)) {
+                tableNode = current;
+                break;
+              }
+              current = current.getParent();
+            }
+            if (tableNode) break;
+          }
+          
+          setSelectedTableKey(tableNode ? tableNode.getKey() : null);
+        });
+        return false;
+      },
+      COMMAND_PRIORITY_LOW
+    );
+  }, [editor]);
   
   // Insert a new table (default 3x3)
   const insertTable = useCallback(() => {
@@ -16,48 +52,62 @@ export default function TablePlugin() {
       const selection = $getSelection();
       if (selection) {
         selection.insertNodes([tableNode]);
-      } else {
-        editor.getRootElement().appendChild(tableNode);
       }
     });
   }, [editor]);
   
   // Add a row
   const addRow = useCallback(() => {
+    if (!selectedTableKey) return;
+    
     editor.update(() => {
       const node = $getNodeByKey(selectedTableKey);
       if ($isTableNode(node)) {
-        node.__rows += 1;
+        const currentRows = node.getRows();
+        node.setRows(currentRows + 1);
       }
     });
   }, [editor, selectedTableKey]);
   
   // Add a column
   const addColumn = useCallback(() => {
+    if (!selectedTableKey) return;
+    
     editor.update(() => {
       const node = $getNodeByKey(selectedTableKey);
       if ($isTableNode(node)) {
-        node.__cols += 1;
+        const currentCols = node.getCols();
+        node.setCols(currentCols + 1);
       }
     });
   }, [editor, selectedTableKey]);
   
   // Remove a row
   const removeRow = useCallback(() => {
+    if (!selectedTableKey) return;
+    
     editor.update(() => {
       const node = $getNodeByKey(selectedTableKey);
-      if ($isTableNode(node) && node.__rows > 1) {
-        node.__rows -= 1;
+      if ($isTableNode(node)) {
+        const currentRows = node.getRows();
+        if (currentRows > 1) {
+          node.setRows(currentRows - 1);
+        }
       }
     });
   }, [editor, selectedTableKey]);
   
   // Remove a column
   const removeColumn = useCallback(() => {
+    if (!selectedTableKey) return;
+    
     editor.update(() => {
       const node = $getNodeByKey(selectedTableKey);
-      if ($isTableNode(node) && node.__cols > 1) {
-        node.__cols -= 1;
+      if ($isTableNode(node)) {
+        const currentCols = node.getCols();
+        if (currentCols > 1) {
+          node.setCols(currentCols - 1);
+        }
       }
     });
   }, [editor, selectedTableKey]);
@@ -70,17 +120,38 @@ export default function TablePlugin() {
 
       {selectedTableKey && (
         <>
-          <Button variant="outline" size="icon" onClick={addRow}>
-            <Plus className="w-4 h-4" />
+          <span className="text-xs text-gray-500 mx-2">Table controls:</span>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={addRow}
+            title="Add row"
+          >
+            <Plus className="w-4 h-4 mr-1" /> Row
           </Button>
-          <Button variant="outline" size="icon" onClick={addColumn}>
-            <Plus className="w-4 h-4 rotate-90" />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={addColumn}
+            title="Add column"
+          >
+            <Plus className="w-4 h-4 mr-1" /> Col
           </Button>
-          <Button variant="outline" size="icon" onClick={removeRow}>
-            <Minus className="w-4 h-4" />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={removeRow}
+            title="Remove row"
+          >
+            <Minus className="w-4 h-4 mr-1" /> Row
           </Button>
-          <Button variant="outline" size="icon" onClick={removeColumn}>
-            <Minus className="w-4 h-4 rotate-90" />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={removeColumn}
+            title="Remove column"
+          >
+            <Minus className="w-4 h-4 mr-1" /> Col
           </Button>
         </>
       )}

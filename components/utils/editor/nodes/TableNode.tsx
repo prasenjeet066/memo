@@ -1,9 +1,34 @@
-import { DecoratorNode } from "lexical";
+import { DecoratorNode, NodeKey, SerializedLexicalNode, Spread } from "lexical";
 import * as React from "react";
 
-function TableComponent({ nodeKey, rows, cols }) {
+type CellData = {
+  [key: string]: string; // "row-col": content
+};
+
+type SerializedTableNode = Spread <
+  {
+    rows: number;
+    cols: number;
+    cellData: CellData;
+  },
+  SerializedLexicalNode >
+;
+
+function TableComponent({
+  nodeKey,
+  rows,
+  cols,
+  cellData,
+  onCellChange
+}: {
+  nodeKey: NodeKey;
+  rows: number;
+  cols: number;
+  cellData: CellData;
+  onCellChange: (row: number, col: number, content: string) => void;
+}) {
   return (
-    <div className="overflow-auto">
+    <div className="overflow-auto my-4">
       <table className="border-collapse border border-gray-400">
         <tbody>
           {Array.from({ length: rows }).map((_, r) => (
@@ -12,10 +37,15 @@ function TableComponent({ nodeKey, rows, cols }) {
                 <td
                   key={c}
                   contentEditable
+                  suppressContentEditableWarning
                   className="border border-gray-400 p-2 min-w-[80px]"
-                >
-                  Cell {r + 1},{c + 1}
-                </td>
+                  onBlur={(e) => {
+                    onCellChange(r, c, e.currentTarget.textContent || "");
+                  }}
+                  dangerouslySetInnerHTML={{
+                    __html: cellData[`${r}-${c}`] || `Cell ${r + 1},${c + 1}`
+                  }}
+                />
               ))}
             </tr>
           ))}
@@ -25,56 +55,95 @@ function TableComponent({ nodeKey, rows, cols }) {
   );
 }
 
-export class TableNode extends DecoratorNode {
-  __rows;
-  __cols;
+export class TableNode extends DecoratorNode < React.ReactElement > {
+  __rows: number;
+  __cols: number;
+  __cellData: CellData;
   
-  static getType() {
+  static getType(): string {
     return "table";
   }
   
-  static clone(node) {
-    return new TableNode(node.__rows, node.__cols, node.__key);
+  static clone(node: TableNode): TableNode {
+    return new TableNode(node.__rows, node.__cols, node.__cellData, node.__key);
   }
   
-  constructor(rows = 2, cols = 2, key) {
+  constructor(rows = 2, cols = 2, cellData: CellData = {}, key ? : NodeKey) {
     super(key);
     this.__rows = rows;
     this.__cols = cols;
+    this.__cellData = cellData;
   }
   
-  createDOM() {
+  createDOM(): HTMLElement {
     const div = document.createElement("div");
     return div;
   }
   
-  updateDOM() {
+  updateDOM(): boolean {
     return false;
   }
   
-  decorate() {
-    return <TableComponent nodeKey={this.getKey()} rows={this.__rows} cols={this.__cols} />;
+  setRows(rows: number): void {
+    const writable = this.getWritable();
+    writable.__rows = rows;
   }
   
-  static importJSON(serializedNode) {
-    const { rows, cols } = serializedNode;
-    return new TableNode(rows, cols);
+  setCols(cols: number): void {
+    const writable = this.getWritable();
+    writable.__cols = cols;
   }
   
-  exportJSON() {
+  setCellData(row: number, col: number, content: string): void {
+    const writable = this.getWritable();
+    writable.__cellData = {
+      ...writable.__cellData,
+      [`${row}-${col}`]: content
+    };
+  }
+  
+  getRows(): number {
+    return this.__rows;
+  }
+  
+  getCols(): number {
+    return this.__cols;
+  }
+  
+  decorate(): React.ReactElement {
+    return (
+      <TableComponent 
+        nodeKey={this.getKey()} 
+        rows={this.__rows} 
+        cols={this.__cols} 
+        cellData={this.__cellData}
+        onCellChange={(row, col, content) => {
+          this.getLatest().setCellData(row, col, content);
+        }}
+      />
+    );
+  }
+  
+  static importJSON(serializedNode: SerializedTableNode): TableNode {
+    const { rows, cols, cellData } = serializedNode;
+    return new TableNode(rows, cols, cellData || {});
+  }
+  
+  exportJSON(): SerializedTableNode {
     return {
       type: "table",
       version: 1,
       rows: this.__rows,
       cols: this.__cols,
+      cellData: this.__cellData,
     };
   }
 }
 
-export function $createTableNode(rows = 2, cols = 2) {
+export function $createTableNode(rows = 2, cols = 2): TableNode {
   return new TableNode(rows, cols);
 }
 
-export function $isTableNode(node) {
+export function $isTableNode(node: any): node is TableNode {
   return node instanceof TableNode;
 }
