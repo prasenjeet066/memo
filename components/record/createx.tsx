@@ -387,8 +387,7 @@ export default function EnhancedEditor({
                
                <TablePlugin/>
               
-                   <TableActionMenuPlugin anchorElem={setToolbar}
-               cellMerge={true}/>
+
                  <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
                 <HtmlPlugin 
                   initialHtml={payload.content}
