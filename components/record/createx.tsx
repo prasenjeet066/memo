@@ -500,7 +500,7 @@ const [tableDialog, setTableDialog] = useState({
           }
           break;
         case 'table':
-          setTableDialog(true)
+          setIsTableDialog(true)
           break;
         case 'link':
           setLinkDialog({ open: true, text: '' });
@@ -860,11 +860,11 @@ break;
   
   const onClick = () => {
     lexicalEditorRef.current.dispatchCommand(INSERT_TABLE_COMMAND, { columns, rows });
-    onClose();
+    setIsTableDialog(false)
   };
   
   return (
-    <Dialog open={isTableDialog} onOpenChange={(open) => setTableDialog(false)}>
+    <Dialog open={isTableDialog} onOpenChange={(open) => setIsTableDialog(false)}>
       <DialogContent className="sm:max-w-[425px] bg-white rounded">
         <DialogHeader>
           <DialogTitle>Insert Table</DialogTitle>
