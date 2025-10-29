@@ -30,7 +30,7 @@ import {
 } from '@/components/editor/dialogs/EditorDialogs';
 
 import { ImagesPlugin } from '@/components/utils/editor/plugins/Image';
-import { TablePlugin } from '@/components/utils/editor/plugins/Table';
+import { TableToolbar } from '@/components/utils/editor/plugins/Table';
 
 import { EditorHeader } from '@/components/editor/EditorHeader';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
@@ -373,7 +373,7 @@ export default function EnhancedEditor({
                 <LinkPlugin />
                 <ImagesPlugin />
                 <ListPlugin />
-                <TablePlugin/>
+                <TableToolbar/>
 
                 <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
                 <HtmlPlugin 

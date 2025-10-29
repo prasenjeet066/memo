@@ -1,15 +1,17 @@
 import React, { useCallback, useState, useEffect } from "react";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $createTableNode, $isTableNode, TableNode } from "@/components/utils/editor/nodes/TableNode";
-import { $getSelection, $getNodeByKey, COMMAND_PRIORITY_LOW, SELECTION_CHANGE_COMMAND } from "lexical";
+import { $getSelection, $getNodeByKey, SELECTION_CHANGE_COMMAND } from "lexical";
+import { LexicalEditor } from "lexical";
 import { Button } from "@/components/ui/button";
 import { Plus, Minus, Table } from "lucide-react";
 
-export default function TablePlugin() {
-  const [editor] = useLexicalComposerContext();
+interface TableToolbarProps {
+  editor: LexicalEditor;
+}
+
+export function TableToolbar({ editor }: TableToolbarProps) {
   const [selectedTableKey, setSelectedTableKey] = useState < string | null > (null);
   
-  // Track selection changes to detect when a table is selected
   useEffect(() => {
     return editor.registerCommand(
       SELECTION_CHANGE_COMMAND,
@@ -21,7 +23,6 @@ export default function TablePlugin() {
             return false;
           }
           
-          // Find if any selected node is a table or within a table
           const nodes = selection.getNodes();
           let tableNode: TableNode | null = null;
           
@@ -41,11 +42,10 @@ export default function TablePlugin() {
         });
         return false;
       },
-      COMMAND_PRIORITY_LOW
+      1 // COMMAND_PRIORITY_LOW
     );
   }, [editor]);
   
-  // Insert a new table (default 3x3)
   const insertTable = useCallback(() => {
     editor.update(() => {
       const tableNode = $createTableNode(3, 3);
@@ -56,36 +56,28 @@ export default function TablePlugin() {
     });
   }, [editor]);
   
-  // Add a row
   const addRow = useCallback(() => {
     if (!selectedTableKey) return;
-    
     editor.update(() => {
       const node = $getNodeByKey(selectedTableKey);
       if ($isTableNode(node)) {
-        const currentRows = node.getRows();
-        node.setRows(currentRows + 1);
+        node.setRows(node.getRows() + 1);
       }
     });
   }, [editor, selectedTableKey]);
   
-  // Add a column
   const addColumn = useCallback(() => {
     if (!selectedTableKey) return;
-    
     editor.update(() => {
       const node = $getNodeByKey(selectedTableKey);
       if ($isTableNode(node)) {
-        const currentCols = node.getCols();
-        node.setCols(currentCols + 1);
+        node.setCols(node.getCols() + 1);
       }
     });
   }, [editor, selectedTableKey]);
   
-  // Remove a row
   const removeRow = useCallback(() => {
     if (!selectedTableKey) return;
-    
     editor.update(() => {
       const node = $getNodeByKey(selectedTableKey);
       if ($isTableNode(node)) {
@@ -97,10 +89,8 @@ export default function TablePlugin() {
     });
   }, [editor, selectedTableKey]);
   
-  // Remove a column
   const removeColumn = useCallback(() => {
     if (!selectedTableKey) return;
-    
     editor.update(() => {
       const node = $getNodeByKey(selectedTableKey);
       if ($isTableNode(node)) {
@@ -113,7 +103,7 @@ export default function TablePlugin() {
   }, [editor, selectedTableKey]);
   
   return (
-    <div className="flex gap-2 items-center p-2 border-b border-gray-200 bg-gray-50 rounded-t-lg">
+    <div className="flex gap-2 items-center p-2 border-b border-gray-200 bg-gray-50">
       <Button variant="outline" size="sm" onClick={insertTable}>
         <Table className="w-4 h-4 mr-1" /> Insert Table
       </Button>
@@ -121,36 +111,16 @@ export default function TablePlugin() {
       {selectedTableKey && (
         <>
           <span className="text-xs text-gray-500 mx-2">Table controls:</span>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={addRow}
-            title="Add row"
-          >
+          <Button variant="outline" size="sm" onClick={addRow} title="Add row">
             <Plus className="w-4 h-4 mr-1" /> Row
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={addColumn}
-            title="Add column"
-          >
+          <Button variant="outline" size="sm" onClick={addColumn} title="Add column">
             <Plus className="w-4 h-4 mr-1" /> Col
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={removeRow}
-            title="Remove row"
-          >
+          <Button variant="outline" size="sm" onClick={removeRow} title="Remove row">
             <Minus className="w-4 h-4 mr-1" /> Row
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={removeColumn}
-            title="Remove column"
-          >
+          <Button variant="outline" size="sm" onClick={removeColumn} title="Remove column">
             <Minus className="w-4 h-4 mr-1" /> Col
           </Button>
         </>
