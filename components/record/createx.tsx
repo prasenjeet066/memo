@@ -1458,7 +1458,7 @@ break;
                     <ImagesPlugin/>
                     <ListPlugin />
                     <TablePlugin/>
-                    <TableActionMenuPlugin/>
+                  
                     <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
                     <HtmlPlugin 
                       initialHtml={payload.content}
