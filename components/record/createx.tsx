@@ -373,7 +373,7 @@ export default function EnhancedEditor({
                 <LinkPlugin />
                 <ImagesPlugin />
                 <ListPlugin />
-               // <TableToolbar/>
+               
 
                 <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
                 <HtmlPlugin 
