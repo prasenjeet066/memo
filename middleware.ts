@@ -48,7 +48,8 @@ export async function middleware(request: NextRequest) {
   
   // --- Identify route types before auth check ---
   const isRoot = pathname === '/' || pathname === '';
-  const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
+  
+  const isAuthRoute = AUTH_ROUTES.some((route) => pathname.endsWith(route));
   const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
     restOfPath.startsWith(route)
   );
