@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import ErrorBoundary from '@/components/ErrorBoundary'
 import { Home, Compass, HandHeart, Settings } from 'lucide-react'
 import Header from '@/components/header'
@@ -9,15 +9,17 @@ import CreateNew from '@/components/record/createx'
 import Spinner from '/components/utils/spinner'
 
 /**
- * 
- * For Create New Article 
- * @param - /
+ * Create New Article Page
  */
 const CreateNewArticle = ({ searchParams }) => {
-  const name = searchParams.get('name').trim()
-  const [ArticleName, setArticleName] = useState(null);
+  const rawName = searchParams?.name ?? ''
+  const name = typeof rawName === 'string' ? rawName.trim() : ''
+  const [articleName, setArticleName] = useState < string | null > (null)
   const isMobile = useMobile()
   const [isExpanded, setIsExpanded] = useState(false)
+  const [isPublishing, setIsPublishing] = useState(false)
+  const [isSuccesfullCreated, setIsSuccesfullCreated] = useState < any > (null)
+  
   const footerList = [
     { label: 'Terms & Conditions', href: '/terms' },
     { label: 'Content Security', href: '/security' },
@@ -25,6 +27,7 @@ const CreateNewArticle = ({ searchParams }) => {
     { label: 'About Us', href: '/about' },
     { label: 'APIs', href: '/api-docs' },
   ];
+  
   const NavList = useMemo(() => [
     { name: 'Home', icon: Home, href: '/' },
     { name: 'Explore', icon: Compass, href: '/explore' },
@@ -32,8 +35,8 @@ const CreateNewArticle = ({ searchParams }) => {
     { name: 'Settings', icon: Settings, href: '/settings' },
   ], [])
   
-  // Use useMemo for Sidebar (prevents re-renders)
-  const Sidebar = useMemo(() =>
+  // Sidebar (memoized)
+  const Sidebar = useMemo(() => (
     <div className='w-auto max-w-64 h-full bg-white mr-2 flex flex-col justify-between rounded-2xl rounded-l-none'>
       <div className='p-4 border-b border-gray-200'>
         <button
@@ -62,7 +65,6 @@ const CreateNewArticle = ({ searchParams }) => {
           ))}
         </div>
 
-        {/* Bottom nav item (Settings) */}
         <div>
           {(() => {
             const settings = NavList[NavList.length - 1]
@@ -83,22 +85,19 @@ const CreateNewArticle = ({ searchParams }) => {
           })()}
         </div>
       </nav>
-    </div>, [isExpanded, NavList])
+    </div>
+  ), [isExpanded, NavList])
   
   useEffect(() => {
-    // if name param not empty 
-    if (name !== '' && name) {
-      setArticleName(name)
-    }
-  }, [])
-  const [currentSidebar, setCurrentSidebar] = useState < React.ReactNode > (Sidebar)
-  const [isSuccesfullCreated, setIsSuccesfullCreated] = useState < any > (null)
-  const [isPublishing, setIsPublishing] = useState(false)
+    if (name) setArticleName(name)
+  }, [name])
   
+  // For child communication (optional)
   const handleSideBarTools = (arg: React.ReactNode) => {
-    setCurrentSidebar(arg)
+    // Placeholder if CreateNew wants to inject sidebar tools
   }
   
+  // Publish handler
   const handlePublish = async (payload: any) => {
     if (!payload) return null
     
@@ -106,12 +105,13 @@ const CreateNewArticle = ({ searchParams }) => {
     setIsSuccesfullCreated(null)
     
     try {
+      const slug = payload.slug || payload.title?.toLowerCase().replace(/\s+/g, '-')
       const response = await fetch(`/api/v_1/record/publish/article/${slug}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...payload,
-          title: ArticleName || payload.title,
+          title: articleName || payload.title,
         })
       })
       
@@ -142,42 +142,42 @@ const CreateNewArticle = ({ searchParams }) => {
   }
   
   return (
-    <>
-      <ErrorBoundary>
-        <main className='h-screen w-full max-h-screen max-w-screen bg-gray-50'>
-          <Header navList={NavList} />
-          <div className='p-1 w-full flex h-full items-start gap-2 justify-between'>
-            <CreateNew
-              onPublish={handlePublish}
-              ExpandedIs={isExpanded}
-              record_name={ArticleName}
-              sideBarTools={handleSideBarTools}
-              isSuccesfullCreated={isSuccesfullCreated}
-              IsExpandedSet={setIsExpanded}
-            />
-          </div>
-             <footer className="w-full bg-white py-6 px-4 mt-auto">
-              <div className="max-w-6xl mx-auto">
-                {!isMobile && (
-                <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row justify-center gap-8'} items-center`}>
-                  {footerList.map((item, index) => (
-                    <a
-                      key={item.label}
-                      href={item.href}
-                      className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                    >
-                      {item.label}
-                    </a>
-                  ))}
-                </div>)}
-                <div className="text-center mt-6 text-xs text-gray-500">
-                  © 2025 All rights reserved.
-                </div>
+    <ErrorBoundary>
+      <main className='h-screen w-full max-h-screen max-w-screen bg-gray-50'>
+        <Header navList={NavList} />
+        <div className='p-1 w-full flex h-full items-start gap-2 justify-between'>
+          <CreateNew
+            onPublish={handlePublish}
+            ExpandedIs={isExpanded}
+            record_name={articleName}
+            sideBarTools={handleSideBarTools}
+            isSuccesfullCreated={isSuccesfullCreated}
+            IsExpandedSet={setIsExpanded}
+          />
+        </div>
+        <footer className="w-full bg-white py-6 px-4 mt-auto">
+          <div className="max-w-6xl mx-auto">
+            {!isMobile && (
+              <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row justify-center gap-8'} items-center`}>
+                {footerList.map((item) => (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                  >
+                    {item.label}
+                  </a>
+                ))}
               </div>
-            </footer>
-        </main>
-      </ErrorBoundary>
-    </>
+            )}
+            <div className="text-center mt-6 text-xs text-gray-500">
+              © 2025 All rights reserved.
+            </div>
+          </div>
+        </footer>
+      </main>
+    </ErrorBoundary>
   )
 }
+
 export default CreateNewArticle
