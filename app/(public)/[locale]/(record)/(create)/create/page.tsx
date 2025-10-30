@@ -180,3 +180,4 @@ const CreateNewArticle = ({ searchParams }) => {
     </>
   )
 }
+export default CreateNewArticle
