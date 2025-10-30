@@ -1,6 +1,11 @@
 // app/api/inngest/route.ts
 import { serve } from "inngest/next";
 import { inngest } from "@/lib/inngest/client";
+
+import {
+  articleIntelligenceFunction
+} from '@/lib/inngest/__function/intelligence';
+
 import { 
   articleSubmissionFunction,
   articleDeletionFunction,
@@ -15,5 +20,6 @@ export const { GET, POST, PUT } = serve({
     articleDeletionFunction,
     bulkArticleUpdateFunction,
     articleStatsAggregationFunction,
+    articleIntelligenceFunction
   ],
 });
