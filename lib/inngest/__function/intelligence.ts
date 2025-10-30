@@ -1,4 +1,4 @@
-import { inngest } from "./client";
+import { inngest } from "@/lib/inngest/client"
 import { RecordDAL } from "@/lib/dal/record.dal";
 import { UserDAL } from "@/lib/dal/user.dal";
 import openAi from '@/lib/utils/ai/openai';
