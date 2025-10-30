@@ -17,7 +17,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
      * in this step - ai start to reasoning this topics 
      */
     const __call__thinking = await step.run('ai_thinking', async () => {
-      const __output = await openAi.chat.completion({
+      const __output = await openAi.chat.completions.create({
         model: 'nvidia/nemotron-nano-9b-v2:free',
         message: [
         {
