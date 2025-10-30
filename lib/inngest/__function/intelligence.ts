@@ -9,12 +9,11 @@ export const articleIntelligenceFunction = inngest.createFunction(
   {
     id: "article-ai-submission",
     name: "Process Article With AI",
-  },
-  { event: "article/ai/worker" },
+  }, { event: "article/ai/worker" },
   async ({ event, step }) => {
     const { data } = event;
     const __slug = data.slug;
-
+    
     /**
      * STEP 1: AI reasoning about the topic
      */
@@ -22,17 +21,16 @@ export const articleIntelligenceFunction = inngest.createFunction(
       const __output = await openAi.chat.completions.create({
         model: "nvidia/nemotron-nano-9b-v2:free",
         messages: [
-          {
-            role: "system",
-            content: `You are a reasoning AI. When given a topic or name, respond with:
+        {
+          role: "system",
+          content: `You are a reasoning AI. When given a topic or name, respond with:
             - articleCategory: What kind of entity it is (e.g., "people", "country").
             - WebSearchRequests: A list of useful web search queries to gather detailed info about it.`,
-          },
-          {
-            role: "user",
-            content: `Topic or name or subject is "${__slug}"`,
-          },
-        ],
+        },
+        {
+          role: "user",
+          content: `Topic or name or subject is "${__slug}"`,
+        }, ],
         response_format: {
           type: "json_schema",
           json_schema: {
@@ -48,7 +46,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
           },
         },
       });
-
+      
       // Parse AI output safely
       try {
         return JSON.parse(__output.choices?.[0]?.message?.content || "{}");
@@ -57,42 +55,44 @@ export const articleIntelligenceFunction = inngest.createFunction(
         return {};
       }
     });
-
+    
     /**
      * STEP 2: Perform web search requests based on AI output
      */
     const __call__websearch = await step.run("websearch_request", async () => {
       if (!__call__thinking) return {};
-
+      
       const { articleCategory, WebSearchRequests } = __call__thinking;
-
+      
       if (Array.isArray(WebSearchRequests) && WebSearchRequests.length > 0) {
-        try {
-          const __search_json_fetch = await fetch(
-            "https://sistorica-python.vercel.app/batch-search",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(WebSearchRequests),
+        const __all_index = await Promise.all(
+          WebSearchRequests.map(async (r) => {
+            try {
+              const res = await fetch(
+                "https://sistorica-python.vercel.app/search?q=" + encodeURIComponent(r), { method: "GET" }
+              );
+              
+              if (!res.ok) {
+                console.error("Search API returned error:", res.status);
+                return { query: r, results: [] };
+              }
+              
+              const data = await res.json();
+              return { query: r, results: data.results };
+            } catch (error) {
+              console.error("Web search error:", error);
+              return { query: r, results: [] };
             }
-          );
-
-          if (!__search_json_fetch.ok) {
-            console.error("Search API returned error:", __search_json_fetch.status);
-            return {};
-          }
-
-          const __searched_json = await __search_json_fetch.json();
-          return __searched_json.data || __searched_json;
-        } catch (error) {
-          console.error("Web search error:", error);
-          return { error: error.message || "Unknown error" };
-        }
+          })
+        );
+        
+        return __all_index;
+        
       }
-
+      
       return {};
     });
-
+    
     // Return combined results for debugging/logging
     return {
       slug: __slug,
