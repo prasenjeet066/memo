@@ -69,12 +69,12 @@ export const articleIntelligenceFunction = inngest.createFunction(
           WebSearchRequests.map(async (r) => {
             try {
               const res = await fetch(
-                "https://sistorica-python.vercel.app/search?q=" + encodeURIComponent(r), { method: "GET" }
+                "/api/search?q=" + encodeURIComponent(r), { method: "GET" }
               );
               
               if (!res.ok) {
                 console.error("Search API returned error:", res.status);
-                return { query: r, results: [] };
+                return { query: r, results: [res.statusText] };
               }
               
               const data = await res.json();
@@ -100,4 +100,5 @@ export const articleIntelligenceFunction = inngest.createFunction(
       websearch: __call__websearch,
     };
   }
+  
 );
