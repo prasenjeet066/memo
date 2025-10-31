@@ -161,7 +161,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
         r.results.map(s => s.link)
       ))];
       // Scrape all URLs concurrently
-      const scrapedData = await Promise.allSettled(
+      const scrapedData = await Promise.all(
         uniqueUrls.map(async (url) => {
           try {
             // Use query parameter format for the scrape endpoint
