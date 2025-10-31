@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Missing search query" }, { status: 400 });
   }
   
-  const apiKey = 'AIzaSyA8ZiUArfuETZL--tTon8LAgHdaACyHA7M';
+  const apiKey = 'AIzaSyBn6PaORaim9aC7BSIY0UrLM7Kb2Mdigvc';
   const cseId = 'f62f4483bced94919';
   
   if (!apiKey || !cseId) {
