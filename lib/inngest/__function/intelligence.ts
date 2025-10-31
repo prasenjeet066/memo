@@ -175,9 +175,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
         allLinks.map(async (link) => {
           try {
             const res = await fetch(
-              `https://sistorica-python.vercel.app/api/scrape?url=${encodeURIComponent(
-            link
-          )}&include_images=false&include_links=true&max_content_length=30000`, { method: "POST", headers: { "Content-Type": "application/json" } }
+              `https://sistorica-python.vercel.app/api/scrape?url=${link.trim()}&include_images=false&include_links=true&max_content_length=30000`, { method: "POST", headers: { "Content-Type": "application/json" } }
             );
             
             if (!res.ok) {
@@ -207,7 +205,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
         (d: any) => d && !d.error && !d.details && d.content
       );
       
-      return validData;
+      return scrapedData;
     });
     // Return combined results for debugging/logging
     return {
