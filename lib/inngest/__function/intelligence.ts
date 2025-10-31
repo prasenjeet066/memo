@@ -110,12 +110,8 @@ export const articleIntelligenceFunction = inngest.createFunction(
                     });
                     if (!__scrape.ok) return;
                     const json = await __scrape.json();
-                    const {
-                      metadata,
-                      content,
-                      links,
-                    } = json;
-                    return { schema : metadata.schema_org, content: content.text_content, links }
+                    
+                    return json
                     
                   } catch (err) {
                     console.error('Scraping error:', err);
