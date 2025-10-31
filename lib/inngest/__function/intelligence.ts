@@ -152,51 +152,63 @@ export const articleIntelligenceFunction = inngest.createFunction(
     /**
      * STEP 3: Scrape content from search results
      */
+    /**
+     * STEP 3: Scrape content from search results
+     */
     const __gather__data = await step.run("gather-run", async () => {
       if (!__call__websearch.length) {
-        
-        return ['No search results to scrape'];
+        return ["No search results to scrape"];
+      }
+      
+      // Flatten all result links from all queries
+      const allLinks = __call__websearch
+        .flatMap((i) => i.results || [])
+        .map((r) => r.link)
+        .filter((link) => typeof link === "string" && link.trim() !== "");
+      
+      if (allLinks.length === 0) {
+        return ["No valid links found to scrape"];
       }
       
       // Scrape all URLs concurrently
       const scrapedData = await Promise.all(
-        __call__websearch.map((i) => i.results.map((s) => {
-          const link = s.link;
-          if (link.trim() !== '') {
-            try {
-              const __scrape = await fetch(
-                `https://sistorica-python.vercel.app/api/scrape?url=${encodeURIComponent(link)}&include_images=false&include_links=true&max_content_length=30000`,
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                }
-              );
-              
-              if (!__scrape.ok) {
-                const errorText = await __scrape.text();
-                console.error(
-                  `Scraping failed for ${link}:`,
-                  __scrape.status,
-                  errorText
-                );
-                return errorText;
-              }
-              
-              const json: ScrapedData = await __scrape.json();
-              console.log(`Successfully scraped: ${link}`);
-              return json
-            } catch (e) {
-              return e;
+        allLinks.map(async (link) => {
+          try {
+            const res = await fetch(
+              `https://sistorica-python.vercel.app/api/scrape?url=${encodeURIComponent(
+            link
+          )}&include_images=false&include_links=true&max_content_length=30000`, { method: "POST", headers: { "Content-Type": "application/json" } }
+            );
+            
+            if (!res.ok) {
+              console.error(`Scraping failed for ${link}:`, res.status);
+              return { url: link, error: `HTTP ${res.status}` };
             }
+            
+            const json = await res.json();
+            
+            // Handle { details: 'Not found' } case
+            if (json?.details === "Not found") {
+              console.warn(`Not found for ${link}`);
+              return { url: link, error: "Not found" };
+            }
+            
+            console.log(`Successfully scraped: ${link}`);
+            return json as ScrapedData;
+          } catch (e: any) {
+            console.error(`Scraping error for ${link}:`, e.message);
+            return { url: link, error: e.message || "Scraping failed" };
           }
-        }))
+        })
       );
       
-      // Filter out failed requests and extract successful data
+      // Filter out failed or invalid responses
+      const validData = scrapedData.filter(
+        (d: any) => d && !d.error && !d.details && d.content
+      );
       
-      return scrapedData;
+      return validData;
     });
-    
     // Return combined results for debugging/logging
     return {
       slug: __slug,
