@@ -127,7 +127,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
                     });
                     
                     if (!__scrape.ok) {
-                      console.error(`Scraping failed for ${link}:`, __scrape.status);
+                      console.error(`Scraping failed for ${i.link}:`, __scrape.status);
                       return null;
                     }
                     
@@ -135,7 +135,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
                     return json;
                     
                   } catch (err) {
-                    console.error('Scraping error for', link, ':', err);
+                    console.error('Scraping error for', i.link, ':', err);
                     return null;
                   }
                 })
