@@ -136,19 +136,19 @@ export const articleIntelligenceFunction = inngest.createFunction(
       async () => {
         if (!__call__thinking) return [];
         
-        const { WebSearchRequests } = __call__thinking;
+        const { ...others, WebSearchRequests } = __call__thinking;
         
         if (Array.isArray(WebSearchRequests) && WebSearchRequests.length > 0) {
           const __all_index = await Promise.all(
             WebSearchRequests.map(async (r) => {
               try {
                 const res = await fetch(
-                  `https://memoorg.vercel.app/api/search?q=${r}`, { method: "GET" }
+                  `https://memoorg.vercel.app/api/search?q=${r}`, { method: "GET", headers: { "Content-Type": "application/json" } }
                 );
                 
                 if (!res.ok) {
                   console.error("Search API returned error:", res.status);
-                  return { query: r, results: ['Search-API-Error'] };
+                  return { query: r, results: ['Search-API-Error::' + res.statusText] };
                 }
                 
                 const data = await res.json();
@@ -242,8 +242,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
           0
         ),
         scrapedPages: Array.isArray(__gather__data) ?
-          __gather__data.length :
-          0,
+          __gather__data.length : 0,
       },
     };
   }
