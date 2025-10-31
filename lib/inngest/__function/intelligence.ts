@@ -157,40 +157,39 @@ export const articleIntelligenceFunction = inngest.createFunction(
         
         return ['No search results to scrape'];
       }
-      const uniqueUrls = [...new Set(__call__websearch.flatMap(r =>
-        r.results.map(s => s.link)
-      ))];
+      
       // Scrape all URLs concurrently
       const scrapedData = await Promise.all(
-        uniqueUrls.map(async (url) => {
-          try {
-            // Use query parameter format for the scrape endpoint
-            const __scrape = await fetch(
-              `https://sistorica-python.vercel.app/api/scrape?url=${encodeURIComponent(url)}&include_images=false&include_links=true&max_content_length=30000`,
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-              }
-            );
-            
-            if (!__scrape.ok) {
-              const errorText = await __scrape.text();
-              console.error(
-                `Scraping failed for ${url}:`,
-                __scrape.status,
-                errorText
+        __call__websearch.map((i) => i.results.map((s) => {
+          const link = s.link;
+          if (link.trim() !== '') {
+            try {
+              const __scrape = await fetch(
+                `https://sistorica-python.vercel.app/api/scrape?url=${encodeURIComponent(link)}&include_images=false&include_links=true&max_content_length=30000`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                }
               );
-              return errorText;
+              
+              if (!__scrape.ok) {
+                const errorText = await __scrape.text();
+                console.error(
+                  `Scraping failed for ${link}:`,
+                  __scrape.status,
+                  errorText
+                );
+                return errorText;
+              }
+              
+              const json: ScrapedData = await __scrape.json();
+              console.log(`Successfully scraped: ${link}`);
+              return json
+            } catch (e) {
+              return e;
             }
-            
-            const json: ScrapedData = await __scrape.json();
-            console.log(`Successfully scraped: ${url}`);
-            return json
-          } catch (err) {
-            console.error("Scraping error for", url, ":", err);
-            return err;
           }
-        })
+        }))
       );
       
       // Filter out failed requests and extract successful data
