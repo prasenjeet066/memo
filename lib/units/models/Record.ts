@@ -278,6 +278,10 @@ const RecordSchema = new Schema<IRecord>(
     published_at: {
       type: Date,
     },
+    schemaOrg:{
+      type : Object,
+      default: {}
+    },
     last_reviewed_at: {
       type: Date,
     },

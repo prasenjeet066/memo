@@ -66,7 +66,9 @@ export class RecordDAL {
   static async createRecord(
     data: CreateRecordDTO,
     userId: string,
-    username: string
+    username: string,
+    schemaOrg= {}
+    
   ): Promise < IRecord > {
     await this.ensureConnection();
     
@@ -88,6 +90,7 @@ export class RecordDAL {
       created_by_username: username,
       status: 'DRAFT',
       protection_level: 'NONE',
+      schemaOrg
     });
     
     return record.save();
