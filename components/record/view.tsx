@@ -153,7 +153,7 @@ export const Viewer = function({ __data }: Props) {
   {/* Header / Title */}
   <div className="px-4 w-full py-3 flex items-center justify-between">
   {/* Left section — title */}
-  <h1 className="font-bold text-gray-900 text-lg sm:text-xl md:text-2xl truncate">
+  <h1 className={`font-bold text-gray-900  truncate ${isMobile ? 'text-xl' : 'text-2xl'}`}>
     {data.title || 'Untitled Article'}
   </h1>
 
@@ -165,14 +165,15 @@ export const Viewer = function({ __data }: Props) {
 
     {isEditableForMe ? (
       <button
-        className="px-4 py-2 bg-gray-900 text-white rounded-full text-sm sm:text-base flex items-center gap-2"
+        className={`${!isMobile ? 'px-4 py-2 bg-gray-900 text-white rounded-full text-sm sm:text-base flex items-center gap-2' : 'flex items-center gap-4 border-l pl-4 ml-4'}`}
         aria-label="Edit document"
         type="button"
         onClick={() => gotoEditPage(true)}
         title="Edit Article"
       >
         <Fai icon="arrow-right" />
-        Edit Article
+        {!isMobile && 'Edit'}
+        
       </button>
     ) : (
       <button
@@ -181,7 +182,7 @@ export const Viewer = function({ __data }: Props) {
         title="Read-only access"
       >
         <Fai icon="lock" />
-        View Only
+        {!isMobile &&  'Locked'}
       </button>
     )}
   </div>
@@ -189,8 +190,8 @@ export const Viewer = function({ __data }: Props) {
 
   {/* Action Buttons */}
   <div className = 'flex px-4 border-b pb-2 w-full mb-2 items-center gap-4 justify-start'>
-    <button onClick={()=>setActivePaper((prev)=> prev!=='overview' ? 'overview': prev)} className={'bg-none p-2 px-3 font-semibold ' + activePaper === 'overview' ? ' text-gray-900 border-b border-gray-900':' text-gray-500'}>{'Overview'}</button>
-    <button onClick={()=>setActivePaper((prev)=> prev!=='discussion' ? 'discussion' : prev)} className={'bg-none p-2 px-3 font-semibold ' + activePaper === 'discussion' ? ' text-gray-900 border-b border-gray-900' : ' text-gray-500'}>{'Discussion'}</button>
+    <button onClick={()=>setActivePaper((prev)=> prev!=='overview' ? 'overview': prev)} className={'bg-none p-2 px-3  ' + activePaper === 'overview' ? ' text-gray-900 border-b border-blue-600 font-bold':' text-gray-500'}>{'Overview'}</button>
+    <button onClick={()=>setActivePaper((prev)=> prev!=='discussion' ? 'discussion' : prev)} className={'bg-none p-2 px-3 ' + activePaper === 'discussion' ? ' text-gray-900 border-b border-blue-600 font-bold ' : ' text-gray-500'}>{'Discussion'}</button>
   </div>
   {/* Article Content */}
   <div className="flex items-start justify-between">
