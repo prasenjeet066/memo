@@ -129,15 +129,19 @@ export const articleIntelligenceFunction = inngest.createFunction(
                 
                 if (!res.ok) {
                   console.error("Search API returned error:", res.status);
-                  return { query: r, results: [] };
+                  return { query: r, results: 'SearchApI Error' };
                 }
                 
                 const data = await res.json();
                 // The API returns { query, results_count, results, start_index }
-                return { query: r, results: data.items };
+                return { 
+                  query: r, 
+                  results: data.items 
+                  
+                };
               } catch (error) {
                 console.error("Web search error:", error);
-                return { query: r, results: [] };
+                return { query: r, results: ['WebSearchApiError'] };
               }
             })
           );
@@ -199,19 +203,6 @@ export const articleIntelligenceFunction = inngest.createFunction(
     });
     
     // Return combined results for debugging/logging
-    return {
-      slug: __slug,
-      thinking: __call__thinking,
-      websearch: __call__websearch,
-      gatheredData: __gather__data,
-      summary: {
-        searchQueries: __call__websearch.length,
-        totalSearchResults: __call__websearch.reduce(
-          (sum, s) => sum + (s.results?.length || 0),
-          0
-        ),
-        scrapedPages: __gather__data.length,
-      },
-    };
+    return {};
   }
 );
