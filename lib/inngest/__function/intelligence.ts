@@ -131,7 +131,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
 
                 const data = await res.json();
                 // The API returns { query, results_count, results, start_index }
-                return { query: r, results: data };
+                return { query: r, results: data.items };
               } catch (error) {
                 console.error("Web search error:", error);
                 return { query: r, results: [] };
