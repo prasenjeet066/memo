@@ -211,7 +211,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
       );
 
       // Filter out failed requests and extract successful data
-      const successfulScrapes = scrapedData
+     /** const successfulScrapes = scrapedData
         .filter(
           (result): result is PromiseFulfilledResult<ScrapedData | null> =>
             result.status === "fulfilled" && result.value !== null
@@ -221,8 +221,8 @@ export const articleIntelligenceFunction = inngest.createFunction(
       console.log(
         `Successfully scraped ${successfulScrapes.length} out of ${uniqueUrls.length} URLs`
       );
-
-      return successfulScrapes;
+**/
+      return scrapedData;
     });
 
     // Return combined results for debugging/logging
