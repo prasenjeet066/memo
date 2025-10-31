@@ -2,6 +2,16 @@ import { inngest } from "@/lib/inngest/client";
 import { RecordDAL } from "@/lib/dal/record.dal";
 import { UserDAL } from "@/lib/dal/user.dal";
 import openAi from "@/lib/utils/ai/openai";
+// interface 
+interface OutputWebSearch 
+  {
+    query : string;
+    results: [{
+      link : string;
+      pagemap:{};
+      title:string
+    }]
+  }
 
 import { CreateRecordDTO, UpdateRecordDTO } from "@/lib/dtos/record.dto";
 
@@ -59,7 +69,8 @@ export const articleIntelligenceFunction = inngest.createFunction(
     /**
      * STEP 2: Perform web search requests based on AI output
      */
-    const __call__websearch = await step.run("websearch_request", async () => {
+     
+    const __call__websearch : OutputWebSearch[] = await step.run("websearch_request", async () => {
       if (!__call__thinking) return [];
       
       const { articleCategory, WebSearchRequests } = __call__thinking;
@@ -98,18 +109,20 @@ export const articleIntelligenceFunction = inngest.createFunction(
         // take url from search
         const allResults = await Promise.all(
           __call__websearch.map(async (search) => {
+            
             if (search.results && Array.isArray(search.results)) {
               const scrapedData = await Promise.all(
                 search.results.map(async (i) => {
-                  const { link, title, snippet, pagemap, displayLink } = i;
+                
+                
                   
                   // Skip if no link
-                  if (!link) return null;
+                  if (!i.link) return null;
                   
                   try {
                     const __scrape = await fetch('https://sistorica-python.vercel.app/api/scrape', {
                       method: 'POST',
-                      body: JSON.stringify({ url: link }),
+                      body: JSON.stringify({ url: i.link }),
                       headers: { 'Content-Type': 'application/json' },
                     });
                     
