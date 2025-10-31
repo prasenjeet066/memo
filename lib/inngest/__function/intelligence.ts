@@ -174,7 +174,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
 
       if (uniqueUrls.length === 0) {
         console.log("No valid URLs to scrape");
-        return [];
+        return ['No valid URLs to scrape'];
       }
 
       // Scrape all URLs concurrently
@@ -202,16 +202,16 @@ export const articleIntelligenceFunction = inngest.createFunction(
 
             const json: ScrapedData = await __scrape.json();
             console.log(`Successfully scraped: ${url}`);
-            return json;
+            return json
           } catch (err) {
             console.error("Scraping error for", url, ":", err);
-            return null;
+            return err;
           }
         })
       );
 
       // Filter out failed requests and extract successful data
-     /** const successfulScrapes = scrapedData
+      const successfulScrapes = scrapedData
         .filter(
           (result): result is PromiseFulfilledResult<ScrapedData | null> =>
             result.status === "fulfilled" && result.value !== null
@@ -221,8 +221,8 @@ export const articleIntelligenceFunction = inngest.createFunction(
       console.log(
         `Successfully scraped ${successfulScrapes.length} out of ${uniqueUrls.length} URLs`
       );
-**/
-      return scrapedData;
+
+      return successfulScrapes;
     });
 
     // Return combined results for debugging/logging
