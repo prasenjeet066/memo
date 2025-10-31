@@ -66,8 +66,8 @@ export const articleIntelligenceFunction = inngest.createFunction(
     const { data } = event;
     const __slug = data.slug;
     
-    /**  
-     * STEP 1: AI reasoning about the topic  
+    /**
+     * STEP 1: AI reasoning about the topic
      */
     const __call__thinking = await step.run("ai_thinking", async () => {
       const __output = await openAi.chat.completions.create({
@@ -75,9 +75,9 @@ export const articleIntelligenceFunction = inngest.createFunction(
         messages: [
         {
           role: "system",
-          content: `You are a reasoning AI. When given a topic or name, respond with:  
-        - articleCategory: What kind of entity it is (e.g., "people", "country").  
-        - WebSearchRequests: A list of useful web search queries to gather detailed info about it.`,
+          content: `You are a reasoning AI. When given a topic or name, respond with:
+            - articleCategory: What kind of entity it is (e.g., "people", "country").
+            - WebSearchRequests: A list of useful web search queries to gather detailed info about it.`,
         },
         {
           role: "user",
@@ -99,7 +99,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
         },
       });
       
-      // Parse AI output safely  
+      // Parse AI output safely
       try {
         return JSON.parse(__output.choices?.[0]?.message?.content || "{}");
       } catch (err) {
@@ -108,8 +108,8 @@ export const articleIntelligenceFunction = inngest.createFunction(
       }
     });
     
-    /**  
-     * STEP 2: Perform web search requests based on AI output  
+    /**
+     * STEP 2: Perform web search requests based on AI output
      */
     const __call__websearch: OutputWebSearch[] = await step.run(
       "websearch_request",
@@ -133,7 +133,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
                 }
                 
                 const data = await res.json();
-                // The API returns { query, results_count, results, start_index }  
+                // The API returns { query, results_count, results, start_index }
                 return { query: r, results: data.items };
               } catch (error) {
                 console.error("Web search error:", error);
@@ -149,69 +149,56 @@ export const articleIntelligenceFunction = inngest.createFunction(
       }
     );
     
-    /**  
-     * STEP 3: Scrape content from search results  
-     */
     /**
      * STEP 3: Scrape content from search results
      */
     const __gather__data = await step.run("gather-run", async () => {
       if (!__call__websearch.length) {
-        return ["No search results to scrape"];
+        
+        return ['No search results to scrape'];
       }
-      
-      // Flatten all result links from all queries
-      const allLinks = __call__websearch
-        .flatMap((i) => i.results || [])
-        .map((r) => r.link)
-        .filter((link) => typeof link === "string" && link.trim() !== "");
-      
-      if (allLinks.length === 0) {
-        return ["No valid links found to scrape"];
-      }
-      
+      const uniqueUrls = [...new Set(__call__websearch.flatMap(r =>
+        r.results.map(s => s.link)
+      ))];
       // Scrape all URLs concurrently
       const scrapedData = await Promise.all(
-        allLinks.map(async (link) => {
+        uniqueUrls.map(async (url) => {
           try {
-            const res = await fetch(
-              `https://sistorica-python.vercel.app/api/scrape?url=${encodeURIComponent(
-            link
-          )}&include_images=false&include_links=true&max_content_length=30000`, { method: "POST", headers: { "Content-Type": "application/json" } }
+            // Use query parameter format for the scrape endpoint
+            const __scrape = await fetch(
+              `https://sistorica-python.vercel.app/api/scrape?url=${encodeURIComponent(url)}&include_images=false&include_links=true&max_content_length=30000`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+              }
             );
             
-            if (!res.ok) {
-              console.error(`Scraping failed for ${link}:`, res.status);
-              return { url: link, error: `HTTP ${res.status}` };
+            if (!__scrape.ok) {
+              const errorText = await __scrape.text();
+              console.error(
+                `Scraping failed for ${url}:`,
+                __scrape.status,
+                errorText
+              );
+              return errorText;
             }
             
-            const json = await res.json();
-            
-            // Handle { details: 'Not found' } case
-            if (json?.details === "Not found") {
-              console.warn(`Not found for ${link}`);
-              return { url: link, error: "Not found" };
-            }
-            
-            console.log(`Successfully scraped: ${link}`);
-            return json as ScrapedData;
-          } catch (e: any) {
-            console.error(`Scraping error for ${link}:`, e.message);
-            return { url: link, error: e.message || "Scraping failed" };
+            const json: ScrapedData = await __scrape.json();
+            console.log(`Successfully scraped: ${url}`);
+            return json
+          } catch (err) {
+            console.error("Scraping error for", url, ":", err);
+            return err;
           }
         })
       );
       
-      // Filter out failed or invalid responses
-      const validData = scrapedData.filter(
-        (d: any) => d && !d.error && !d.details && d.content
-      );
+      // Filter out failed requests and extract successful data
       
-      return validData;
+      return scrapedData;
     });
     
-    // Return combined results for debugging/logging  
-    
+    // Return combined results for debugging/logging
     return {
       slug: __slug,
       thinking: __call__thinking,
@@ -223,8 +210,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
           (sum, s) => sum + (s.results?.length || 0),
           0
         ),
-        scrapedPages: Array.isArray(__gather__data) ?
-          __gather__data.length : 0,
+        scrapedPages: __gather__data.length,
       },
     };
   }
