@@ -78,7 +78,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
               }
               
               const data = await res.json();
-              return { query: r, results: data };
+              return { query: r, results: data.items };
             } catch (error) {
               console.error("Web search error:", error);
               return { query: r, results: [] };
@@ -92,6 +92,41 @@ export const articleIntelligenceFunction = inngest.createFunction(
       
       return {};
     });
+    
+    const __gather__data = await step.run('gather-run', async () => {
+      if (__call__websearch.length) {
+        // take url from search
+        return await Promise.all(
+          __call__websearch.map(async (search) => {
+            if (search.results) {
+              return await Promise.all(
+                search.results.map(async (i) => {
+                  const { link, title, snippet, pagemap, displayLink } = i;
+                  try {
+                    const __scrape = await fetch('https://sistorica-python.vercel.app/api/scrape', {
+                      method: 'POST',
+                      body: JSON.stringify({ url: link }),
+                      headers: { 'Content-Type': 'application/json' },
+                    });
+                    if (!__scrape.ok) return;
+                    const json = await __scrape.json();
+                    const {
+                      metadata,
+                      content,
+                      links,
+                    } = json;
+                    return { schema : metadata.schema_org, content: content.text_content, links }
+                    
+                  } catch (err) {
+                    console.error('Scraping error:', err);
+                  }
+                })
+              );
+            }
+          })
+        );
+      }
+    })
     
     // Return combined results for debugging/logging
     return {
