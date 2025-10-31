@@ -2,8 +2,11 @@ import { inngest } from "@/lib/inngest/client";
 import { RecordDAL } from "@/lib/dal/record.dal";
 import { UserDAL } from "@/lib/dal/user.dal";
 import openAi from "@/lib/utils/ai/openai";
+import { CreateRecordDTO, UpdateRecordDTO } from "@/lib/dtos/record.dto";
 
-// Fixed interface to match the actual API response
+/**
+ * Interfaces
+ */
 interface SearchResult {
   title: string;
   link: string;
@@ -16,7 +19,6 @@ interface OutputWebSearch {
   results: SearchResult[];
 }
 
-// Interface for scraped data response
 interface ScrapedData {
   url: string;
   status_code: number;
@@ -55,8 +57,27 @@ interface ScrapedData {
   any > ;
 }
 
-import { CreateRecordDTO, UpdateRecordDTO } from "@/lib/dtos/record.dto";
+/**
+ * Utility: retry helper with exponential backoff
+ */
+async function retry < T > (
+  fn: () => Promise < T > ,
+  retries = 2,
+  delay = 1000
+): Promise < T > {
+  try {
+    return await fn();
+  } catch (err) {
+    if (retries <= 0) throw err;
+    console.warn(`Retrying after error: ${String(err)}`);
+    await new Promise((r) => setTimeout(r, delay));
+    return retry(fn, retries - 1, delay * 2);
+  }
+}
 
+/**
+ * Main Function: Process Article with AI
+ */
 export const articleIntelligenceFunction = inngest.createFunction(
   {
     id: "article-ai-submission",
@@ -76,8 +97,8 @@ export const articleIntelligenceFunction = inngest.createFunction(
         {
           role: "system",
           content: `You are a reasoning AI. When given a topic or name, respond with:
-            - articleCategory: What kind of entity it is (e.g., "people", "country").
-            - WebSearchRequests: A list of useful web search queries to gather detailed info about it.`,
+              - articleCategory: What kind of entity it is (e.g., "person", "country").
+              - WebSearchRequests: A list of useful web search queries to gather detailed info about it.`,
         },
         {
           role: "user",
@@ -99,7 +120,6 @@ export const articleIntelligenceFunction = inngest.createFunction(
         },
       });
       
-      // Parse AI output safely
       try {
         return JSON.parse(__output.choices?.[0]?.message?.content || "{}");
       } catch (err) {
@@ -116,32 +136,26 @@ export const articleIntelligenceFunction = inngest.createFunction(
       async () => {
         if (!__call__thinking) return [];
         
-        const { articleCategory, WebSearchRequests } = __call__thinking;
+        const { WebSearchRequests } = __call__thinking;
         
         if (Array.isArray(WebSearchRequests) && WebSearchRequests.length > 0) {
           const __all_index = await Promise.all(
             WebSearchRequests.map(async (r) => {
               try {
                 const res = await fetch(
-                  "https://memoorg.vercel.app/api/search?q=" +
-                  encodeURIComponent(r), { method: "GET" }
+                  `https://memoorg.vercel.app/api/search?q=${r}`, { method: "GET" }
                 );
                 
                 if (!res.ok) {
                   console.error("Search API returned error:", res.status);
-                  return { query: r, results: 'SearchApI Error' };
+                  return { query: r, results: ['Search-API-Error'] };
                 }
                 
                 const data = await res.json();
-                // The API returns { query, results_count, results, start_index }
-                return { 
-                  query: r, 
-                  results: data.items 
-                  
-                };
+                return { query: r, results: data.items || ['No-Data'] };
               } catch (error) {
                 console.error("Web search error:", error);
-                return { query: r, results: ['WebSearchApiError'] };
+                return { query: r, results: ['WebSearchError'] };
               }
             })
           );
@@ -158,51 +172,79 @@ export const articleIntelligenceFunction = inngest.createFunction(
      */
     const __gather__data = await step.run("gather-run", async () => {
       if (!__call__websearch.length) {
-        
-        return ['No search results to scrape'];
+        return ["No search results to scrape"];
       }
-      const uniqueUrls = [...new Set(__call__websearch.flatMap(r =>
-        r.results.map(s => s.link)
-      ))];
-      // Scrape all URLs concurrently
+      
+      // Flatten all result links from all queries
+      const allLinks = __call__websearch
+        .flatMap((i) => i.results || [])
+        .map((r) => r.link)
+        .filter((link) => typeof link === "string" && link.trim() !== "");
+      
+      if (allLinks.length === 0) {
+        return ["No valid links found to scrape"];
+      }
+      
+      console.log(`Scraping ${allLinks.length} URLs...`);
+      
+      // Scrape all URLs concurrently with retry
       const scrapedData = await Promise.all(
-        uniqueUrls.map(async (url) => {
-          try {
-            // Use query parameter format for the scrape endpoint
-            const __scrape = await fetch(
-              `https://sistorica-python.vercel.app/api/scrape?url=${encodeURIComponent(url)}&include_images=false&include_links=true&max_content_length=30000`,
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-              }
+        allLinks.map((link) =>
+          retry(async () => {
+            const res = await fetch(
+              `https://sistorica-python.vercel.app/api/scrape?url=${encodeURIComponent(
+                link
+              )}&include_images=false&include_links=true&max_content_length=30000`, { method: "POST", headers: { "Content-Type": "application/json" } }
             );
             
-            if (!__scrape.ok) {
-              const errorText = await __scrape.text();
-              console.error(
-                `Scraping failed for ${url}:`,
-                __scrape.status,
-                errorText
-              );
-              return errorText;
+            if (!res.ok) {
+              console.error(`Scraping failed for ${link}:`, res.status);
+              return { url: link, error: `HTTP ${res.status}` };
             }
             
-            const json: ScrapedData = await __scrape.json();
-            console.log(`Successfully scraped: ${url}`);
-            return json
-          } catch (err) {
-            console.error("Scraping error for", url, ":", err);
-            return err;
-          }
-        })
+            const json = await res.json();
+            
+            if (json?.details === "Not found") {
+              console.warn(`Not found for ${link}`);
+              return { url: link, error: "Not found" };
+            }
+            
+            console.log(` Successfully scraped: ${link}`);
+            return json as ScrapedData;
+          })
+        )
       );
       
-      // Filter out failed requests and extract successful data
+      // Filter out invalid/failed responses
+      const validData = scrapedData.filter(
+        (d: any) => d && !d.error && !d.details && d.content
+      );
       
-      return scrapedData;
+      console.log(
+        `Scraped ${validData.length} valid pages out of ${allLinks.length}`
+      );
+      
+      return validData;
     });
     
-    // Return combined results for debugging/logging
-    return {};
+    /**
+     * STEP 4: Return results for logging or further processing
+     */
+    return {
+      slug: __slug,
+      thinking: __call__thinking,
+      websearch: __call__websearch,
+      gatheredData: __gather__data,
+      summary: {
+        searchQueries: __call__websearch.length,
+        totalSearchResults: __call__websearch.reduce(
+          (sum, s) => sum + (s.results?.length || 0),
+          0
+        ),
+        scrapedPages: Array.isArray(__gather__data) ?
+          __gather__data.length :
+          0,
+      },
+    };
   }
 );
