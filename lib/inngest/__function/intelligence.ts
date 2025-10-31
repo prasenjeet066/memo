@@ -60,7 +60,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
      * STEP 2: Perform web search requests based on AI output
      */
     const __call__websearch = await step.run("websearch_request", async () => {
-      if (!__call__thinking) return {};
+      if (!__call__thinking) return [];
       
       const { articleCategory, WebSearchRequests } = __call__thinking;
       
@@ -78,7 +78,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
               }
               
               const data = await res.json();
-              return { query: r, results: data.items };
+              return { query: r, results: data.items || [] };
             } catch (error) {
               console.error("Web search error:", error);
               return { query: r, results: [] };
@@ -90,45 +90,64 @@ export const articleIntelligenceFunction = inngest.createFunction(
         
       }
       
-      return {};
+      return [];
     });
     
     const __gather__data = await step.run('gather-run', async () => {
       if (__call__websearch.length) {
         // take url from search
-        return await Promise.all(
+        const allResults = await Promise.all(
           __call__websearch.map(async (search) => {
-            if (search.results) {
-              return await Promise.all(
+            if (search.results && Array.isArray(search.results)) {
+              const scrapedData = await Promise.all(
                 search.results.map(async (i) => {
                   const { link, title, snippet, pagemap, displayLink } = i;
+                  
+                  // Skip if no link
+                  if (!link) return null;
+                  
                   try {
                     const __scrape = await fetch('https://sistorica-python.vercel.app/api/scrape', {
                       method: 'POST',
                       body: JSON.stringify({ url: link }),
                       headers: { 'Content-Type': 'application/json' },
                     });
-                    if (!__scrape.ok) return;
-                    const json = await __scrape.json();
                     
-                    return json
+                    if (!__scrape.ok) {
+                      console.error(`Scraping failed for ${link}:`, __scrape.status);
+                      return null;
+                    }
+                    
+                    const json = await __scrape.json();
+                    return json;
                     
                   } catch (err) {
-                    console.error('Scraping error:', err);
+                    console.error('Scraping error for', link, ':', err);
+                    return null;
                   }
                 })
               );
+              
+              // Filter out null/undefined values
+              return scrapedData.filter(item => item !== null && item !== undefined);
             }
+            return [];
           })
         );
+        
+        // Flatten the results and filter out empty arrays
+        return allResults.flat().filter(item => item !== null && item !== undefined);
       }
-    })
+      
+      return [];
+    });
     
     // Return combined results for debugging/logging
     return {
       slug: __slug,
       thinking: __call__thinking,
       websearch: __call__websearch,
+      gatheredData: __gather__data,
     };
   }
   
