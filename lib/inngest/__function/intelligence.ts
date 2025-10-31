@@ -69,7 +69,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
           WebSearchRequests.map(async (r) => {
             try {
               const res = await fetch(
-                "/api/search?q=" + encodeURIComponent(r), { method: "GET" }
+                "https://memoorg.vercel.app/api/search?q=" + encodeURIComponent(r), { method: "GET" }
               );
               
               if (!res.ok) {
