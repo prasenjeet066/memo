@@ -32,12 +32,15 @@ interface ScrapedData {
     modified_date: string | null;
     canonical_url: string | null;
     language: string | null;
-    og_tags: Record<string, any>;
-    twitter_tags: Record<string, any>;
+    og_tags: Record < string,
+    any > ;
+    twitter_tags: Record < string,
+    any > ;
     schema_org: any[];
   };
   content: {
-    headings: Record<string, string[]>;
+    headings: Record < string,
+    string[] > ;
     paragraphs: string[];
     lists: any[];
     tables: any[];
@@ -46,19 +49,22 @@ interface ScrapedData {
     text_content: string;
     word_count: number;
   };
-  media: Record<string, any>;
-  links: Record<string, string[]>;
-  structured_data: Record<string, any>;
+  media: Record < string,
+  any > ;
+  links: Record < string,
+  string[] > ;
+  structured_data: Record < string,
+  any > ;
 }
 
 /**
  * Utility: retry helper with exponential backoff
  */
-async function retry<T>(
-  fn: () => Promise<T>,
+async function retry < T > (
+  fn: () => Promise < T > ,
   retries = 2,
   delay = 1000
-): Promise<T> {
+): Promise < T > {
   try {
     return await fn();
   } catch (err) {
@@ -76,12 +82,11 @@ export const articleIntelligenceFunction = inngest.createFunction(
   {
     id: "article-ai-submission",
     name: "Process Article With AI",
-  },
-  { event: "article/ai/worker" },
+  }, { event: "article/ai/worker" },
   async ({ event, step }) => {
     const { data } = event;
     const __slug = data.slug;
-
+    
     /**
      * STEP 1: AI reasoning about the topic
      */
@@ -89,17 +94,17 @@ export const articleIntelligenceFunction = inngest.createFunction(
       const __output = await openAi.chat.completions.create({
         model: "nvidia/nemotron-nano-9b-v2:free",
         messages: [
-          {
-            role: "system",
-            content: `You are a reasoning AI. When given a topic or name, respond with:
+        {
+          role: "system",
+          content: `You are a reasoning AI. When given a topic or name, respond with:
               - articleCategory: What kind of entity it is (e.g., "person", "country").
-              - WebSearchRequests: A list of useful web search queries to gather detailed info about it.`,
-          },
-          {
-            role: "user",
-            content: `Topic or name or subject is "${__slug}"`,
-          },
-        ],
+              - WebSearchRequests: A list of useful web search queries to gather detailed info about it.
+              - RevisedName: The name you are given may contain spelling or typos, so you will prepare a parliamentary name.`,
+        },
+        {
+          role: "user",
+          content: `Topic or name or subject is "${__slug}"`,
+        }, ],
         response_format: {
           type: "json_schema",
           json_schema: {
@@ -107,6 +112,9 @@ export const articleIntelligenceFunction = inngest.createFunction(
             schema: {
               type: "object",
               properties: {
+                RevisedName: {
+                  type: "string"
+                },
                 articleCategory: { type: "string" },
                 WebSearchRequests: { type: "array", items: { type: "string" } },
               },
@@ -115,7 +123,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
           },
         },
       });
-
+      
       try {
         return JSON.parse(__output.choices?.[0]?.message?.content || "{}");
       } catch (err) {
@@ -123,7 +131,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
         return {};
       }
     });
-
+    
     /**
      * STEP 2: Perform web search requests based on AI output
      */
@@ -131,24 +139,23 @@ export const articleIntelligenceFunction = inngest.createFunction(
       "websearch_request",
       async () => {
         if (!__call__thinking) return [];
-
+        
         const { WebSearchRequests } = __call__thinking;
-
+        
         if (Array.isArray(WebSearchRequests) && WebSearchRequests.length > 0) {
           const __all_index = await Promise.all(
             WebSearchRequests.map(async (r) => {
               try {
                 const res = await fetch(
                   "https://memoorg.vercel.app/api/search?q=" +
-                    encodeURIComponent(r),
-                  { method: "GET" }
+                  encodeURIComponent(r), { method: "GET" }
                 );
-
+                
                 if (!res.ok) {
                   console.error("Search API returned error:", res.status);
                   return { query: r, results: [] };
                 }
-
+                
                 const data = await res.json();
                 return { query: r, results: data.items || [] };
               } catch (error) {
@@ -157,14 +164,14 @@ export const articleIntelligenceFunction = inngest.createFunction(
               }
             })
           );
-
+          
           return __all_index;
         }
-
+        
         return [];
       }
     );
-
+    
     /**
      * STEP 3: Scrape content from search results
      */
@@ -172,19 +179,19 @@ export const articleIntelligenceFunction = inngest.createFunction(
       if (!__call__websearch.length) {
         return ["No search results to scrape"];
       }
-
+      
       // Flatten all result links from all queries
       const allLinks = __call__websearch
         .flatMap((i) => i.results || [])
         .map((r) => r.link)
         .filter((link) => typeof link === "string" && link.trim() !== "");
-
+      
       if (allLinks.length === 0) {
         return ["No valid links found to scrape"];
       }
-
+      
       console.log(`Scraping ${allLinks.length} URLs...`);
-
+      
       // Scrape all URLs concurrently with retry
       const scrapedData = await Promise.all(
         allLinks.map((link) =>
@@ -192,40 +199,88 @@ export const articleIntelligenceFunction = inngest.createFunction(
             const res = await fetch(
               `https://sistorica-python.vercel.app/api/scrape?url=${encodeURIComponent(
                 link
-              )}&include_images=false&include_links=true&max_content_length=30000`,
-              { method: "POST", headers: { "Content-Type": "application/json" } }
+              )}&include_images=false&include_links=true&max_content_length=30000`, { method: "POST", headers: { "Content-Type": "application/json" } }
             );
-
+            
             if (!res.ok) {
               console.error(`Scraping failed for ${link}:`, res.status);
               return { url: link, error: `HTTP ${res.status}` };
             }
-
+            
             const json = await res.json();
-
+            
             if (json?.details === "Not found") {
               console.warn(`Not found for ${link}`);
               return { url: link, error: "Not found" };
             }
-
+            
             console.log(`✅ Successfully scraped: ${link}`);
             return json as ScrapedData;
           })
         )
       );
-
+      
       // Filter out invalid/failed responses
       const validData = scrapedData.filter(
         (d: any) => d && !d.error && !d.details && d.content
       );
-
+      
       console.log(
         `Scraped ${validData.length} valid pages out of ${allLinks.length}`
       );
-
+      
       return validData;
     });
-
+    
+    const InvestigateWithSrc = await step.run('investigate', async () => {
+      if (__gather__data.length < 1) {
+        // failed to search integration 
+        const WriteWithoutWebIntegration = await openAi.chat.completions.create({
+          model: 'nvidia/nemotron-nano-9b-v2:free',
+          messages: [
+          {
+            'role': 'system',
+            'message': `Now you create a good quality wiki article about this subject or topic based on its category and where:
+            - ImagesUrls: Why is it that if there is a photo URL, it is in the form of an object inside an array, whereas if there is a size, caption, link, it will be inside that object.
+            - Sections: All the sections needed to write that article or wiki will be inside an object that contains the section name and all the text in that section. 
+            - ReferenceList: You can add references to validate that article or wiki entry. 
+            - SchemaOrg :For SEO and Google Knowledge Panel, create a schema.org for that article.
+            `
+          },
+          {
+            'role': 'user',
+            'message': `Topic or subject name is - "${__call__thinking.RevisedName || __slug} and category is ${__call__thinking.articleCategory || 'Unknown'}
+            `
+          }],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "results",
+              schema: {
+                type: "object",
+                properties: {
+                  ImagesUrls: {
+                    type: "array"
+                  },
+                  Sections: { type: "array" },
+                  ReferenceList: { type: "object" },
+                  SchemaOrg: {
+                    type: "object"
+                  }
+                },
+                required: ["ImagesUrls", "Sections", "SchemaOrg"],
+              },
+            },
+          }
+        })
+        try {
+          return JSON.parse(WriteWithoutWebIntegration.choices?.[0]?.message?.content || "{}");
+        } catch (err) {
+          console.error("AI parsing error:", err);
+          return {};
+        }
+      }
+    })
     /**
      * STEP 4: Return results for logging or further processing
      */
@@ -234,16 +289,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
       thinking: __call__thinking,
       websearch: __call__websearch,
       gatheredData: __gather__data,
-      summary: {
-        searchQueries: __call__websearch.length,
-        totalSearchResults: __call__websearch.reduce(
-          (sum, s) => sum + (s.results?.length || 0),
-          0
-        ),
-        scrapedPages: Array.isArray(__gather__data)
-          ? __gather__data.length
-          : 0,
-      },
+      
     };
   }
 );
