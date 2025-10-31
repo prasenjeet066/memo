@@ -94,7 +94,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
      */
     const __call__thinking = await step.run("ai_thinking", async () => {
       const __output = await openAi.chat.completions.create({
-        model: "nvidia/nemotron-nano-9b-v2:free",
+        model: "openai/gpt-oss-safeguard-20b:groq",
         messages: [
         {
           role: "system",
@@ -120,7 +120,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
                 articleCategory: { type: "string" },
                 WebSearchRequests: { type: "array", items: { type: "string" } },
               },
-              required: ["articleCategory", "WebSearchRequests"],
+              required: ["RevisedName","articleCategory", "WebSearchRequests"],
             },
           },
         },
@@ -238,7 +238,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
       if (__gather__data.length < 1) {
         // Failed to search integration - write without web data
         const WriteWithoutWebIntegration = await openAi.chat.completions.create({
-          model: "nvidia/nemotron-nano-9b-v2:free",
+          model: "openai/gpt-oss-safeguard-20b:groq",
           messages: [
           {
             role: "system",
