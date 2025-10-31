@@ -2,11 +2,8 @@ import { inngest } from "@/lib/inngest/client";
 import { RecordDAL } from "@/lib/dal/record.dal";
 import { UserDAL } from "@/lib/dal/user.dal";
 import openAi from "@/lib/utils/ai/openai";
-import { CreateRecordDTO, UpdateRecordDTO } from "@/lib/dtos/record.dto";
 
-/**
- * Interfaces
- */
+// Fixed interface to match the actual API response
 interface SearchResult {
   title: string;
   link: string;
@@ -19,6 +16,7 @@ interface OutputWebSearch {
   results: SearchResult[];
 }
 
+// Interface for scraped data response
 interface ScrapedData {
   url: string;
   status_code: number;
@@ -57,27 +55,8 @@ interface ScrapedData {
   any > ;
 }
 
-/**
- * Utility: retry helper with exponential backoff
- */
-async function retry < T > (
-  fn: () => Promise < T > ,
-  retries = 2,
-  delay = 1000
-): Promise < T > {
-  try {
-    return await fn();
-  } catch (err) {
-    if (retries <= 0) throw err;
-    console.warn(`Retrying after error: ${String(err)}`);
-    await new Promise((r) => setTimeout(r, delay));
-    return retry(fn, retries - 1, delay * 2);
-  }
-}
+import { CreateRecordDTO, UpdateRecordDTO } from "@/lib/dtos/record.dto";
 
-/**
- * Main Function: Process Article with AI
- */
 export const articleIntelligenceFunction = inngest.createFunction(
   {
     id: "article-ai-submission",
@@ -87,8 +66,8 @@ export const articleIntelligenceFunction = inngest.createFunction(
     const { data } = event;
     const __slug = data.slug;
     
-    /**
-     * STEP 1: AI reasoning about the topic
+    /**  
+     * STEP 1: AI reasoning about the topic  
      */
     const __call__thinking = await step.run("ai_thinking", async () => {
       const __output = await openAi.chat.completions.create({
@@ -96,9 +75,9 @@ export const articleIntelligenceFunction = inngest.createFunction(
         messages: [
         {
           role: "system",
-          content: `You are a reasoning AI. When given a topic or name, respond with:
-              - articleCategory: What kind of entity it is (e.g., "person", "country").
-              - WebSearchRequests: A list of useful web search queries to gather detailed info about it.`,
+          content: `You are a reasoning AI. When given a topic or name, respond with:  
+        - articleCategory: What kind of entity it is (e.g., "people", "country").  
+        - WebSearchRequests: A list of useful web search queries to gather detailed info about it.`,
         },
         {
           role: "user",
@@ -120,6 +99,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
         },
       });
       
+      // Parse AI output safely  
       try {
         return JSON.parse(__output.choices?.[0]?.message?.content || "{}");
       } catch (err) {
@@ -128,15 +108,15 @@ export const articleIntelligenceFunction = inngest.createFunction(
       }
     });
     
-    /**
-     * STEP 2: Perform web search requests based on AI output
+    /**  
+     * STEP 2: Perform web search requests based on AI output  
      */
     const __call__websearch: OutputWebSearch[] = await step.run(
       "websearch_request",
       async () => {
         if (!__call__thinking) return [];
         
-        const { WebSearchRequests } = __call__thinking;
+        const { articleCategory, WebSearchRequests } = __call__thinking;
         
         if (Array.isArray(WebSearchRequests) && WebSearchRequests.length > 0) {
           const __all_index = await Promise.all(
@@ -153,7 +133,8 @@ export const articleIntelligenceFunction = inngest.createFunction(
                 }
                 
                 const data = await res.json();
-                return { query: r, results: data.items || [] };
+                // The API returns { query, results_count, results, start_index }  
+                return { query: r, results: data.items };
               } catch (error) {
                 console.error("Web search error:", error);
                 return { query: r, results: [] };
@@ -168,6 +149,9 @@ export const articleIntelligenceFunction = inngest.createFunction(
       }
     );
     
+    /**  
+     * STEP 3: Scrape content from search results  
+     */
     /**
      * STEP 3: Scrape content from search results
      */
@@ -186,16 +170,14 @@ export const articleIntelligenceFunction = inngest.createFunction(
         return ["No valid links found to scrape"];
       }
       
-      console.log(`Scraping ${allLinks.length} URLs...`);
-      
-      // Scrape all URLs concurrently with retry
+      // Scrape all URLs concurrently
       const scrapedData = await Promise.all(
-        allLinks.map((link) =>
-          retry(async () => {
+        allLinks.map(async (link) => {
+          try {
             const res = await fetch(
               `https://sistorica-python.vercel.app/api/scrape?url=${encodeURIComponent(
-                link
-              )}&include_images=false&include_links=true&max_content_length=30000`, { method: "POST", headers: { "Content-Type": "application/json" } }
+            link
+          )}&include_images=false&include_links=true&max_content_length=30000`, { method: "POST", headers: { "Content-Type": "application/json" } }
             );
             
             if (!res.ok) {
@@ -205,32 +187,31 @@ export const articleIntelligenceFunction = inngest.createFunction(
             
             const json = await res.json();
             
+            // Handle { details: 'Not found' } case
             if (json?.details === "Not found") {
               console.warn(`Not found for ${link}`);
               return { url: link, error: "Not found" };
             }
             
-            console.log(` Successfully scraped: ${link}`);
+            console.log(`Successfully scraped: ${link}`);
             return json as ScrapedData;
-          })
-        )
+          } catch (e: any) {
+            console.error(`Scraping error for ${link}:`, e.message);
+            return { url: link, error: e.message || "Scraping failed" };
+          }
+        })
       );
       
-      // Filter out invalid/failed responses
+      // Filter out failed or invalid responses
       const validData = scrapedData.filter(
         (d: any) => d && !d.error && !d.details && d.content
-      );
-      
-      console.log(
-        `Scraped ${validData.length} valid pages out of ${allLinks.length}`
       );
       
       return validData;
     });
     
-    /**
-     * STEP 4: Return results for logging or further processing
-     */
+    // Return combined results for debugging/logging  
+    
     return {
       slug: __slug,
       thinking: __call__thinking,
@@ -243,8 +224,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
           0
         ),
         scrapedPages: Array.isArray(__gather__data) ?
-          __gather__data.length :
-          0,
+          __gather__data.length : 0,
       },
     };
   }
