@@ -78,7 +78,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
               }
               
               const data = await res.json();
-              return { query: r, results: data.results };
+              return { query: r, results: data };
             } catch (error) {
               console.error("Web search error:", error);
               return { query: r, results: [] };
