@@ -30,12 +30,15 @@ interface ScrapedData {
     modified_date: string | null;
     canonical_url: string | null;
     language: string | null;
-    og_tags: Record<string, any>;
-    twitter_tags: Record<string, any>;
+    og_tags: Record < string,
+    any > ;
+    twitter_tags: Record < string,
+    any > ;
     schema_org: any[];
   };
   content: {
-    headings: Record<string, string[]>;
+    headings: Record < string,
+    string[] > ;
     paragraphs: string[];
     lists: any[];
     tables: any[];
@@ -44,9 +47,12 @@ interface ScrapedData {
     text_content: string;
     word_count: number;
   };
-  media: Record<string, any>;
-  links: Record<string, string[]>;
-  structured_data: Record<string, any>;
+  media: Record < string,
+  any > ;
+  links: Record < string,
+  string[] > ;
+  structured_data: Record < string,
+  any > ;
 }
 
 import { CreateRecordDTO, UpdateRecordDTO } from "@/lib/dtos/record.dto";
@@ -55,12 +61,11 @@ export const articleIntelligenceFunction = inngest.createFunction(
   {
     id: "article-ai-submission",
     name: "Process Article With AI",
-  },
-  { event: "article/ai/worker" },
+  }, { event: "article/ai/worker" },
   async ({ event, step }) => {
     const { data } = event;
     const __slug = data.slug;
-
+    
     /**
      * STEP 1: AI reasoning about the topic
      */
@@ -68,17 +73,16 @@ export const articleIntelligenceFunction = inngest.createFunction(
       const __output = await openAi.chat.completions.create({
         model: "nvidia/nemotron-nano-9b-v2:free",
         messages: [
-          {
-            role: "system",
-            content: `You are a reasoning AI. When given a topic or name, respond with:
+        {
+          role: "system",
+          content: `You are a reasoning AI. When given a topic or name, respond with:
             - articleCategory: What kind of entity it is (e.g., "people", "country").
             - WebSearchRequests: A list of useful web search queries to gather detailed info about it.`,
-          },
-          {
-            role: "user",
-            content: `Topic or name or subject is "${__slug}"`,
-          },
-        ],
+        },
+        {
+          role: "user",
+          content: `Topic or name or subject is "${__slug}"`,
+        }, ],
         response_format: {
           type: "json_schema",
           json_schema: {
@@ -94,7 +98,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
           },
         },
       });
-
+      
       // Parse AI output safely
       try {
         return JSON.parse(__output.choices?.[0]?.message?.content || "{}");
@@ -103,7 +107,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
         return {};
       }
     });
-
+    
     /**
      * STEP 2: Perform web search requests based on AI output
      */
@@ -111,24 +115,23 @@ export const articleIntelligenceFunction = inngest.createFunction(
       "websearch_request",
       async () => {
         if (!__call__thinking) return [];
-
+        
         const { articleCategory, WebSearchRequests } = __call__thinking;
-
+        
         if (Array.isArray(WebSearchRequests) && WebSearchRequests.length > 0) {
           const __all_index = await Promise.all(
             WebSearchRequests.map(async (r) => {
               try {
                 const res = await fetch(
                   "https://memoorg.vercel.app/api/search?q=" +
-                    encodeURIComponent(r),
-                  { method: "GET" }
+                  encodeURIComponent(r), { method: "GET" }
                 );
-
+                
                 if (!res.ok) {
                   console.error("Search API returned error:", res.status);
                   return { query: r, results: [] };
                 }
-
+                
                 const data = await res.json();
                 // The API returns { query, results_count, results, start_index }
                 return { query: r, results: data.items };
@@ -138,45 +141,25 @@ export const articleIntelligenceFunction = inngest.createFunction(
               }
             })
           );
-
+          
           return __all_index;
         }
-
+        
         return [];
       }
     );
-
+    
     /**
      * STEP 3: Scrape content from search results
      */
     const __gather__data = await step.run("gather-run", async () => {
-      if (__call__websearch.length === 0) {
-        console.log("No search results to scrape");
-        return [];
+      if (!__call__websearch.length) {
+        
+        return ['No search results to scrape'];
       }
-
-      // Collect all URLs from all search queries (limit to top 3 per query)
-      const allUrls: string[] = [];
-      for (const search of __call__websearch) {
-        if (search.results && Array.isArray(search.results)) {
-          const urls = search.results
-            .slice(0, 3) // Limit to top 3 results per query
-            .map((result) => result.link)
-            .filter((link) => link); // Filter out any undefined/null links
-          
-          allUrls.push(...urls);
-        }
-      }
-
-      // Remove duplicates
-      const uniqueUrls = [...new Set(allUrls)];
-      console.log(`Scraping ${uniqueUrls.length} unique URLs`);
-
-      if (uniqueUrls.length === 0) {
-        console.log("No valid URLs to scrape");
-        return ['No valid URLs to scrape'];
-      }
-
+      const uniqueUrls = [...new Set(__call__websearch.flatMap(r =>
+        r.results.map(s => s.link)
+      ))];
       // Scrape all URLs concurrently
       const scrapedData = await Promise.allSettled(
         uniqueUrls.map(async (url) => {
@@ -189,7 +172,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
                 headers: { "Content-Type": "application/json" },
               }
             );
-
+            
             if (!__scrape.ok) {
               const errorText = await __scrape.text();
               console.error(
@@ -197,9 +180,9 @@ export const articleIntelligenceFunction = inngest.createFunction(
                 __scrape.status,
                 errorText
               );
-              return null;
+              return errorText;
             }
-
+            
             const json: ScrapedData = await __scrape.json();
             console.log(`Successfully scraped: ${url}`);
             return json
@@ -209,22 +192,12 @@ export const articleIntelligenceFunction = inngest.createFunction(
           }
         })
       );
-
+      
       // Filter out failed requests and extract successful data
-      const successfulScrapes = scrapedData
-        .filter(
-          (result): result is PromiseFulfilledResult<ScrapedData | null> =>
-            result.status === "fulfilled" && result.value !== null
-        )
-        .map((result) => result.value);
-
-      console.log(
-        `Successfully scraped ${successfulScrapes.length} out of ${uniqueUrls.length} URLs`
-      );
-
-      return successfulScrapes;
+      
+      return scrapedData;
     });
-
+    
     // Return combined results for debugging/logging
     return {
       slug: __slug,
