@@ -9,7 +9,7 @@ import {
 import { Fai } from '@/components/Fontawesome';
 
 interface EditorHeaderProps {
-  recordName?: string;
+  recordName ? : string;
   canUndo: boolean;
   canRedo: boolean;
   editorMode: 'visual' | 'code';
@@ -18,6 +18,7 @@ interface EditorHeaderProps {
   onRedo: () => void;
   onPreview: () => void;
   onModeChange: (mode: 'visual' | 'code') => void;
+  handlePublish: ()=>void;
 }
 
 export function EditorHeader({
@@ -30,6 +31,7 @@ export function EditorHeader({
   onRedo,
   onPreview,
   onModeChange,
+  handlePublish,
 }: EditorHeaderProps) {
   return (
     <div className="px-4 py-3 flex items-center justify-between">
@@ -92,6 +94,16 @@ export function EditorHeader({
         >
           <Fai icon="gear" style="fal" />
         </button>
+
+                        <Button
+                          onClick={handlePublish}
+                          aria-label="Publish document"
+                          type="button"
+                          title="Publish (Ctrl+S)"
+                        >
+                          Publish
+                        </Button>
+                    
       </div>
     </div>
   );

@@ -283,6 +283,7 @@ export default function EnhancedEditor({
         onRedo={handleRedo}
         onPreview={handlePreview}
         onModeChange={setEditorMode}
+        handlePublish = {handlePublishSubmit}
       />
       
       <EditorStatusBar
@@ -294,7 +295,7 @@ export default function EnhancedEditor({
 
       <div className="flex-1 overflow-auto bg-white relative">
         {showPreview ? (
-          <div className="p-8 w-full min-h-full prose max-w-none" style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <div className="p-8 w-full min-h-full prose max-w-full" style={{ maxWidth: '100%', margin: '0 auto' }}>
             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
               <p className="text-sm font-medium text-yellow-800">Preview Mode - Read Only</p>
             </div>
@@ -341,7 +342,7 @@ export default function EnhancedEditor({
               .mdxeditor-root-contenteditable {
                 max-width: 100%;
                 margin: 0 auto;
-              
+                padding: 4px
               }
               
               .mdxeditor-toolbar {
@@ -451,16 +452,6 @@ export default function EnhancedEditor({
                       <InsertTable />
                       <InsertCodeBlock />
                       <InsertThematicBreak />
-                      <div className="custom-publish-button">
-                        <Button
-                          onClick={handlePublish}
-                          aria-label="Publish document"
-                          type="button"
-                          title="Publish (Ctrl+S)"
-                        >
-                          Publish
-                        </Button>
-                      </div>
                     </>
                   )
                 }),
