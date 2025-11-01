@@ -248,102 +248,7 @@ Be concise and accurate.`,
     const InvestigateWithSrc = await step.run("investigate", async () => {
       if (__gather__data.length < 1) {
         // Failed to search integration - write without web data
-        const WriteWithoutWebIntegration = await openAi.chat.completions.create({
-          model: "openai/gpt-oss-safeguard-20b:groq",
-          messages: [
-          {
-            role: "system",
-            content: `You are a wiki article generator. Create a comprehensive article with:
-- ImagesUrls: Array of image objects with url, caption, and size properties
-- Sections: Array of section objects with name and text (HTML formatted) properties
-- ReferenceList: Array of reference objects with title, url, and source properties
-- SchemaOrg: A valid schema.org JSON-LD object for SEO
-
-Write detailed, informative content. Use proper HTML formatting in section text.`,
-          },
-          {
-            role: "user",
-            content: `Create a wiki article about: "${
-                __call__thinking.RevisedName || __slug
-              }" (Category: ${__call__thinking.articleCategory || "Unknown"})`,
-          }, ],
-          response_format: {
-            type: "json_schema",
-            json_schema: {
-              name: "results",
-              schema: {
-                type: "object",
-                properties: {
-                  ImagesUrls: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        url: { type: "string" },
-                        caption: { type: "string" },
-                        size: { type: "string" }
-                      },
-                      required: ["url"],
-                      additionalProperties: false
-                    },
-                    description: "Array of image objects"
-                  },
-                  Sections: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        name: { type: "string" },
-                        text: { type: "string" }
-                      },
-                      required: ["name", "text"],
-                      additionalProperties: false
-                    },
-                    description: "Array of article sections with HTML content"
-                  },
-                  ReferenceList: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        title: { type: "string" },
-                        url: { type: "string" },
-                        source: { type: "string" }
-                      },
-                      required: ["title"],
-                      additionalProperties: false
-                    },
-                    description: "Array of references"
-                  },
-                  SchemaOrg: {
-                    type: "object",
-                    properties: {
-                      "@context": { type: "string" },
-                      "@type": { type: "string" },
-                      name: { type: "string" }
-                    },
-                    required: ["@context", "@type", "name"],
-                    additionalProperties: true,
-                    description: "Schema.org JSON-LD object"
-                  },
-                },
-                required: ["ImagesUrls", "Sections", "SchemaOrg", "ReferenceList"],
-                additionalProperties: false
-              },
-            },
-          },
-        });
         
-        try {
-          return JSON.parse(
-            WriteWithoutWebIntegration.choices?.[0]?.message?.content || "{}"
-          );
-        } catch (err) {
-          console.error("AI parsing error:", err);
-          return {};
-        }
-      }
-      
       // TODO: Process gathered data when available
       // For now, use the same structure with web data
       const WriteWithWebData = await openAi.chat.completions.create({
@@ -358,20 +263,13 @@ Write detailed, informative content. Use proper HTML formatting in section text.
 - ReferenceList: Array of reference objects with title, url, and source properties (use scraped sources)
 - SchemaOrg: A valid schema.org JSON-LD object for SEO
 
-Write detailed, informative content based on the sources. Use proper HTML formatting in section text.`,
+Write detailed, informative content based on the sources. Use proper Markdown formatting in section property.`,
         },
         {
           role: "user",
           content: `Create a wiki article about: "${
               __call__thinking.RevisedName || __slug
-            }" (Category: ${__call__thinking.articleCategory || "Unknown"})
-
-Scraped data from ${__gather__data.length} sources:
-${JSON.stringify(__gather__data.slice(0, 3).map(d => ({
-  url: d.url,
-  title: d.metadata?.title,
-  content: d.content?.text_content?.slice(0, 1000)
-})))}`,
+            }" (Category: ${__call__thinking.articleCategory || "Unknown"})`,
         }, ],
         response_format: {
           type: "json_schema",
@@ -394,7 +292,7 @@ ${JSON.stringify(__gather__data.slice(0, 3).map(d => ({
                   }
                 },
                 Sections: {
-                  type: 'text'
+                  type: 'string'
                 },
                 ReferenceList: {
                   type: "array",
@@ -437,6 +335,7 @@ ${JSON.stringify(__gather__data.slice(0, 3).map(d => ({
       } catch (err) {
         console.error("AI parsing error with web data:", err);
         return {};
+      }
       }
     });
     
