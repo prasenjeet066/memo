@@ -48,7 +48,7 @@ export default function MainPage() {
   
   
   const Sidebar = !isMobile && (
-    <div className='w-auto max-w-64 h-full bg-white ml-2 flex flex-col justify-between rounded-2xl'>
+    <div className='w-auto max-w-64 h-full min-h-full bg-white ml-2 flex flex-col justify-between rounded-2xl'>
       <div className='p-4 border-b border-gray-200'>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
@@ -66,7 +66,7 @@ export default function MainPage() {
               href={nav.href}
               className='flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors group'
             >
-              <nav.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-800 flex-shrink-0' />
+              <nav.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-800 flex-shrink-0 bg-gray-50 rounded-full p-2' />
               {isExpanded && (
                 <span className='text-sm font-medium text-gray-700 group-hover:text-gray-900 capitalize'>
                   {nav.name}
