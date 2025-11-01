@@ -418,9 +418,6 @@ ${JSON.stringify(__gather__data.slice(0, 3).map(d => ({
                     additionalProperties: false
                   }
                 },
-                summary: {
-                  type : "string"
-                },
                 SchemaOrg: {
                   type: "object",
                   properties: {
@@ -431,8 +428,11 @@ ${JSON.stringify(__gather__data.slice(0, 3).map(d => ({
                   required: ["@context", "@type", "name"],
                   additionalProperties: true
                 },
+                Summary: {
+                  type : 'string'
+                }
               },
-              required: ["ImagesUrls", "Sections", "SchemaOrg", "ReferenceList","summary"],
+              required: ["ImagesUrls", "Sections", "SchemaOrg", "ReferenceList","Summary"],
               additionalProperties: false
             },
           },
@@ -463,7 +463,7 @@ ${JSON.stringify(__gather__data.slice(0, 3).map(d => ({
         let dto = {
           title: __call__thinking.RevisedName,
           content: __heading,
-          summary: InvestigateWithSrc.summary,
+          summary: InvestigateWithSrc.Summary || 'None',
           categories: __call__thinking.articleCategory,
           schemaOrg: InvestigateWithSrc.SchemaOrg || {},
         };
