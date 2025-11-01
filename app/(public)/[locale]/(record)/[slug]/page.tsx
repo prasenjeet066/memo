@@ -1,5 +1,6 @@
 'use client'
 import ErrorBoundary from '@/components/ErrorBoundary'
+import Head from "next/head";
 import { Home, Compass, HandHeart, Settings } from 'lucide-react'
 import Header from '@/components/header'
 import { Viewer } from '@/components/record/view'
@@ -184,8 +185,15 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
   }
   
   if (isExistArticel && recordJdata) {
+    // add meta data....
     return (
-      
+      <>
+      <Head>
+        <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(recordJdata.schemaOrg || {}) }}
+      />
+      </Head>
       <ErrorBoundary>
         <div className='min-h-screen w-full bg-gray-50 h-screen'>
           <Header navList={NavList} />
@@ -216,7 +224,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
               </div>
             </footer>
         </div>
-      </ErrorBoundary>
+      </ErrorBoundary></>
     )
   }
   
