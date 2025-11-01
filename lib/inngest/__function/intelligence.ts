@@ -244,7 +244,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
             role: "system",
             content: `Now you create a good quality wiki article about this subject or topic based on its category and where:
             - ImagesUrls: Why is it that if there is a photo URL, it is in the form of an object inside an array, whereas if there is a size, caption, link, it will be inside that object.
-            - Sections: All the sections needed to write that article or wiki will be inside an object that contains the section name and all the text in that section. 
+            - Sections: All the sections needed to write that article or wiki will be inside an object that contains the section name and all the Html Formated text in that section. 
             - ReferenceList: You can add references to validate that article or wiki entry. 
             - SchemaOrg: For SEO and Google Knowledge Panel, create a schema.org for that article.`,
           },
