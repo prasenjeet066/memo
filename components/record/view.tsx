@@ -161,11 +161,14 @@ export const Viewer = function({ __data }: Props) {
     <div className="w-full h-full flex flex-col">
       {/* Header / Title */}
       <div className="px-4 w-full py-3 flex items-center justify-between">
-        {/* Left section — title */}
+        {/* Left section — tit
+        le */}
+        <div className ='flex flex-col items-start gap-2'>
         <h1 className={`font-bold text-gray-900 truncate ${isMobile ? 'text-xl' : 'text-2xl'}`}>
           {data.title || 'Untitled Article'}
         </h1>
-
+        <small>{data.categories.join(',')}</small>
+        </div>
         {/* Right section — actions */}
         <div className="flex items-center gap-4 border-l pl-4 ml-4">
           <button className="">
