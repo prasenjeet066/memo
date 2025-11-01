@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { compile } from '@mdx-js/mdx'
+import { evaluate } from '@mdx-js/mdx'
 import { MDXProvider } from '@mdx-js/react'
 import * as runtime from 'react/jsx-runtime'
 
@@ -11,26 +11,26 @@ type Props = {
 }
 
 export default function ClientMDX({ source, components = {} }: Props) {
-  const [MDXContent, setMDXContent] = useState<React.ComponentType | null>(null)
+  const [Content, setContent] = useState<React.ComponentType | null>(null)
 
   useEffect(() => {
     async function renderMDX() {
-      const compiled = await compile(source, { outputFormat: 'function-body', useDynamicImport: false })
-      const js = String(compiled)
-      const { default: Content } = await import(
-        'data:text/javascript;charset=utf-8,' + encodeURIComponent(js)
-      )
-      setMDXContent(() => Content)
+      const { default: MDXContent } = await evaluate(source, {
+        ...runtime,
+        useDynamicImport: false,
+      })
+      setContent(() => MDXContent)
     }
+
     renderMDX()
   }, [source])
 
-  if (!MDXContent) return <p>Loading MDX...</p>
+  if (!Content) return <p>Loading MDX...</p>
 
   return (
     <MDXProvider components={components}>
       <article className="prose">
-        <MDXContent />
+        <Content />
       </article>
     </MDXProvider>
   )
