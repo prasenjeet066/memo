@@ -68,7 +68,9 @@ body {
   .prose h1 {
     @apply text-3xl font-bold text-gray-800 border-b pb-1 mb-4;
   }
-
+  .prose a {
+    @apply font-semibold text-blue-500
+  }
   .prose h2 {
     @apply text-2xl border-b pb-1 font-semibold text-gray-700 mt-6 mb-4;
   }
