@@ -41,7 +41,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
   
   // Use useMemo for Sidebar (prevents re-renders)
   const Sidebar = useMemo(() =>
-    <div className='w-auto max-w-64 h-full bg-white mr-2 flex flex-col justify-between rounded-2xl rounded-l-none'>
+    <div className='w-auto max-w-64 h-full min-h-screen bg-gray-50 flex flex-col justify-between'>
       <div className='p-4 border-b border-gray-200'>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
@@ -199,8 +199,8 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
         <div className='min-h-screen w-full bg-gray-50 h-screen'>
           <Header navList={NavList} />
          
-          <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
-          
+          <div className='p-4 w-full flex h-full items-start gap-2 justify-between bg-white'>
+          {!isMobile && Sidebar}
              
             <Viewer __data={recordJdata} />
             
@@ -235,8 +235,8 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
     <Header navList={NavList} />  
     
     <div className='p-1 w-full flex h-full items-start justify-between'>  
-       
-      <div className='flex-1 flex bg-white flex-col gap-4 p-4 w-full h-full'>  
+       {!isMobile &&  Sidebar}
+      <div className='flex-1 flex bg-white flex-col gap-4 p-4 w-full h-full bg-white'>  
         <h1 className='text-2xl sm:text-xl md:text-lg lg:text-2xl font-bold '>
           Sorry!
         </h1>

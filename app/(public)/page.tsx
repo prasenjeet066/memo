@@ -138,7 +138,7 @@ export default function MainPage() {
                   }
                 </h1>
                 
-                <div className="w-full p-[1px] rounded-full bg-blue-600">
+                <div className="w-full p-[1px] rounded-full">
                   <div className="w-full p-2 flex items-center gap-2 bg-gray-50 rounded-full">
                     <input
                       type="text"
