@@ -3,22 +3,11 @@ import { RecordDAL } from "@/lib/dal/record.dal";
 import { UserDAL } from "@/lib/dal/user.dal";
 import openAi from "@/lib/utils/ai/openai";
 import { CreateRecordDTO, UpdateRecordDTO } from "@/lib/dtos/record.dto";
-import {markdownToHtml} from "@/lib/editor/templates/markdown"
+import { markdownToHtml } from "@/lib/editor/templates/markdown";
+
 /**
  * Interfaces
  */
-interface SearchResult {
-  title: string;
-  link: string;
-  snippet: string;
-  displayLink: string;
-}
-
-interface OutputWebSearch {
-  query: string;
-  results: SearchResult[];
-}
-
 interface ScrapedData {
   url: string;
   status_code: number;
@@ -76,7 +65,7 @@ async function retry < T > (
 }
 
 /**
- * Main Function: Process Article with AI
+ * Main Function: Process Article with AI using OpenAI Web Search
  */
 export const articleIntelligenceFunction = inngest.createFunction(
   {
@@ -90,48 +79,77 @@ export const articleIntelligenceFunction = inngest.createFunction(
     const username = data.username;
     
     /**
-     * STEP 1: AI reasoning about the topic
+     * STEP 1: AI reasoning and web search in one call
+     * Using OpenAI's web search capability to gather information
      */
-    const __call__thinking = await step.run("ai_thinking", async () => {
+    const __call__research = await step.run("ai_research_with_web", async () => {
       const __output = await openAi.chat.completions.create({
-        model: "openai/gpt-oss-safeguard-20b:groq",
+        model: "openai/gpt-oss-safeguard-20b:groq", // Use a model that supports web search
         messages: [
         {
           role: "system",
-          content: `You are a reasoning AI. When given a topic or name, respond with:
-- RevisedName: A corrected version of the name/topic (fix typos/spelling)
-- articleCategory: What kind of entity it is (e.g., "person", "country", "technology", "event")
-- WebSearchRequests: An array of 2-4 useful web search queries to gather detailed info
+          content: `You are a research AI with web search capabilities. When given a topic, you will:
+1. Search the web for comprehensive information
+2. Analyze and synthesize the findings
+3. Provide structured output
 
-Be concise and accurate.`,
+Respond with:
+- RevisedName: Corrected/standardized name of the topic
+- articleCategory: Entity type (person, place, technology, event, etc.)
+- KeyFacts: Array of important facts discovered
+- Sources: Array of source URLs used
+- ResearchSummary: Brief summary of findings
+
+Be thorough and use current web information.`,
         },
         {
           role: "user",
-          content: `Topic or name or subject is "${__slug}"`,
+          content: `Research and gather comprehensive information about: "${__slug}"
+            
+Please search the web for reliable sources and provide detailed findings.`,
+        }, ],
+        tools: [
+        {
+          type: "web_search",
         }, ],
         response_format: {
           type: "json_schema",
           json_schema: {
-            name: "results",
+            name: "research_results",
             schema: {
               type: "object",
               properties: {
                 RevisedName: {
                   type: "string",
-                  description: "Corrected name with proper spelling"
+                  description: "Corrected name with proper spelling",
                 },
                 articleCategory: {
                   type: "string",
-                  description: "Category of the entity"
+                  description: "Category of the entity",
                 },
-                WebSearchRequests: {
+                KeyFacts: {
                   type: "array",
                   items: { type: "string" },
-                  description: "List of search queries"
+                  description: "Important facts discovered",
+                },
+                Sources: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Source URLs used",
+                },
+                ResearchSummary: {
+                  type: "string",
+                  description: "Summary of research findings",
                 },
               },
-              required: ["RevisedName", "articleCategory", "WebSearchRequests"],
-              additionalProperties: false
+              required: [
+                "RevisedName",
+                "articleCategory",
+                "KeyFacts",
+                "Sources",
+                "ResearchSummary",
+              ],
+              additionalProperties: false,
             },
           },
         },
@@ -146,238 +164,172 @@ Be concise and accurate.`,
     });
     
     /**
-     * STEP 2: Perform web search requests based on AI output
+     * STEP 2: Generate comprehensive article using research data
      */
-    const __call__websearch: OutputWebSearch[] = await step.run(
-      "websearch_request",
+    const __generate__article = await step.run(
+      "generate_article",
       async () => {
-        if (!__call__thinking) return [];
-        
-        const { WebSearchRequests } = __call__thinking;
-        
-        if (Array.isArray(WebSearchRequests) && WebSearchRequests.length > 0) {
-          const __all_index = await Promise.all(
-            WebSearchRequests.map(async (r) => {
-              try {
-                const res = await fetch(
-                  "https://memoorg.vercel.app/api/search?q=" +
-                  encodeURIComponent(r), { method: "GET" }
-                );
-                
-                if (!res.ok) {
-                  console.error("Search API returned error:", res.status);
-                  return { query: r, results: [] };
-                }
-                
-                const data = await res.json();
-                return { query: r, results: data.items || [] };
-              } catch (error) {
-                console.error("Web search error:", error);
-                return { query: r, results: [] };
-              }
-            })
-          );
-          
-          return __all_index;
+        if (!__call__research || !__call__research.RevisedName) {
+          return { error: "Research step failed" };
         }
         
-        return [];
+        const articlePrompt = `Based on the research findings, create a comprehensive wiki article about "${__call__research.RevisedName}".
+
+Research Summary:
+${__call__research.ResearchSummary}
+
+Key Facts:
+${__call__research.KeyFacts?.join("\n- ") || "No facts available"}
+
+Category: ${__call__research.articleCategory}
+
+Create a well-structured article with proper sections, references, and schema.org markup.`;
+        
+        const __output = await openAi.chat.completions.create({
+          model: "openai/gpt-oss-safeguard-20b:groq",
+          messages: [
+          {
+            role: "system",
+            content: `You are a professional wiki article writer. Create comprehensive, well-structured articles with:
+- summary: Concise article summary
+- ImagesUrls: Array of relevant image objects (if applicable)
+- Sections: Complete article content in Markdown format with proper headings
+- ReferenceList: Array of reference objects from sources
+- SchemaOrg: Valid schema.org JSON-LD object for SEO
+
+Write detailed, informative content with proper citations and structure.`,
+          },
+          {
+            role: "user",
+            content: articlePrompt,
+          }, ],
+          tools: [
+          {
+            type: "web_search",
+          }, ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "article_output",
+              schema: {
+                type: "object",
+                properties: {
+                  ImagesUrls: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        url: { type: "string" },
+                        caption: { type: "string" },
+                        size: { type: "string" },
+                      },
+                      required: ["url"],
+                      additionalProperties: false,
+                    },
+                  },
+                  Sections: {
+                    type: "string",
+                    description: "Full article in Markdown format",
+                  },
+                  ReferenceList: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        title: { type: "string" },
+                        url: { type: "string" },
+                        source: { type: "string" },
+                      },
+                      required: ["title"],
+                      additionalProperties: false,
+                    },
+                  },
+                  SchemaOrg: {
+                    type: "object",
+                    properties: {
+                      "@context": { type: "string" },
+                      "@type": { type: "string" },
+                      name: { type: "string" },
+                    },
+                    required: ["@context", "@type", "name"],
+                    additionalProperties: true,
+                  },
+                  Summary: {
+                    type: "string",
+                  },
+                },
+                required: [
+                  "ImagesUrls",
+                  "Sections",
+                  "SchemaOrg",
+                  "ReferenceList",
+                  "Summary",
+                ],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+        
+        try {
+          return JSON.parse(__output.choices?.[0]?.message?.content || "{}");
+        } catch (err) {
+          console.error("Article generation parsing error:", err);
+          return { error: "Failed to parse article" };
+        }
       }
     );
     
     /**
-     * STEP 3: Scrape content from search results
+     * STEP 3: Save to database
      */
-    const __gather__data = await step.run("gather-run", async () => {
-      if (!__call__websearch.length) {
-        return [];
+    const __save__to__db = await step.run("save_to_database", async () => {
+      if (
+        __generate__article.error ||
+        !__generate__article.Sections ||
+        !__generate__article.SchemaOrg
+      ) {
+        return { error: "Article generation incomplete" };
       }
       
-      // Flatten all result links from all queries
-      const allLinks = __call__websearch
-        .flatMap((i) => i.results || [])
-        .map((r) => r.link)
-        .filter((link) => typeof link === "string" && link.trim() !== "");
-      
-      if (allLinks.length === 0) {
-        return [];
-      }
-      
-      console.log(`Scraping ${allLinks.length} URLs...`);
-      
-      // Scrape all URLs concurrently with retry
-      const scrapedData = await Promise.all(
-        allLinks.map((link) =>
-          retry(async () => {
-            const res = await fetch(
-              `https://sistorica-python.vercel.app/api/scrape?url=${encodeURIComponent(
-                link
-              )}&include_images=false&include_links=true&max_content_length=30000`, { method: "POST", headers: { "Content-Type": "application/json" } }
-            );
-            
-            if (!res.ok) {
-              console.error(`Scraping failed for ${link}:`, res.status);
-              return { url: link, error: `HTTP ${res.status}` };
-            }
-            
-            const json = await res.json();
-            
-            if (json?.details === "Not found") {
-              console.warn(`Not found for ${link}`);
-              return { url: link, error: "Not found" };
-            }
-            
-            console.log(`✅ Successfully scraped: ${link}`);
-            return json as ScrapedData;
-          })
-        )
-      );
-      
-      // Filter out invalid/failed responses
-      const validData = scrapedData.filter(
-        (d: any) => d && !d.error && !d.details && d.content
-      );
-      
-      console.log(
-        `Scraped ${validData.length} valid pages out of ${allLinks.length}`
-      );
-      
-      return validData;
-    });
-    
-    const InvestigateWithSrc = await step.run("investigate", async () => {
-      if (__gather__data.length < 1) {
-        // Failed to search integration - write without web data
-        
-      // TODO: Process gathered data when available
-      // For now, use the same structure with web data
-      const WriteWithWebData = await openAi.chat.completions.create({
-        model: "openai/gpt-oss-safeguard-20b:groq",
-        messages: [
-        {
-          role: "system",
-          content: `You are a wiki article generator. Using the provided web scraped data, create a comprehensive article with:
-- summary: short summary about this article and edition 
-- ImagesUrls: Array of image objects with url, caption, and size properties
-- Sections: Wiki or Article  (Markdown formatted) properties.
-- ReferenceList: Array of reference objects with title, url, and source properties (use scraped sources)
-- SchemaOrg: A valid schema.org JSON-LD object for SEO
-
-Write detailed, informative content based on the sources. Use proper Markdown formatting in section property.`,
-        },
-        {
-          role: "user",
-          content: `Create a wiki article about: "${
-              __call__thinking.RevisedName || __slug
-            }" (Category: ${__call__thinking.articleCategory || "Unknown"})`,
-        }, ],
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "results",
-            schema: {
-              type: "object",
-              properties: {
-                ImagesUrls: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      url: { type: "string" },
-                      caption: { type: "string" },
-                      size: { type: "string" }
-                    },
-                    required: ["url"],
-                    additionalProperties: false
-                  }
-                },
-                Sections: {
-                  type: 'string'
-                },
-                ReferenceList: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      title: { type: "string" },
-                      url: { type: "string" },
-                      source: { type: "string" }
-                    },
-                    required: ["title"],
-                    additionalProperties: false
-                  }
-                },
-                SchemaOrg: {
-                  type: "object",
-                  properties: {
-                    "@context": { type: "string" },
-                    "@type": { type: "string" },
-                    name: { type: "string" }
-                  },
-                  required: ["@context", "@type", "name"],
-                  additionalProperties: true
-                },
-                Summary: {
-                  type: 'string'
-                }
-              },
-              required: ["ImagesUrls", "Sections", "SchemaOrg", "ReferenceList", "Summary"],
-              additionalProperties: false
-            },
-          },
-        },
-      });
+      const dto = {
+        title: __call__research.RevisedName,
+        content: __generate__article.Sections,
+        content_type: "mkd",
+        summary: __generate__article.Summary || "None",
+        categories: [__call__research.articleCategory],
+        tags: [],
+        references: __generate__article.ReferenceList || [],
+        schemaOrg: __generate__article.SchemaOrg || {},
+      };
       
       try {
-        return JSON.parse(
-          WriteWithWebData.choices?.[0]?.message?.content || "{}"
+        const record = await RecordDAL.createRecord(
+          dto,
+          userid,
+          username,
+          dto.schemaOrg
         );
-      } catch (err) {
-        console.error("AI parsing error with web data:", err);
-        return {};
-      }
-      }
-    });
-    
-    const fillDataToMarkup = await step.run("markup", async () => {
-      if (InvestigateWithSrc.Sections && InvestigateWithSrc.SchemaOrg) {
-        const __heading = await InvestigateWithSrc.Sections;
-        
-        const __infobox = InvestigateWithSrc.SchemaOrg;
-        const __refList = InvestigateWithSrc.ReferenceList;
-        const __imgList = InvestigateWithSrc.ImagesUrls;
-        
-        // insert to db ...
-        let dto = {
-          title: __call__thinking.RevisedName,
-          content: __heading,
-          content_type:'mkd',
-          summary: InvestigateWithSrc.Summary || 'None',
-          categories: __call__thinking.articleCategory,
-          schemaOrg: InvestigateWithSrc.SchemaOrg || {},
+        console.log(`✅ Article created successfully: ${record._id}`);
+        return {
+          success: true,
+          recordId: record._id,
+          slug: record.slug,
         };
-        
-        try {
-          const resp = await RecordDAL.createRecord(dto, userid, username);
-          return resp;
-        } catch (e) {
-          console.error("Database error:", e);
-          return { error: String(e) };
-        }
+      } catch (e) {
+        console.error("Database error:", e);
+        return { error: String(e) };
       }
-      return { error: "No sections or schema generated" };
     });
     
     /**
-     * STEP 4: Return results for logging or further processing
+     * STEP 4: Return complete results
      */
     return {
       slug: __slug,
-      thinking: __call__thinking,
-      websearch: __call__websearch,
-      gatheredData: __gather__data,
-      investigation: InvestigateWithSrc,
-      markup: fillDataToMarkup,
+      research: __call__research,
+      article: __generate__article,
+      database: __save__to__db,
     };
   }
 );
