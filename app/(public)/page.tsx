@@ -48,7 +48,7 @@ export default function MainPage() {
   
   
   const Sidebar = !isMobile && (
-    <div className='w-auto max-w-64 h-full min-h-screen bg-white ml-2 flex flex-col justify-between rounded-2xl'>
+    <div className='w-auto max-w-64 h-full min-h-screen bg-gray-50 flex flex-col justify-between '>
       <div className='p-4 border-b border-gray-200'>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
@@ -117,10 +117,9 @@ export default function MainPage() {
   return ( <Suspense fallback={<Spinner/>}>
       <main className="min-h-screen w-full bg-gray-50 flex flex-col">
         <Header  navlist={NavList} isMobile={isMobile} />
-        
         <div className="flex-1 flex overflow-hidden">
           {!isMobile && Sidebar}
-          <div className="flex-1 flex flex-col overflow-y-auto">
+          <div className="flex-1 flex flex-col overflow-y-auto bg-white">
             <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
               {/* Image Section */}
               <div className="flex items-center justify-center w-full mb-8">
