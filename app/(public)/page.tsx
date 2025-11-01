@@ -66,11 +66,14 @@ export default function MainPage() {
               href={nav.href}
               className='flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors group'
             >
-              <div className='rounded-full p-2 h-5 w-5'>
-                
-              
-              <nav.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-800 flex-shrink-0 bg-gray-50 ' />
+              {!isExpanded ? (
+              <div className='rounded-full p-2 h-5 w-5 bg-gray-50 flex items-center justify-center'>
+              <nav.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-800 flex-shrink-0' />
               </div>
+              ):(
+                <nav.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-800 flex-shrink-0' />
+  
+              )}
               {isExpanded && (
                 <span className='text-sm font-medium text-gray-700 group-hover:text-gray-900 capitalize'>
                   {nav.name}
