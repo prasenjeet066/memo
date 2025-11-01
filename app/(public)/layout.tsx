@@ -32,6 +32,7 @@ export default function LocaleLayout({ children }: Props) {
           rel="stylesheet"
         />
         <link rel='stylesheet' href='/font/Aminute/Web-TT/Aminute.css'/>
+        <link href="https://db.onlinewebfonts.com/c/97e03bc37a8450b75b402cc4e579b2ad?family=ITC+Galliard+Roman" rel="stylesheet" type="text/css"/>
         <link rel = 'stylesheet' href = '/icon/css/all.min.css'/>
       </head>
       <style>
@@ -40,6 +41,7 @@ export default function LocaleLayout({ children }: Props) {
 
           @import url(https://db.onlinewebfonts.com/c/5d86f2e8ccc2811b9392aa03b7ce4a63?family=Styrene+B+Regular+Regular);
           @import url('https://fonts.cdnfonts.com/css/latin-modern-math');
+          
           `
         }
       </style>

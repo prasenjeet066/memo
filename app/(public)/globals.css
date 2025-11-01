@@ -61,7 +61,7 @@ body {
 
 @layer base {
   .prose{
-    @apply font-[PPNeueMachina-Regular] w-full max-w-full overflow-hidden
+    @apply font-[ITC Galliard Roman] w-full max-w-full overflow-hidden
   }
   .prose h1 {
     @apply text-3xl font-bold text-gray-800 border-b pb-1 mb-4;
