@@ -6,10 +6,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useMobile } from "@/lib/units/use-mobile";
 import { Fai } from '@/components/Fontawesome';
 
 interface EditorHeaderProps {
   recordName ? : string;
+  categories: string[];
   canUndo: boolean;
   canRedo: boolean;
   editorMode: 'visual' | 'code';
@@ -23,6 +25,7 @@ interface EditorHeaderProps {
 
 export function EditorHeader({
   recordName,
+  category = [],
   canUndo,
   canRedo,
   editorMode,
@@ -33,12 +36,16 @@ export function EditorHeader({
   onModeChange,
   handlePublish,
 }: EditorHeaderProps) {
+  const isMobile = useMobile()
   return (
     <div className="px-4 py-3 flex items-center justify-between">
       <div className="flex items-center gap-4">
-        <h1 className="text-xl font-bold text-gray-900">
-          {recordName || 'Untitled Document'}
+   <div className ='flex flex-col items-start gap-2'>
+        <h1 className={`font-bold text-gray-900 truncate ${isMobile ? 'text-xl' : 'text-2xl'}`}>
+          {data.title || 'Untitled Article'}
         </h1>
+        <small>{data.categories.join(',')}</small>
+        </div>
       </div>
     
       <div className="flex items-center justify-end gap-2">
