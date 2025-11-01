@@ -25,7 +25,7 @@ interface EditorHeaderProps {
 
 export function EditorHeader({
   recordName,
-  category = [],
+  categories = [],
   canUndo,
   canRedo,
   editorMode,

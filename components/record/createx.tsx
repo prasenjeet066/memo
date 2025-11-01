@@ -275,7 +275,7 @@ export default function EnhancedEditor({
     <div className="w-full h-full flex flex-col">
       <EditorHeader
         recordName={record_name}
-        categorys = {__data?.categorys ? __data.categorys : []}
+        categories = {__data?.categories ? __data.categories : []}
         canUndo={canUndo}
         canRedo={canRedo}
         editorMode={editorMode}
