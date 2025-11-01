@@ -1,6 +1,6 @@
 'use client'
 import { useMobile } from "@/lib/units/use-mobile";
-import Mdx from '@/components/mdx'
+import ClientMDX from '@/components/mdx'
 import { useState, useEffect, useMemo } from 'react'
 import { useSession } from 'next-auth/react';
 import { createEditor } from "lexical";
@@ -217,7 +217,7 @@ export const Viewer = function({ __data }: Props) {
         {activePaper === 'overview' ? (
           <div
             className={`flex-1 overflow-x-auto bg-white relative prose max-w-none ${isMobile ? 'p-2' : 'p-4'}`}>
-            <Mdx source = {data.content}/>
+            <ClientMDX source = {data.content}/>
           </div>
         ) : (
           <div className={`flex-1 ${isMobile ? 'p-2' : 'p-4'}`}>
