@@ -339,9 +339,9 @@ export default function EnhancedEditor({
           <div className="w-full min-h-full">
             <style jsx global>{`
               .mdxeditor-root-contenteditable {
-                max-width: 900px;
+                max-width: 100%;
                 margin: 0 auto;
-                padding: 2rem;
+              
               }
               
               .mdxeditor-toolbar {
