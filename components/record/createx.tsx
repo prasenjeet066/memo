@@ -346,14 +346,14 @@ export default function EnhancedEditor({
               
               .mdxeditor-toolbar {
                 background-color: #f9fafb;
-                border-radius: 9999px;
                 padding: 0.25rem 0.5rem;
-                margin: 0.5rem auto;
+                
                 max-width: fit-content;
                 border: none;
                 display: flex;
                 align-items: center;
-                gap: 0.25rem;
+                justify-content: space-between;
+                gap: 4px;
               }
               
               .mdxeditor-toolbar button {
