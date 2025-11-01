@@ -75,7 +75,7 @@
     "openai": "latest",
     "react-day-picker": "latest",
     "@monaco-editor/react": "latest",
-    
+    "@mdxeditor/editor": "latest",
     "@chakra-ui/react": "latest",
     "@chakra-ui/icons": "latest",
      "@lexical/code": "^0.15.0",

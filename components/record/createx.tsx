@@ -1,43 +1,73 @@
+// components/record/createx.tsx
 'use client';
+
+/**
+ * Enhanced Editor with MDXEditor
+ * 
+ * This component uses MDXEditor instead of Lexical for a simpler, 
+ * more maintainable MDX/Markdown editing experience.
+ * 
+ * Installation required:
+ * npm install @mdxeditor/editor
+ * 
+ * Key features:
+ * - Rich text editing with MDX support
+ * - Built-in toolbar with common formatting options
+ * - Image, table, and code block support
+ * - Link dialog and syntax highlighting
+ * - Markdown shortcuts
+ * - Diff/source view toggle
+ */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { useSession } from 'next-auth/react';
-import { createEditor } from "lexical";
-import { $convertFromMarkdownString, TRANSFORMERS } from "@lexical/markdown";
-import { $generateHtmlFromNodes } from "@lexical/html";
-import { LexicalComposer } from '@lexical/react/LexicalComposer';
-import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
-import { ContentEditable } from '@lexical/react/LexicalContentEditable';
-import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
-import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
-import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
-import { ListPlugin } from '@lexical/react/LexicalListPlugin';
-import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
-import TableActionMenuPlugin from '@/components/utils/editor/plugins/TableActionMenuPlugin'
-import { UNDO_COMMAND, REDO_COMMAND, LexicalEditor } from 'lexical';
+import dynamic from 'next/dynamic';
+import '@mdxeditor/editor/style.css';
 
-import { initialConfig } from '@/config/lexical.config';
 import { EditorProps, Citation, AutoSaveStatus, PublishStatus } from '@/types/editor.types';
 import { calculateTextStats, generateReferencesSection, generateCitationId } from '@/utils/editor.utils';
-import { useEditorCommands } from '@/hooks/useEditorCommands';
-import { HtmlPlugin, EditorRefPlugin, CustomCommandsPlugin } from '@/components/editor/plugins/EditorPlugins';
 import {
-  LinkDialog,
   CitationDialog,
-  ImageDialog,
-  VideoDialog,
-  TableDialog,
   FindReplaceDialog,
   PublishDialog,
 } from '@/components/editor/dialogs/EditorDialogs';
 
-import { ImagesPlugin } from '@/components/utils/editor/plugins/Image';
-import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
-
 import { EditorHeader } from '@/components/editor/EditorHeader';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
 import { EditorStatusBar } from '@/components/editor/EditorStatusBar';
+
+// Dynamically import MDXEditor to avoid SSR issues
+const MDXEditor = dynamic(
+  () => import('@mdxeditor/editor').then((mod) => mod.MDXEditor),
+  { ssr: false }
+);
+
+const {
+  headingsPlugin,
+  listsPlugin,
+  quotePlugin,
+  thematicBreakPlugin,
+  linkPlugin,
+  linkDialogPlugin,
+  imagePlugin,
+  tablePlugin,
+  codeBlockPlugin,
+  codeMirrorPlugin,
+  diffSourcePlugin,
+  markdownShortcutPlugin,
+  toolbarPlugin,
+  UndoRedo,
+  BoldItalicUnderlineToggles,
+  BlockTypeSelect,
+  CreateLink,
+  InsertImage,
+  InsertTable,
+  ListsToggle,
+  Separator,
+  InsertCodeBlock,
+  InsertThematicBreak,
+} = await import('@mdxeditor/editor');
 
 export default function EnhancedEditor({
   editor_mode = 'visual',
@@ -65,7 +95,6 @@ export default function EnhancedEditor({
   const [publishStatus, setPublishStatus] = useState<PublishStatus | null>(null);
   
   // Dialog states
-  const [linkDialog, setLinkDialog] = useState({ open: false, text: '' });
   const [citationDialog, setCitationDialog] = useState({
     open: false,
     author: '',
@@ -73,50 +102,18 @@ export default function EnhancedEditor({
     url: '',
     date: ''
   });
-  const [imageDialog, setImageDialog] = useState({ open: false, url: '' });
-  const [videoDialog, setVideoDialog] = useState({ open: false, url: '' });
   const [findReplaceDialog, setFindReplaceDialog] = useState({
     open: false,
     find: '',
     replace: ''
   });
   const [publishDialog, setPublishDialog] = useState({ open: false, summary: '' });
-  const [isTableDialog, setIsTableDialog] = useState(false);
   
   // Refs
   const { data: session } = useSession();
-  const lexicalEditorRef = useRef<LexicalEditor | null>(null);
+  const mdxEditorRef = useRef<any>(null);
   const monacoEditorRef = useRef<any>(null);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [floatingAnchorElem, setFloatingAnchorElem] = useState<HTMLDivElement | null>(null);
-  
-  // Convert markdown to HTML
-  useEffect(() => {
-    if (__data?.content_type && __data.content_type === 'mkd' && __data.content) {
-      const editor = createEditor();
-      
-      editor.update(() => {
-        $convertFromMarkdownString(__data.content, TRANSFORMERS);
-      });
-      
-      editor.getEditorState().read(() => {
-        const html = $generateHtmlFromNodes(editor);
-        setPayload(prev => ({
-          ...prev,
-          content: html,
-          slug: __data.slug || prev.slug,
-          title: __data.title || prev.title
-        }));
-      });
-    } else if (__data?.content) {
-      setPayload(prev => ({
-        ...prev,
-        content: __data.content,
-        slug: __data.slug || prev.slug,
-        title: __data.title || prev.title
-      }));
-    }
-  }, [__data]);
   
   // Calculate statistics
   const calculateStats = useCallback((content: string) => {
@@ -127,10 +124,10 @@ export default function EnhancedEditor({
   }, []);
   
   // Handle content change
-  const handleLexicalChange = useCallback((html: string) => {
-    setPayload(prev => ({ ...prev, content: html }));
+  const handleMDXChange = useCallback((markdown: string) => {
+    setPayload(prev => ({ ...prev, content: markdown }));
     setAutoSaveStatus('unsaved');
-    calculateStats(html);
+    calculateStats(markdown);
     
     if (autoSaveTimerRef.current) {
       clearTimeout(autoSaveTimerRef.current);
@@ -152,15 +149,12 @@ export default function EnhancedEditor({
     setCitations(prev => [...prev, newCitation]);
     
     const citationNumber = citations.length + 1;
+    const citationText = `[^${citationNumber}]`;
     
-    if (lexicalEditorRef.current) {
-      lexicalEditorRef.current.update(() => {
-        const selection = window.getSelection();
-        if (selection) {
-          const supNode = document.createTextNode(`[${citationNumber}]`);
-          selection.getRangeAt(0).insertNode(supNode);
-        }
-      });
+    if (mdxEditorRef.current) {
+      const currentContent = mdxEditorRef.current.getMarkdown();
+      const newContent = currentContent + citationText;
+      mdxEditorRef.current.setMarkdown(newContent);
     }
     
     return newCitation.id;
@@ -169,19 +163,6 @@ export default function EnhancedEditor({
   const generateRefs = useCallback(() => {
     return generateReferencesSection(citations);
   }, [citations]);
-  
-  // Editor commands hook
-  const { executeCommand } = useEditorCommands(
-    lexicalEditorRef,
-    editorMode,
-    citations,
-    generateRefs,
-    setLinkDialog,
-    setCitationDialog,
-    setImageDialog,
-    setVideoDialog,
-    setIsTableDialog,
-  );
   
   // Code editor change
   const handleEditorContentChangeCode = useCallback((value?: string) => {
@@ -211,16 +192,24 @@ export default function EnhancedEditor({
   }, [showPreview]);
   
   const handleUndo = useCallback(() => {
-    lexicalEditorRef.current?.dispatchCommand(UNDO_COMMAND, undefined);
+    if (mdxEditorRef.current) {
+      mdxEditorRef.current.undo();
+    }
   }, []);
   
   const handleRedo = useCallback(() => {
-    lexicalEditorRef.current?.dispatchCommand(REDO_COMMAND, undefined);
+    if (mdxEditorRef.current) {
+      mdxEditorRef.current.redo();
+    }
   }, []);
   
   const findAndReplace = useCallback((searchTerm: string, replaceTerm: string, replaceAll: boolean = false) => {
-    if (!lexicalEditorRef.current) return;
-    console.log('Replace functionality - simplified version');
+    if (!mdxEditorRef.current) return;
+    const content = mdxEditorRef.current.getMarkdown();
+    const newContent = replaceAll 
+      ? content.replaceAll(searchTerm, replaceTerm)
+      : content.replace(searchTerm, replaceTerm);
+    mdxEditorRef.current.setMarkdown(newContent);
   }, []);
   
   const handlePublishSubmit = async (summary: string) => {
@@ -236,12 +225,6 @@ export default function EnhancedEditor({
         type: 'error',
         message: 'Failed to publish. Please try again.'
       });
-    }
-  };
-  
-  const onRef = (_floatingAnchorElem: HTMLDivElement) => {
-    if (_floatingAnchorElem !== null) {
-      setFloatingAnchorElem(_floatingAnchorElem);
     }
   };
   
@@ -277,32 +260,9 @@ export default function EnhancedEditor({
         e.preventDefault();
         handleRedo();
       }
-      if (e.ctrlKey && e.key === 'b') {
-        e.preventDefault();
-        executeCommand('bold');
-      }
-      if (e.ctrlKey && e.key === 'i') {
-        e.preventDefault();
-        executeCommand('italic');
-      }
-      if (e.ctrlKey && e.key === 'u') {
-        e.preventDefault();
-        executeCommand('underline');
-      }
-      if (e.ctrlKey && e.key === 'k') {
-        e.preventDefault();
-        executeCommand('link');
-      }
       if (e.ctrlKey && e.key === 's') {
         e.preventDefault();
         handlePublish();
-      }
-      if (e.ctrlKey && e.key === 'f') {
-        e.preventDefault();
-        const searchTerm = prompt('Find:');
-        if (searchTerm) {
-          window.find(searchTerm);
-        }
       }
       if (e.ctrlKey && e.key === 'h') {
         e.preventDefault();
@@ -316,7 +276,7 @@ export default function EnhancedEditor({
     
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [executeCommand, handleUndo, handleRedo, handlePublish, handlePreview]);
+  }, [handleUndo, handleRedo, handlePublish, handlePreview]);
   
   // Cleanup
   useEffect(() => {
@@ -352,7 +312,7 @@ export default function EnhancedEditor({
       
       <EditorToolbar
         editorMode={editorMode}
-        onAction={executeCommand}
+        onAction={() => {}}
         onPublish={handlePublish}
       />
 
@@ -367,8 +327,8 @@ export default function EnhancedEditor({
         ) : editorMode === 'code' ? (
           <Editor
             height="100%"
-            defaultLanguage="html"
-            value={payload.content || '<!-- Write your code... -->'}
+            defaultLanguage="markdown"
+            value={payload.content || '<!-- Write your markdown... -->'}
             onMount={(editor) => {
               monacoEditorRef.current = editor;
               editor.updateOptions({
@@ -384,65 +344,55 @@ export default function EnhancedEditor({
           />
         ) : (
           <div className="p-8 w-full min-h-full" style={{ maxWidth: '900px', margin: '0 auto' }}>
-            <LexicalComposer initialConfig={initialConfig}>
-              <div className="relative" ref={onRef}>
-                <RichTextPlugin
-                  contentEditable={
-                    <ContentEditable 
-                      className="outline-none prose max-w-none min-h-[500px]"
-                      style={{ minHeight: '500px' }}
-                    />
-                  }
-                  placeholder={
-                    <div className="absolute top-0 left-0 text-gray-400 pointer-events-none">
-                      Start writing...
-                    </div>
-                  }
-                  ErrorBoundary={LexicalErrorBoundary}
-                />
-                <HistoryPlugin />
-                <LinkPlugin />
-                <ImagesPlugin />
-                <ListPlugin />
-                <TablePlugin/>
-                <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
-                <HtmlPlugin 
-                  initialHtml={payload.content}
-                  onHtmlChange={handleLexicalChange}
-                />
-                <CustomCommandsPlugin onCommand={(cmd) => console.log('Command:', cmd)} />
-                <EditorRefPlugin editorRef={lexicalEditorRef} />
-              </div>
-            </LexicalComposer>
+            <MDXEditor
+              ref={mdxEditorRef}
+              markdown={payload.content}
+              onChange={handleMDXChange}
+              plugins={[
+                headingsPlugin(),
+                listsPlugin(),
+                quotePlugin(),
+                thematicBreakPlugin(),
+                linkPlugin(),
+                linkDialogPlugin(),
+                imagePlugin(),
+                tablePlugin(),
+                codeBlockPlugin({ defaultCodeBlockLanguage: 'js' }),
+                codeMirrorPlugin({ codeBlockLanguages: { js: 'JavaScript', css: 'CSS', html: 'HTML', python: 'Python' } }),
+                markdownShortcutPlugin(),
+                toolbarPlugin({
+                  toolbarContents: () => (
+                    <>
+                      <UndoRedo />
+                      <Separator />
+                      <BoldItalicUnderlineToggles />
+                      <Separator />
+                      <BlockTypeSelect />
+                      <Separator />
+                      <CreateLink />
+                      <InsertImage />
+                      <Separator />
+                      <ListsToggle />
+                      <Separator />
+                      <InsertTable />
+                      <InsertCodeBlock />
+                      <InsertThematicBreak />
+                    </>
+                  )
+                }),
+                diffSourcePlugin({ viewMode: 'rich-text' }),
+              ]}
+              contentEditableClassName="prose max-w-none min-h-[500px] outline-none"
+            />
           </div>
         )}
       </div>
 
       {/* Dialogs */}
-      <LinkDialog 
-        state={linkDialog} 
-        setState={setLinkDialog} 
-        editorRef={lexicalEditorRef} 
-      />
       <CitationDialog 
         state={citationDialog} 
         setState={setCitationDialog} 
         onAddCitation={addCitation} 
-      />
-      <ImageDialog 
-        state={imageDialog} 
-        setState={setImageDialog} 
-        editorRef={lexicalEditorRef} 
-      />
-      <VideoDialog 
-        state={videoDialog} 
-        setState={setVideoDialog} 
-        editorRef={lexicalEditorRef} 
-      />
-      <TableDialog 
-        isOpen={isTableDialog} 
-        setIsOpen={setIsTableDialog} 
-        editorRef={lexicalEditorRef} 
       />
       <FindReplaceDialog 
         state={findReplaceDialog} 
