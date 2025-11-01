@@ -42,9 +42,9 @@ export function EditorHeader({
       <div className="flex items-center gap-4">
    <div className ='flex flex-col items-start gap-2'>
         <h1 className={`font-bold text-gray-900 truncate ${isMobile ? 'text-xl' : 'text-2xl'}`}>
-          {data.title || 'Untitled Article'}
+          {recordName || 'Untitled Article'}
         </h1>
-        <small>{data.categories.join(',')}</small>
+        <small>{categories.join(',')}</small>
         </div>
       </div>
     
