@@ -15,7 +15,6 @@ import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import TableActionMenuPlugin from '@/components/utils/editor/plugins/TableActionMenuPlugin'
-import { TRANSFORMERS } from '@lexical/markdown';
 import { UNDO_COMMAND, REDO_COMMAND, LexicalEditor } from 'lexical';
 
 import { initialConfig } from '@/config/lexical.config';
@@ -34,7 +33,6 @@ import {
 } from '@/components/editor/dialogs/EditorDialogs';
 
 import { ImagesPlugin } from '@/components/utils/editor/plugins/Image';
-//import { TableToolbar } from '@/components/utils/editor/plugins/Table';
 import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
 
 import { EditorHeader } from '@/components/editor/EditorHeader';
@@ -49,22 +47,22 @@ export default function EnhancedEditor({
   __data,
 }: EditorProps) {
   // States
-  const [editorMode, setEditorMode] = useState < 'visual' | 'code' > (editor_mode);
+  const [editorMode, setEditorMode] = useState<'visual' | 'code'>(editor_mode);
   const [payload, setPayload] = useState({
     slug: __data?.slug || '',
     title: __data?.title || '',
     content: __data?.content || ''
   });
   
-  const [citations, setCitations] = useState < Citation[] > ([]);
+  const [citations, setCitations] = useState<Citation[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [wordCount, setWordCount] = useState(0);
   const [characterCount, setCharacterCount] = useState(0);
   const [readingTime, setReadingTime] = useState(0);
-  const [autoSaveStatus, setAutoSaveStatus] = useState < AutoSaveStatus > ('saved');
+  const [autoSaveStatus, setAutoSaveStatus] = useState<AutoSaveStatus>('saved');
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
-  const [publishStatus, setPublishStatus] = useState < PublishStatus | null > (null);
+  const [publishStatus, setPublishStatus] = useState<PublishStatus | null>(null);
   
   // Dialog states
   const [linkDialog, setLinkDialog] = useState({ open: false, text: '' });
@@ -87,14 +85,36 @@ export default function EnhancedEditor({
   
   // Refs
   const { data: session } = useSession();
-  const lexicalEditorRef = useRef < LexicalEditor | null > (null);
-  const monacoEditorRef = useRef < any > (null);
-  const autoSaveTimerRef = useRef < NodeJS.Timeout | null > (null);
+  const lexicalEditorRef = useRef<LexicalEditor | null>(null);
+  const monacoEditorRef = useRef<any>(null);
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [floatingAnchorElem, setFloatingAnchorElem] = useState<HTMLDivElement | null>(null);
   
-  // Initialize data
+  // Convert markdown to HTML
   useEffect(() => {
-    if (__data) {
-      setPayload(prev => ({ ...prev, slug: __data.slug, id: __data.id }));
+    if (__data?.content_type && __data.content_type === 'mkd' && __data.content) {
+      const editor = createEditor();
+      
+      editor.update(() => {
+        $convertFromMarkdownString(__data.content, TRANSFORMERS);
+      });
+      
+      editor.getEditorState().read(() => {
+        const html = $generateHtmlFromNodes(editor);
+        setPayload(prev => ({
+          ...prev,
+          content: html,
+          slug: __data.slug || prev.slug,
+          title: __data.title || prev.title
+        }));
+      });
+    } else if (__data?.content) {
+      setPayload(prev => ({
+        ...prev,
+        content: __data.content,
+        slug: __data.slug || prev.slug,
+        title: __data.title || prev.title
+      }));
     }
   }, [__data]);
   
@@ -105,7 +125,7 @@ export default function EnhancedEditor({
     setCharacterCount(stats.characterCount);
     setReadingTime(stats.readingTime);
   }, []);
-  const [toolbar, setToolbar] = useState(null)
+  
   // Handle content change
   const handleLexicalChange = useCallback((html: string) => {
     setPayload(prev => ({ ...prev, content: html }));
@@ -123,7 +143,7 @@ export default function EnhancedEditor({
   }, [calculateStats]);
   
   // Citation management
-  const addCitation = useCallback((citation: Omit < Citation, 'id' > ) => {
+  const addCitation = useCallback((citation: Omit<Citation, 'id'>) => {
     const newCitation: Citation = {
       ...citation,
       id: generateCitationId(),
@@ -146,7 +166,6 @@ export default function EnhancedEditor({
     return newCitation.id;
   }, [citations.length]);
   
-  
   const generateRefs = useCallback(() => {
     return generateReferencesSection(citations);
   }, [citations]);
@@ -165,7 +184,7 @@ export default function EnhancedEditor({
   );
   
   // Code editor change
-  const handleEditorContentChangeCode = useCallback((value ? : string) => {
+  const handleEditorContentChangeCode = useCallback((value?: string) => {
     setPayload(prev => ({ ...prev, content: value || '' }));
     setAutoSaveStatus('unsaved');
     
@@ -198,28 +217,12 @@ export default function EnhancedEditor({
   const handleRedo = useCallback(() => {
     lexicalEditorRef.current?.dispatchCommand(REDO_COMMAND, undefined);
   }, []);
-  useEffect(() => {
-    if (__data?.content_type) {
-      if (__data.content_type === 'mkd') {
-        const editor = createEditor();
-        let html = "";
-        
-        editor.update(() => {
-          $convertFromMarkdownString(__data.content, TRANSFORMERS);
-          html = $generateHtmlFromNodes(editor);
-          setPayload({
-            html
-          })
-        });
-      }
-    }
-  }, [__data])
+  
   const findAndReplace = useCallback((searchTerm: string, replaceTerm: string, replaceAll: boolean = false) => {
     if (!lexicalEditorRef.current) return;
     console.log('Replace functionality - simplified version');
   }, []);
-  const [floatingAnchorElem, setFloatingAnchorElem] =
-  useState < HTMLDivElement | null > (null);
+  
   const handlePublishSubmit = async (summary: string) => {
     setPublishStatus({ type: 'loading', message: 'Publishing...' });
     
@@ -235,6 +238,7 @@ export default function EnhancedEditor({
       });
     }
   };
+  
   const onRef = (_floatingAnchorElem: HTMLDivElement) => {
     if (_floatingAnchorElem !== null) {
       setFloatingAnchorElem(_floatingAnchorElem);
@@ -345,14 +349,12 @@ export default function EnhancedEditor({
         readingTime={readingTime}
         autoSaveStatus={autoSaveStatus}
       />
-    
       
       <EditorToolbar
         editorMode={editorMode}
         onAction={executeCommand}
         onPublish={handlePublish}
       />
-      
 
       <div className="flex-1 overflow-auto bg-white relative">
         {showPreview ? (
@@ -383,7 +385,7 @@ export default function EnhancedEditor({
         ) : (
           <div className="p-8 w-full min-h-full" style={{ maxWidth: '900px', margin: '0 auto' }}>
             <LexicalComposer initialConfig={initialConfig}>
-              <div className="relative" ref= {onRef}>
+              <div className="relative" ref={onRef}>
                 <RichTextPlugin
                   contentEditable={
                     <ContentEditable 
@@ -402,11 +404,8 @@ export default function EnhancedEditor({
                 <LinkPlugin />
                 <ImagesPlugin />
                 <ListPlugin />
-               
-               <TablePlugin/>
-              
-
-                 <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+                <TablePlugin/>
+                <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
                 <HtmlPlugin 
                   initialHtml={payload.content}
                   onHtmlChange={handleLexicalChange}

@@ -17,6 +17,7 @@ interface Props {
       _id ? : string
       title ? : string
       content ? : string
+      content_type ? : string
       protection_level ? : string
       summary ? : string
       categories ? : string[]
@@ -112,20 +113,25 @@ export const Viewer = function({ __data }: Props) {
   useEffect(() => {
     if (__data?.data) {
       const d = __data.data
-      setData(d)
-      // content ....
-      if (d?.content_type || d?.content_type !== 'html') {
-        
+      
+      // Convert markdown to HTML if content_type is 'mkd'
+      if (d?.content_type && d.content_type === 'mkd' && d.content) {
         const editor = createEditor();
-        let html = "";
         
         editor.update(() => {
-          $convertFromMarkdownString(__data.content, TRANSFORMERS);
-          html = $generateHtmlFromNodes(editor);
-          setData((prev) => ({ ...prev, content: html }))
+          $convertFromMarkdownString(d.content, TRANSFORMERS);
         });
         
+        // Read the editor state and generate HTML
+        editor.getEditorState().read(() => {
+          const html = $generateHtmlFromNodes(editor);
+          setData({ ...d, content: html });
+        });
+      } else {
+        setData(d);
       }
+      
+      // Set edit permissions
       const protectionLevel = d.protection_level || 'NONE'
       const allowedRoles = whoCanEdit[protectionLevel] || []
       
@@ -142,81 +148,95 @@ export const Viewer = function({ __data }: Props) {
   }, [__data, session])
   
   if (!data) {
-    return <div>Loading...</div>
+    return <div className="flex items-center justify-center h-screen">
+      <div className="text-gray-600">Loading...</div>
+    </div>
   }
   
   if (editPage) {
     return (
       <ErrorBoundary>
-
-            <CreateNew
-              __data={data}
-              onPublish={handlePublish}
-              ExpandedIs={isExpanded}
-              record_name={data.title}
-              sideBarTools={handleSideBarTools}
-              isSuccesfullCreated={isSuccesfullCreated}
-              IsExpandedSet={setIsExpanded}
-            />
-        
+        <CreateNew
+          __data={data}
+          onPublish={handlePublish}
+          ExpandedIs={isExpanded}
+          record_name={data.title}
+          sideBarTools={handleSideBarTools}
+          isSuccesfullCreated={isSuccesfullCreated}
+          IsExpandedSet={setIsExpanded}
+        />
       </ErrorBoundary>
     )
   }
   
   return (
     <div className="w-full h-full flex flex-col">
-  {/* Header / Title */}
-  <div className="px-4 w-full py-3 flex items-center justify-between">
-  {/* Left section — title */}
-  <h1 className={`font-bold text-gray-900  truncate ${isMobile ? 'text-xl' : 'text-2xl'}`}>
-    {data.title || 'Untitled Article'}
-  </h1>
+      {/* Header / Title */}
+      <div className="px-4 w-full py-3 flex items-center justify-between">
+        {/* Left section — title */}
+        <h1 className={`font-bold text-gray-900 truncate ${isMobile ? 'text-xl' : 'text-2xl'}`}>
+          {data.title || 'Untitled Article'}
+        </h1>
 
-  {/* Right section — actions */}
-  <div className="flex items-center gap-4 border-l pl-4 ml-4">
-    <button className="border p-2 rounded">
-      <Fai icon="language" />
-    </button>
+        {/* Right section — actions */}
+        <div className="flex items-center gap-4 border-l pl-4 ml-4">
+          <button className="border p-2 rounded">
+            <Fai icon="language" />
+          </button>
 
-    {isEditableForMe ? (
-      <button
-        className={`${!isMobile ? 'px-4 py-2 bg-gray-900 text-white rounded-full text-sm sm:text-base flex items-center gap-2' : 'flex items-center gap-4 border-l pl-4 ml-4'}`}
-        aria-label="Edit document"
-        type="button"
-        onClick={() => gotoEditPage(true)}
-        title="Edit Article"
-      >
-        <Fai icon="arrow-right" />
-        {!isMobile && 'Edit'}
-        
-      </button>
-    ) : (
-      <button
-        disabled
-        className="px-4 py-2 bg-gray-100 text-gray-600 rounded-full text-sm sm:text-base flex items-center gap-2 cursor-not-allowed"
-        title="Read-only access"
-      >
-        <Fai icon="lock" />
-        {!isMobile &&  'Locked'}
-      </button>
-    )}
-  </div>
-</div>
+          {isEditableForMe ? (
+            <button
+              className={`${!isMobile ? 'px-4 py-2 bg-gray-900 text-white rounded-full text-sm sm:text-base flex items-center gap-2' : 'flex items-center gap-4 border-l pl-4 ml-4'}`}
+              aria-label="Edit document"
+              type="button"
+              onClick={() => gotoEditPage(true)}
+              title="Edit Article"
+            >
+              <Fai icon="arrow-right" />
+              {!isMobile && 'Edit'}
+            </button>
+          ) : (
+            <button
+              disabled
+              className="px-4 py-2 bg-gray-100 text-gray-600 rounded-full text-sm sm:text-base flex items-center gap-2 cursor-not-allowed"
+              title="Read-only access"
+            >
+              <Fai icon="lock" />
+              {!isMobile && 'Locked'}
+            </button>
+          )}
+        </div>
+      </div>
 
-  {/* Action Buttons */}
-  <div className = 'flex px-4 border-b pb-2 w-full mb-2 items-center gap-4 justify-start'>
-    <button onClick={()=>setActivePaper((prev)=> prev!=='overview' ? 'overview': prev)} className={'bg-none p-2 px-3  ' + activePaper === 'overview' ? ' text-gray-900 border-b border-blue-600 font-bold':' text-gray-500'}>{'Overview'}</button>
-    <button onClick={()=>setActivePaper((prev)=> prev!=='discussion' ? 'discussion' : prev)} className={'bg-none p-2 px-3 ' + activePaper === 'discussion' ? ' text-gray-900 border-b border-blue-600 font-bold ' : ' text-gray-500'}>{'Discussion'}</button>
-  </div>
-  {/* Article Content */}
-  <div className="flex items-start justify-between">
-    {activePaper === 'overview' ? (
-    <div
-      className={`flex-1 overflow-x-scroll bg-white relative prose max-w-none ${isMobile ? 'p-2' : 'p-4'}`}
-      dangerouslySetInnerHTML={{ __html: data?.content || '<p>No content available yet.</p>' }}
-    />
-    ):null}
-  </div>
-</div>
+      {/* Action Buttons */}
+      <div className='flex px-4 border-b pb-2 w-full mb-2 items-center gap-4 justify-start'>
+        <button 
+          onClick={() => setActivePaper('overview')} 
+          className={`bg-none p-2 px-3 ${activePaper === 'overview' ? 'text-gray-900 border-b-2 border-blue-600 font-bold' : 'text-gray-500'}`}
+        >
+          Overview
+        </button>
+        <button 
+          onClick={() => setActivePaper('discussion')} 
+          className={`bg-none p-2 px-3 ${activePaper === 'discussion' ? 'text-gray-900 border-b-2 border-blue-600 font-bold' : 'text-gray-500'}`}
+        >
+          Discussion
+        </button>
+      </div>
+
+      {/* Article Content */}
+      <div className="flex items-start justify-between">
+        {activePaper === 'overview' ? (
+          <div
+            className={`flex-1 overflow-x-auto bg-white relative prose max-w-none ${isMobile ? 'p-2' : 'p-4'}`}
+            dangerouslySetInnerHTML={{ __html: data?.content || '<p>No content available yet.</p>' }}
+          />
+        ) : (
+          <div className={`flex-1 ${isMobile ? 'p-2' : 'p-4'}`}>
+            <p className="text-gray-600">Discussion feature coming soon...</p>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
