@@ -313,7 +313,7 @@ export const articleIntelligenceFunction = inngest.createFunction(
           const resp = await RecordDAL.createRecord(dto,
             userid, username
           )
-          
+          return resp
         } catch (e) {
           return e
         }
