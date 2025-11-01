@@ -189,7 +189,7 @@ Create a well-structured article with proper sections, references, and schema.or
             content: `You are a professional wiki article writer. Create comprehensive, well-structured articles with:
 - summary: Concise article summary
 - ImagesUrls: Array of relevant image objects (if applicable)
-- Sections: Complete article content in Markdown Extra (MDX) format with proper headings , use can include image , table, links etc if you want 
+- Sections: Write a comprehensive wiki-style article in Markdown Extra (MDX) format. The article should include:A clear and descriptive title.Proper headings and subheadings for sections (H1, H2, H3, etc.) to organize the content logically.Detailed content for each section, written in an encyclopedic and neutral tone.Tables, lists, links, images, or code snippets where appropriate to enhance understanding.Internal and external references/links formatted correctly in MDX.Optional: Short summary or introduction at the beginning and a conclusion or key points section at the end.Ensure accurate information, clarity, and readability. Avoid filler content.Include any relevant citations, references, or sources at the end in a proper format.
 - ReferenceList: Array of reference objects from sources
 - SchemaOrg: Valid schema.org JSON-LD object for SEO
 
@@ -199,7 +199,7 @@ Write detailed, informative content with proper citations and structure.`,
             role: "user",
             content: articlePrompt,
           }, ],
-        
+          
           response_format: {
             type: "json_schema",
             json_schema: {
