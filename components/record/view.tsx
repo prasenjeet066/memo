@@ -116,21 +116,7 @@ export const Viewer = function({ __data }: Props) {
       const d = __data.data
       
       // Convert markdown to HTML if content_type is 'mkd'
-      if (d?.content_type && d.content_type === 'mkd' && d.content) {
-        const editor = createEditor();
-        
-        editor.update(() => {
-          $convertFromMarkdownString(d.content, TRANSFORMERS);
-        });
-        
-        // Read the editor state and generate HTML
-        editor.getEditorState().read(() => {
-          const html = $generateHtmlFromNodes(editor);
-          setHtmlContent(html)
-        });
-      } else {
-        setData(d);
-      }
+
       
       // Set edit permissions
       const protectionLevel = d.protection_level || 'NONE'
@@ -230,7 +216,7 @@ export const Viewer = function({ __data }: Props) {
         {activePaper === 'overview' ? (
           <div
             className={`flex-1 overflow-x-auto bg-white relative prose max-w-none ${isMobile ? 'p-2' : 'p-4'}`}
-            dangerouslySetInnerHTML={{ __html: data?.content_type === 'mkd' ? htmlContent : data.content }}
+            dangerouslySetInnerHTML={{ __html: data.content }}
           />
         ) : (
           <div className={`flex-1 ${isMobile ? 'p-2' : 'p-4'}`}>
