@@ -226,7 +226,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
     <Header navList={NavList} />  
     
     <div className='p-1 w-full flex h-full items-start justify-between'>  
-      {!isMobile && Sidebar}  
+       
       <div className='flex-1 flex bg-white flex-col gap-4 p-4 w-full h-full'>  
         <h1 className='text-2xl sm:text-xl md:text-lg lg:text-2xl font-bold '>
           Sorry!
