@@ -351,6 +351,7 @@ Write detailed, informative content. Use proper HTML formatting in section text.
           {
             role: "system",
             content: `You are a wiki article generator. Using the provided web scraped data, create a comprehensive article with:
+- summary: short summary about this article and edition 
 - ImagesUrls: Array of image objects with url, caption, and size properties
 - Sections: Array of section objects with name and text (HTML formatted) properties
 - ReferenceList: Array of reference objects with title, url, and source properties (use scraped sources)
@@ -417,6 +418,9 @@ ${JSON.stringify(__gather__data.slice(0, 3).map(d => ({
                     additionalProperties: false
                   }
                 },
+                summary: {
+                  type : "string"
+                },
                 SchemaOrg: {
                   type: "object",
                   properties: {
@@ -428,7 +432,7 @@ ${JSON.stringify(__gather__data.slice(0, 3).map(d => ({
                   additionalProperties: true
                 },
               },
-              required: ["ImagesUrls", "Sections", "SchemaOrg", "ReferenceList"],
+              required: ["ImagesUrls", "Sections", "SchemaOrg", "ReferenceList","summary"],
               additionalProperties: false
             },
           },
@@ -459,6 +463,7 @@ ${JSON.stringify(__gather__data.slice(0, 3).map(d => ({
         let dto = {
           title: __call__thinking.RevisedName,
           content: __heading,
+          summary: InvestigateWithSrc.summary,
           categories: __call__thinking.articleCategory,
           schemaOrg: InvestigateWithSrc.SchemaOrg || {},
         };
