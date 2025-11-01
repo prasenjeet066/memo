@@ -189,7 +189,7 @@ Create a well-structured article with proper sections, references, and schema.or
             content: `You are a professional wiki article writer. Create comprehensive, well-structured articles with:
 - summary: Concise article summary
 - ImagesUrls: Array of relevant image objects (if applicable)
-- Sections: Complete article content in Markdown format with proper headings
+- Sections: Complete article content in Markdown Extra (MDX) format with proper headings , use can include image , table, links etc if you want 
 - ReferenceList: Array of reference objects from sources
 - SchemaOrg: Valid schema.org JSON-LD object for SEO
 

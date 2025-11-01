@@ -191,7 +191,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
           <Header navList={NavList} />
          
           <div className='p-4 w-full flex h-full items-start gap-2 justify-between'>
-            { ! isMobile && Sidebar}
+          
              
             <Viewer __data={recordJdata} />
             
