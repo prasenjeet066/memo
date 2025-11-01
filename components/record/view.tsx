@@ -36,6 +36,7 @@ export const Viewer = function({ __data }: Props) {
   const [isExpanded, setIsExpanded] = useState(true)
   const isMobile = useMobile()
   const { data: session } = useSession();
+  const [htmlContent , setHtmlContent] = useState(null)
   const [isSuccesfullCreated, setIsSuccesfullCreated] = useState < any > (null)
   const [isPublishing, setIsPublishing] = useState(false)
   const [currentSidebar, setCurrentSidebar] = useState < React.ReactNode > (null)
@@ -125,7 +126,7 @@ export const Viewer = function({ __data }: Props) {
         // Read the editor state and generate HTML
         editor.getEditorState().read(() => {
           const html = $generateHtmlFromNodes(editor);
-          setData({ ...d, content: html });
+          setHtmlContent(html)
         });
       } else {
         setData(d);
@@ -180,7 +181,7 @@ export const Viewer = function({ __data }: Props) {
 
         {/* Right section — actions */}
         <div className="flex items-center gap-4 border-l pl-4 ml-4">
-          <button className="border p-2 rounded">
+          <button className="">
             <Fai icon="language" />
           </button>
 
@@ -209,7 +210,7 @@ export const Viewer = function({ __data }: Props) {
       </div>
 
       {/* Action Buttons */}
-      <div className='flex px-4 border-b pb-2 w-full mb-2 items-center gap-4 justify-start'>
+      <div className='flex px-1 border-b pb-2 w-full mb-2 items-center gap-4 justify-start'>
         <button 
           onClick={() => setActivePaper('overview')} 
           className={`bg-none p-2 px-3 ${activePaper === 'overview' ? 'text-gray-900 border-b-2 border-blue-600 font-bold' : 'text-gray-500'}`}
@@ -229,7 +230,7 @@ export const Viewer = function({ __data }: Props) {
         {activePaper === 'overview' ? (
           <div
             className={`flex-1 overflow-x-auto bg-white relative prose max-w-none ${isMobile ? 'p-2' : 'p-4'}`}
-            dangerouslySetInnerHTML={{ __html: data?.content || '<p>No content available yet.</p>' }}
+            dangerouslySetInnerHTML={{ __html: data?.content_type === 'mkd' ? htmlContent : data.content }}
           />
         ) : (
           <div className={`flex-1 ${isMobile ? 'p-2' : 'p-4'}`}>
