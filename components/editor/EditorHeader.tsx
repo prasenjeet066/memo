@@ -18,7 +18,7 @@ interface EditorHeaderProps {
   onRedo: () => void;
   onPreview: () => void;
   onModeChange: (mode: 'visual' | 'code') => void;
-  handlePublish: ()=>void;
+  handlePublish: () => void;
 }
 
 export function EditorHeader({
@@ -95,14 +95,15 @@ export function EditorHeader({
           <Fai icon="gear" style="fal" />
         </button>
 
-                        <Button
+                        <button
+                        className = 'px-3 p-2 bg-indigo-500 text-white rounded-full'
                           onClick={handlePublish}
                           aria-label="Publish document"
                           type="button"
                           title="Publish (Ctrl+S)"
                         >
                           Publish
-                        </Button>
+                        </button>
                     
       </div>
     </div>
