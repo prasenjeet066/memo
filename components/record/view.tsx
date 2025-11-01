@@ -1,5 +1,6 @@
 'use client'
 import { useMobile } from "@/lib/units/use-mobile";
+import Mdx from '@/components/mdx'
 import { useState, useEffect, useMemo } from 'react'
 import { useSession } from 'next-auth/react';
 import { createEditor } from "lexical";
@@ -215,9 +216,9 @@ export const Viewer = function({ __data }: Props) {
       <div className="flex items-start justify-between">
         {activePaper === 'overview' ? (
           <div
-            className={`flex-1 overflow-x-auto bg-white relative prose max-w-none ${isMobile ? 'p-2' : 'p-4'}`}
-            dangerouslySetInnerHTML={{ __html: data.content }}
-          />
+            className={`flex-1 overflow-x-auto bg-white relative prose max-w-none ${isMobile ? 'p-2' : 'p-4'}`}>
+            <Mdx source = {data.content}/>
+          </div>
         ) : (
           <div className={`flex-1 ${isMobile ? 'p-2' : 'p-4'}`}>
             <p className="text-gray-600">Discussion feature coming soon...</p>
