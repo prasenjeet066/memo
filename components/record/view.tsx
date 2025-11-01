@@ -158,7 +158,7 @@ export const Viewer = function({ __data }: Props) {
   }
   
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col bg-white">
       {/* Header / Title */}
       <div className="px-4 w-full py-3 flex items-center justify-between">
         {/* Left section — tit
