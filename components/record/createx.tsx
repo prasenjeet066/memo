@@ -1,24 +1,6 @@
 // components/record/createx.tsx
 'use client';
 
-/**
- * Enhanced Editor with MDXEditor
- * 
- * This component uses MDXEditor instead of Lexical for a simpler, 
- * more maintainable MDX/Markdown editing experience.
- * 
- * Installation required:
- * npm install @mdxeditor/editor
- * 
- * Key features:
- * - Rich text editing with MDX support
- * - Built-in toolbar with common formatting options
- * - Image, table, and code block support
- * - Link dialog and syntax highlighting
- * - Markdown shortcuts
- * - Diff/source view toggle
- */
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { useSession } from 'next-auth/react';
@@ -34,8 +16,8 @@ import {
 } from '@/components/editor/dialogs/EditorDialogs';
 
 import { EditorHeader } from '@/components/editor/EditorHeader';
-import { EditorToolbar } from '@/components/editor/EditorToolbar';
 import { EditorStatusBar } from '@/components/editor/EditorStatusBar';
+import { Button } from '@/components/ui/button';
 
 // Dynamically import MDXEditor to avoid SSR issues
 const MDXEditor = dynamic(
@@ -309,12 +291,6 @@ export default function EnhancedEditor({
         readingTime={readingTime}
         autoSaveStatus={autoSaveStatus}
       />
-      
-      <EditorToolbar
-        editorMode={editorMode}
-        onAction={() => {}}
-        onPublish={handlePublish}
-      />
 
       <div className="flex-1 overflow-auto bg-white relative">
         {showPreview ? (
@@ -325,25 +301,114 @@ export default function EnhancedEditor({
             <div dangerouslySetInnerHTML={{ __html: payload.content }} />
           </div>
         ) : editorMode === 'code' ? (
-          <Editor
-            height="100%"
-            defaultLanguage="markdown"
-            value={payload.content || '<!-- Write your markdown... -->'}
-            onMount={(editor) => {
-              monacoEditorRef.current = editor;
-              editor.updateOptions({
-                minimap: { enabled: false },
-                fontSize: 14,
-                wordWrap: 'on',
-                lineNumbers: 'on',
-                scrollBeyondLastLine: false,
-              });
-            }}
-            onChange={handleEditorContentChangeCode}
-            theme="vs-light"
-          />
+          <>
+            {/* Code mode toolbar with publish button */}
+            <div className="flex items-center justify-between bg-gray-50 w-full rounded-full px-2 py-1 mb-2">
+              <div className="flex-1" />
+              <div className="flex items-center border-l pl-2">
+                <Button
+                  className="px-4 py-2 bg-gray-600 text-white transition-colors m-2 rounded-full"
+                  onClick={handlePublish}
+                  aria-label="Publish document"
+                  type="button"
+                  title="Publish (Ctrl+S)"
+                >
+                  Publish
+                </Button>
+              </div>
+            </div>
+            <Editor
+              height="calc(100% - 60px)"
+              defaultLanguage="markdown"
+              value={payload.content || '<!-- Write your markdown... -->'}
+              onMount={(editor) => {
+                monacoEditorRef.current = editor;
+                editor.updateOptions({
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  wordWrap: 'on',
+                  lineNumbers: 'on',
+                  scrollBeyondLastLine: false,
+                });
+              }}
+              onChange={handleEditorContentChangeCode}
+              theme="vs-light"
+            />
+          </>
         ) : (
-          <div className="p-8 w-full min-h-full" style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <div className="w-full min-h-full">
+            <style jsx global>{`
+              .mdxeditor-root-contenteditable {
+                max-width: 900px;
+                margin: 0 auto;
+                padding: 2rem;
+              }
+              
+              .mdxeditor-toolbar {
+                background-color: #f9fafb;
+                border-radius: 9999px;
+                padding: 0.25rem 0.5rem;
+                margin: 0.5rem auto;
+                max-width: fit-content;
+                border: none;
+                display: flex;
+                align-items: center;
+                gap: 0.25rem;
+              }
+              
+              .mdxeditor-toolbar button {
+                border-radius: 0.375rem;
+                padding: 0.5rem 0.75rem;
+                border: none;
+                background: transparent;
+                transition: background-color 0.2s;
+              }
+              
+              .mdxeditor-toolbar button:hover {
+                background-color: #e5e7eb;
+              }
+              
+              .mdxeditor-toolbar select {
+                border: none;
+                background: transparent;
+                padding: 0.5rem 1rem;
+                border-left: 1px solid #e5e7eb;
+                border-right: 1px solid #e5e7eb;
+                font-weight: 600;
+                max-width: 180px;
+              }
+              
+              .mdxeditor-toolbar select:hover {
+                background-color: #e5e7eb;
+              }
+              
+              .mdxeditor-toolbar [role="separator"] {
+                width: 1px;
+                height: 24px;
+                background-color: #e5e7eb;
+                margin: 0 0.25rem;
+              }
+              
+              /* Custom publish button in toolbar */
+              .custom-publish-button {
+                margin-left: auto;
+                padding-left: 0.5rem;
+                border-left: 1px solid #e5e7eb;
+              }
+              
+              .custom-publish-button button {
+                background-color: #4b5563;
+                color: white;
+                padding: 0.5rem 1rem;
+                border-radius: 9999px;
+                margin: 0.5rem;
+              }
+              
+              .custom-publish-button button:hover {
+                background-color: #374151;
+              }
+            `}</style>
+            
             <MDXEditor
               ref={mdxEditorRef}
               markdown={payload.content}
@@ -358,7 +423,16 @@ export default function EnhancedEditor({
                 imagePlugin(),
                 tablePlugin(),
                 codeBlockPlugin({ defaultCodeBlockLanguage: 'js' }),
-                codeMirrorPlugin({ codeBlockLanguages: { js: 'JavaScript', css: 'CSS', html: 'HTML', python: 'Python' } }),
+                codeMirrorPlugin({ 
+                  codeBlockLanguages: { 
+                    js: 'JavaScript', 
+                    css: 'CSS', 
+                    html: 'HTML', 
+                    python: 'Python',
+                    typescript: 'TypeScript',
+                    json: 'JSON'
+                  } 
+                }),
                 markdownShortcutPlugin(),
                 toolbarPlugin({
                   toolbarContents: () => (
@@ -377,6 +451,16 @@ export default function EnhancedEditor({
                       <InsertTable />
                       <InsertCodeBlock />
                       <InsertThematicBreak />
+                      <div className="custom-publish-button">
+                        <Button
+                          onClick={handlePublish}
+                          aria-label="Publish document"
+                          type="button"
+                          title="Publish (Ctrl+S)"
+                        >
+                          Publish
+                        </Button>
+                      </div>
                     </>
                   )
                 }),
