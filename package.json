@@ -85,6 +85,9 @@
     "@lexical/rich-text": "^0.15.0",
     "@lexical/table": "^0.15.0",
     "@lexical/markdown": "^0.15.0",
+    "@lexical/headless": "latest",
+    "@lexical/html": "latest",
+
     "d3": "latest",
     "topojson-client":"latest",
     "@emotion/react": "latest",
