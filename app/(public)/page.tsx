@@ -108,11 +108,11 @@ export default function MainPage() {
   ];
   
   return ( <Suspense fallback={<Spinner/>}>
-      <main className="min-h-screen w-full bg-gray-900 flex flex-col">
-        <Header isDark = {true} navlist={NavList} isMobile={isMobile} />
+      <main className="min-h-screen w-full bg-gray-50 flex flex-col">
+        <Header  navlist={NavList} isMobile={isMobile} />
         
         <div className="flex-1 flex overflow-hidden">
-    
+          {!isMobile && Sidebar}
           <div className="flex-1 flex flex-col overflow-y-auto">
             <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
               {/* Image Section */}
@@ -120,20 +120,20 @@ export default function MainPage() {
                 <img
                   alt="Sample"
                   className={`h-auto object-contain rounded-lg ${isMobile ? 'w-full' : 'w-2/3'}`}
-                  src="https://memoorg.vercel.app/api/img/vor"
+                  src="https://memoorg.vercel.app/api/v_1/img/vor"
                 />
               </div>
               
               {/* Search Section */}
               <div className={`w-full ${isMobile ? 'max-w-full' : 'max-w-2xl'}`}>
-                <h1 className="text-center text-white text-2xl sm:text-3xl md:text-4xl font-semibold mb-6 ">
+                <h1 className="text-center text-black text-2xl sm:text-3xl md:text-4xl font-semibold mb-6 ">
                   {
                     "Search anything..."
                   }
                 </h1>
                 
                 <div className="w-full p-[1px] rounded-full bg-blue-600">
-                  <div className="w-full p-2 flex items-center gap-2 bg-white rounded-full">
+                  <div className="w-full p-2 flex items-center gap-2 bg-gray-50 rounded-full">
                     <input
                       type="text"
                       className="outline-none text-black border-none pl-4 bg-transparent flex-1 text-sm sm:text-base font-semibold"
@@ -157,7 +157,7 @@ export default function MainPage() {
             
           </div>
         </div>
-           <footer className="w-full py-6 px-4 mt-auto text-white">
+           <footer className="w-full py-6 px-4 mt-auto text-black">
               <div className="max-w-6xl mx-auto">
                 {!isMobile && (
                 <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row justify-center gap-8'} items-center`}>
@@ -171,7 +171,7 @@ export default function MainPage() {
                     </a>
                   ))}
                 </div>)}
-                <div className="text-center mt-6 text-xs text-white">
+                <div className="text-center mt-6 text-xs text-black">
                   © 2025 All rights reserved.
                 </div>
               </div>
