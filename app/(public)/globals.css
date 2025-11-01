@@ -49,7 +49,9 @@ body {
   float: left;
   /* first-letter:float-start */
 }
-
+.prose {
+  font-family: "ITC Galliard Roman" !important;
+}
 .dark .top-text::first-letter {
   color: #f3f4f6;
   /* dark:first-letter:text-gray-100 */
@@ -61,7 +63,7 @@ body {
 
 @layer base {
   .prose{
-    @apply font-["ITC Galliard Roman"] w-full max-w-full overflow-hidden
+    @apply w-full max-w-full overflow-hidden
   }
   .prose h1 {
     @apply text-3xl font-bold text-gray-800 border-b pb-1 mb-4;
