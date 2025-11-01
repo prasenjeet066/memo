@@ -116,7 +116,7 @@ export const Viewer = function({ __data }: Props) {
       const d = __data.data
       
       // Convert markdown to HTML if content_type is 'mkd'
-
+      setData(d)
       
       // Set edit permissions
       const protectionLevel = d.protection_level || 'NONE'
@@ -135,7 +135,7 @@ export const Viewer = function({ __data }: Props) {
   }, [__data, session])
   
   if (!data) {
-    return <div className="flex items-center justify-center h-screen">
+    return <div className="flex w-full items-center justify-center h-screen">
       <div className="text-gray-600">Loading...</div>
     </div>
   }
