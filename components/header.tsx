@@ -39,12 +39,13 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
       >
         {/* ===== Left Section ===== */}
         <div className="flex items-center gap-3">
+          {isMobile && (
           <Menu
             className={`w-6 h-6 cursor-pointer transition-colors ${
               isDark ? 'text-white' : 'text-gray-700 hover:text-gray-900'
             }`}
             onClick={() => setSideBarOpenLogic(!sideBarLogic)}
-          />
+          />)}
           <Link href="/" className="flex items-center gap-1">
             <h1
               className={`logo-style-font text-2xl font-semibold cursor-pointer ${
