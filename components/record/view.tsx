@@ -2,6 +2,9 @@
 import { useMobile } from "@/lib/units/use-mobile";
 import { useState, useEffect, useMemo } from 'react'
 import { useSession } from 'next-auth/react';
+import { createEditor } from "lexical";
+import { $convertFromMarkdownString, TRANSFORMERS } from "@lexical/markdown";
+import { $generateHtmlFromNodes } from "@lexical/html";
 import { Fai } from '@/components/Fontawesome';
 import CreateNew from '@/components/record/createx'
 import { Home, Compass, HandHeart, Settings } from 'lucide-react'
@@ -110,7 +113,19 @@ export const Viewer = function({ __data }: Props) {
     if (__data?.data) {
       const d = __data.data
       setData(d)
-      
+      // content ....
+      if (d?.content_type || d?.content_type !== 'html') {
+        
+        const editor = createEditor();
+        let html = "";
+        
+        editor.update(() => {
+          $convertFromMarkdownString(__data.content, TRANSFORMERS);
+          html = $generateHtmlFromNodes(editor);
+          setData((prev) => ({ ...prev, content: html }))
+        });
+        
+      }
       const protectionLevel = d.protection_level || 'NONE'
       const allowedRoles = whoCanEdit[protectionLevel] || []
       
@@ -202,5 +217,6 @@ export const Viewer = function({ __data }: Props) {
     />
     ):null}
   </div>
-</div>)
+</div>
+  )
 }

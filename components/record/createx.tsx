@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { useSession } from 'next-auth/react';
+import { createEditor } from "lexical";
+import { $convertFromMarkdownString, TRANSFORMERS } from "@lexical/markdown";
+import { $generateHtmlFromNodes } from "@lexical/html";
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
@@ -102,7 +105,7 @@ export default function EnhancedEditor({
     setCharacterCount(stats.characterCount);
     setReadingTime(stats.readingTime);
   }, []);
-  const [toolbar , setToolbar] = useState(null)
+  const [toolbar, setToolbar] = useState(null)
   // Handle content change
   const handleLexicalChange = useCallback((html: string) => {
     setPayload(prev => ({ ...prev, content: html }));
@@ -195,7 +198,22 @@ export default function EnhancedEditor({
   const handleRedo = useCallback(() => {
     lexicalEditorRef.current?.dispatchCommand(REDO_COMMAND, undefined);
   }, []);
-  
+  useEffect(() => {
+    if (__data?.content_type) {
+      if (__data.content_type === 'mkd') {
+        const editor = createEditor();
+        let html = "";
+        
+        editor.update(() => {
+          $convertFromMarkdownString(__data.content, TRANSFORMERS);
+          html = $generateHtmlFromNodes(editor);
+          setPayload({
+            html
+          })
+        });
+      }
+    }
+  }, [__data])
   const findAndReplace = useCallback((searchTerm: string, replaceTerm: string, replaceAll: boolean = false) => {
     if (!lexicalEditorRef.current) return;
     console.log('Replace functionality - simplified version');
