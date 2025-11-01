@@ -189,6 +189,7 @@ export default function RecordWithSlug({ params, searchParams }: RecordWithSlugP
     return (
       <>
       <Head>
+        <title>{recordJdata.title || 'Not Found' + '- Sistorica'}</title>
         <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(recordJdata.schemaOrg || {}) }}
