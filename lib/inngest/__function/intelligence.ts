@@ -108,10 +108,6 @@ Be thorough and use current web information.`,
             
 Please search the web for reliable sources and provide detailed findings.`,
         }, ],
-        tools: [
-        {
-          type: "web_search",
-        }, ],
         response_format: {
           type: "json_schema",
           json_schema: {
@@ -203,10 +199,7 @@ Write detailed, informative content with proper citations and structure.`,
             role: "user",
             content: articlePrompt,
           }, ],
-          tools: [
-          {
-            type: "web_search",
-          }, ],
+        
           response_format: {
             type: "json_schema",
             json_schema: {
@@ -296,7 +289,7 @@ Write detailed, informative content with proper citations and structure.`,
         title: __call__research.RevisedName,
         content: __generate__article.Sections,
         content_type: "mkd",
-        summary: __generate__article.Summary || "None",
+        summary: "None",
         categories: [__call__research.articleCategory],
         tags: [],
         references: __generate__article.ReferenceList || [],
@@ -310,7 +303,7 @@ Write detailed, informative content with proper citations and structure.`,
           username,
           dto.schemaOrg
         );
-        console.log(`✅ Article created successfully: ${record._id}`);
+        
         return {
           success: true,
           recordId: record._id,
