@@ -442,7 +442,7 @@ ${JSON.stringify(__gather__data.slice(0, 3).map(d => ({
     
     const fillDataToMarkup = await step.run("markup", async () => {
       if (InvestigateWithSrc.Sections && InvestigateWithSrc.SchemaOrg) {
-        const __heading = await markdownToHtml(InvestigateWithSrc.Sections);
+        const __heading = await InvestigateWithSrc.Sections;
         
         const __infobox = InvestigateWithSrc.SchemaOrg;
         const __refList = InvestigateWithSrc.ReferenceList;
@@ -452,6 +452,7 @@ ${JSON.stringify(__gather__data.slice(0, 3).map(d => ({
         let dto = {
           title: __call__thinking.RevisedName,
           content: __heading,
+          content_type:'mkd',
           summary: InvestigateWithSrc.Summary || 'None',
           categories: __call__thinking.articleCategory,
           schemaOrg: InvestigateWithSrc.SchemaOrg || {},

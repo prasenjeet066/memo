@@ -85,6 +85,7 @@ export class RecordDAL {
       tags: data.tags || [],
       infobox: data.infobox,
       references: data.references || [],
+      content_type : data.content_type || 'html',
       external_links: data.externalLinks || [],
       created_by: new mongoose.Types.ObjectId(userId),
       created_by_username: username,

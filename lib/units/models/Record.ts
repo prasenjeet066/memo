@@ -213,6 +213,10 @@ const RecordSchema = new Schema<IRecord>(
     last_edited_by_username: {
       type: String,
     },
+    content_type :{
+      type: String,
+      default : 'html'
+    },
     revisions: [RevisionSchema],
     current_revision: {
       type: Number,
