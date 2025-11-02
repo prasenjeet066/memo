@@ -1,39 +1,65 @@
 /**
- * Type definitions for Article Intelligence Function
+ * Type definitions for Perplexity-style Article Intelligence
  */
 
-export interface ScrapedData {
-  url: string;
-  status_code: number;
-  scraped_at: string;
-  metadata: {
-    title: string | null;
-    description: string | null;
-    keywords: string[] | null;
-    author: string | null;
-    published_date: string | null;
-    modified_date: string | null;
-    canonical_url: string | null;
-    language: string | null;
-    og_tags: Record<string, any>;
-    twitter_tags: Record<string, any>;
-    schema_org: any[];
+/**
+ * Article event structure
+ */
+export interface ArticleEvent {
+  data: {
+    slug: string;
+    userid: string;
+    username: string;
   };
-  content: {
-    headings: Record<string, string[]>;
-    paragraphs: string[];
-    lists: any[];
-    tables: any[];
-    code_blocks: string[];
-    quotes: string[];
-    text_content: string;
-    word_count: number;
-  };
-  media: Record<string, any>;
-  links: Record<string, string[]>;
-  structured_data: Record<string, any>;
 }
 
+/**
+ * Image metadata with full attribution
+ */
+export interface ImageResult {
+  url: string;
+  caption ? : string;
+  size ? : string;
+  author ? : string;
+  source ? : string;
+}
+
+/**
+ * Crawl result with enhanced metadata
+ */
+export interface CrawlResult {
+  plainText ? : string;
+  author ? : string;
+  date ? : string;
+  url ? : string;
+  query ? : string;
+  title ? : string;
+  error ? : string;
+}
+
+/**
+ * Search metadata from search API
+ */
+export interface SearchMetadata {
+  url: string;
+  title: string;
+  snippet: string;
+}
+
+/**
+ * Search result with crawled content
+ */
+export interface SearchResult {
+  query: string;
+  crawl ? : CrawlResult[];
+  searchMetadata ? : SearchMetadata[];
+  results ? : any[];
+  error ? : string;
+}
+
+/**
+ * Research result with source attribution
+ */
 export interface ResearchResult {
   RevisedName: string;
   articleCategory: string;
@@ -43,61 +69,56 @@ export interface ResearchResult {
   ResearchSummary: string;
 }
 
-export interface CrawlResult {
-  plainText?: string;
-  author?: string;
-  date?: string;
-  query?: string;
-  url?: string;
-  error?: string;
-}
-
-export interface SearchResult {
-  query: string;
-  crawl?: CrawlResult[];
-  results?: any[];
-  error?: string;
-}
-
-export interface ImageObject {
-  url: string;
-  caption?: string;
-  size?: string;
-}
-
-export interface ReferenceObject {
+/**
+ * Reference with citation index
+ */
+export interface Reference {
   title: string;
-  url?: string;
-  source?: string;
+  url ? : string;
+  source ? : string;
+  index ? : number;
 }
 
-export interface SchemaOrgObject {
+/**
+ * Schema.org markup
+ */
+export interface SchemaOrg {
   "@context": string;
   "@type": string;
   name: string;
   [key: string]: any;
 }
 
+/**
+ * Article result with citations
+ */
 export interface ArticleResult {
-  ImagesUrls: ImageObject[];
+  ImagesUrls: ImageResult[];
   Sections: string;
-  ReferenceList: ReferenceObject[];
-  SchemaOrg: SchemaOrgObject;
+  ReferenceList: Reference[];
+  SchemaOrg: SchemaOrg;
   Summary: string;
-  error?: string;
 }
 
-export interface ArticleEvent {
-  data: {
-    slug: string;
-    userid: string;
-    username: string;
-  };
-}
-
+/**
+ * Database save result
+ */
 export interface DatabaseResult {
-  success?: boolean;
-  recordId?: string;
-  slug?: string;
-  error?: string;
+  success ? : boolean;
+  recordId ? : string;
+  slug ? : string;
+  error ? : string;
+}
+
+/**
+ * Complete workflow result
+ */
+export interface WorkflowResult {
+  slug: string;
+  searchQueries: string[];
+  research: ResearchResult;
+  searchResults: SearchResult[];
+  images: ImageResult[];
+  article: ArticleResult;
+  database: DatabaseResult;
 }
