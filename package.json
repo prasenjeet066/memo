@@ -74,6 +74,7 @@
     "react-advanced-cropper": "latest",
     "@mdx-js/react": "latest",
     "@mdx-js/mdx": "latest",
+    "remark-gfm": "latest",
     "openai": "latest",
     "react-day-picker": "latest",
     "@monaco-editor/react": "latest",
