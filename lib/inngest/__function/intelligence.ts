@@ -9,6 +9,7 @@ import {
   CrawlResult,
   DatabaseResult,
   ArticleEvent,
+  ImageResult,
 } from "@/types/bot";
 
 /**
@@ -18,12 +19,11 @@ const CONFIG = {
   AI_MODEL: "openai/gpt-oss-safeguard-20b:groq",
   SEARCH_API_URL: "https://memoorg.vercel.app/api/search",
   CRAWL_API_URL: "https://sistorica-python.vercel.app/scrape-llm",
-  IMAGE_SEARCH_API: "https://api.unsplash.com/search/photos", // Add your Unsplash API key
   RETRY_ATTEMPTS: 2,
   RETRY_DELAY: 1000,
   MAX_SEARCH_QUERIES: 5,
   MAX_URLS_PER_QUERY: 3,
-  MAX_IMAGES: 5,
+  MAX_IMAGES: 6, // Maximum images to include in the article
 } as const;
 
 /**
@@ -159,7 +159,7 @@ async function crawlUrl(url: string, query: string): Promise<CrawlResult> {
         date: data.publication_date,
         url: url,
         query: query,
-        images: data.images,
+        images: data.images || [], // Extract images from crawl response
         title: data.title || "",
       };
     }
@@ -247,39 +247,36 @@ async function performWebSearch(queries: string[]): Promise<SearchResult[]> {
 }
 
 /**
- * Step 4: Search for relevant images
+ * Step 4: Extract and process images from crawl results
  */
-async function searchImages(topic: string): Promise<any[]> {
-  try {
-    // You can use Unsplash, Pexels, or your own image API
-    // For now, returning empty array - implement based on your needs
-    return [];
-    
-    /* Example Unsplash implementation:
-    const response = await fetch(
-      `${CONFIG.IMAGE_SEARCH_API}?query=${encodeURIComponent(topic)}&per_page=${CONFIG.MAX_IMAGES}`,
-      {
-        headers: {
-          'Authorization': 'Client-ID YOUR_UNSPLASH_ACCESS_KEY'
-        }
+function extractImagesFromCrawl(searchResults: SearchResult[]): ImageResult[] {
+  const allImages: ImageResult[] = [];
+  
+  searchResults.forEach((result) => {
+    result.crawl?.forEach((crawl) => {
+      if (crawl.images && Array.isArray(crawl.images)) {
+        crawl.images.forEach((img: any) => {
+          if (img.url) {
+            allImages.push({
+              url: img.url,
+              caption: img.alt || crawl.title || result.query,
+              size: "standard",
+              author: crawl.author,
+              source: crawl.url,
+            });
+          }
+        });
       }
-    );
-    
-    if (!response.ok) return [];
-    
-    const data = await response.json();
-    return data.results?.map((img: any) => ({
-      url: img.urls.regular,
-      caption: img.alt_description || topic,
-      size: `${img.width}x${img.height}`,
-      author: img.user.name,
-      source: img.links.html,
-    })) || [];
-    */
-  } catch (error) {
-    console.error("Image search error:", error);
-    return [];
-  }
+    });
+  });
+
+  // Remove duplicates and limit to MAX_IMAGES
+  const uniqueImages = allImages.filter(
+    (img, index, self) =>
+      index === self.findIndex((t) => t.url === img.url)
+  );
+
+  return uniqueImages.slice(0, CONFIG.MAX_IMAGES);
 }
 
 /**
@@ -366,7 +363,7 @@ async function performAIResearch(
 async function generateArticle(
   research: ResearchResult,
   searchResults: SearchResult[],
-  images: any[]
+  images: ImageResult[]
 ): Promise<ArticleResult> {
   const response = await openAi.chat.completions.create({
     model: CONFIG.AI_MODEL,
@@ -472,7 +469,7 @@ async function saveToDatabase(
         title: research.RevisedName,
         content: article.Sections,
         content_type: "mkd",
-        summary: 'New Created',
+        summary: 'New',
         categories: [research.articleCategory],
         tags: [],
         references: article.ReferenceList,
@@ -527,11 +524,11 @@ export const articleIntelligenceFunction = inngest.createFunction(
     );
 
     /**
-     * STEP 3: Search for relevant images
+     * STEP 3: Extract images from crawl results
      */
     const images = await step.run(
-      "search_images",
-      async () => await searchImages(slug)
+      "extract_images",
+      async () => extractImagesFromCrawl(searchResults)
     );
 
     /**

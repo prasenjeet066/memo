@@ -372,7 +372,7 @@ ${content}
   
   <instructions>
     <instruction>Create a comprehensive wiki article with inline citations</instruction>
-    <instruction>Place image gallery at the top using the wiki-img-list div</instruction>
+    <instruction>Add image in wiki if image available, </instruction>
     <instruction>Use numbered citations [1], [2], [3] throughout the text</instruction>
     <instruction>Every factual claim should have at least one citation</instruction>
     <instruction>Citations must correspond to the available references</instruction>
@@ -380,16 +380,13 @@ ${content}
     <instruction>Write in encyclopedic style - objective, informative, well-organized</instruction>
     <instruction>Include all relevant images with proper captions</instruction>
     <instruction>Generate complete schema.org markup appropriate for the entity type</instruction>
+    <instruction>
+    Add Table in wiki , if needed 
+    </instruction>
   </instructions>
   
   <example_format>
     # Topic Name
-    
-    ## Image Gallery
-    <div class="wiki-img-list">
-      <img src="..." alt="..." />
-      <img src="..." alt="..." />
-    </div>
     
     ## Introduction
     **Topic Name** is a [description][1]. It was founded in [year][2] and is known for [achievement][3].
