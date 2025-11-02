@@ -35,6 +35,7 @@ export interface CrawlResult {
   query ? : string;
   title ? : string;
   error ? : string;
+  images?: []
 }
 
 /**

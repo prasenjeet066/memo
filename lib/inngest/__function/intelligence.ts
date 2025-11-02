@@ -159,6 +159,7 @@ async function crawlUrl(url: string, query: string): Promise<CrawlResult> {
         date: data.publication_date,
         url: url,
         query: query,
+        images: data.images,
         title: data.title || "",
       };
     }
@@ -471,7 +472,7 @@ async function saveToDatabase(
         title: research.RevisedName,
         content: article.Sections,
         content_type: "mkd",
-        summary: article.Summary,
+        summary: 'New Created',
         categories: [research.articleCategory],
         tags: [],
         references: article.ReferenceList,
@@ -502,7 +503,7 @@ async function saveToDatabase(
 export const articleIntelligenceFunction = inngest.createFunction(
   {
     id: "article-ai-submission",
-    name: "Process Article With AI (Perplexity-Style)",
+    name: "Process Article With AI ",
   },
   { event: "article/ai/worker" },
   async ({ event, step }) => {
