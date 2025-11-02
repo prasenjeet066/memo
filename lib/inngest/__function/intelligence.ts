@@ -175,7 +175,7 @@ Be thorough and use current web information.`,
       const searchMap = await Promise.all(
         querys.map(async (q) => {
           try {
-            const s = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+            const s = await fetch(`https://memoorg.vercel.app/api/search?q=${encodeURIComponent(q)}`);
             
             if (!s.ok) {
               return {
