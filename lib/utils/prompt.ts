@@ -186,6 +186,14 @@ export const AI_PROMPTS = {
   </research_data>
   
   <instructions>
+    <instruction>
+    Add all images top of wiki
+    <example>
+    <div class="wiki-img-list">
+     { All image element }
+    </div>
+    </example>
+    </instruction>
     <instruction>Create a well-structured, comprehensive wiki article</instruction>
     <instruction>Include proper sections with clear headings</instruction>
     <instruction>Add references and citations from the provided sources</instruction>
