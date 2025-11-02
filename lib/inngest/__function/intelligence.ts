@@ -186,10 +186,39 @@ Be thorough and use current web information.`,
             }
             
             const res = await s.json();
+          
+              const Crawl = await Promise.all(res.items.map((urli)=>{
+                const url = urli.link;
+                try {
+                  const ce = await fetch('');
+                  if (!ce.ok) {
+                    return {
+                      query: q,
+                      url,
+                      error: ce.statusText
+                    }
+                  }
+                  const j = await ce.json();
+                  if (j.plain_text.trim()!=='') {
+                    return {
+                      plainText : j.plain_text,
+                      author: j.author,
+                      date : j.publication_date
+                    }
+                  }
+                } catch (e) {
+                  return {
+                    query: q,
+                    url,
+                    error: ''
+                  }
+                }
+              }))
+            
             return {
-              query: q,
-              results: res.items || []
-            };
+              query: q ,
+              crawl: Crawl 
+            }
           } catch (e) {
             return {
               query: q,
@@ -369,3 +398,5 @@ Write detailed, informative content with proper citations and structure.`,
     };
   }
 );
+
+
