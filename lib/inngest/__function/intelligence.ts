@@ -17,7 +17,7 @@ import {
 const CONFIG = {
   AI_MODEL: "openai/gpt-oss-safeguard-20b:groq",
   SEARCH_API_URL: "https://memoorg.vercel.app/api/search",
-  CRAWL_API_URL: "https://sistorica-python.onrender.com/api/", // TODO: Add your actual crawl API URL
+  CRAWL_API_URL: "https://sistorica-python.vercel.app/scrape-llm", // TODO: Add your actual crawl API URL
   RETRY_ATTEMPTS: 2,
   RETRY_DELAY: 1000,
   MAX_SEARCH_QUERIES: 5,
