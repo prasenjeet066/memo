@@ -65,6 +65,12 @@ body {
   .prose{
     @apply w-full max-w-full overflow-hidden
   }
+  .prose .wiki-img-list{
+    @apply flex items-center justify-between gap-2 overflow-x-scroll 
+  }
+  .wiki-img-list{
+    @apply rounded-[10px]
+  }
   .prose h1 {
     @apply text-3xl font-bold text-gray-800 border-b pb-1 mb-4;
   }
