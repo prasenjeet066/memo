@@ -88,7 +88,9 @@ export const articleIntelligenceFunction = inngest.createFunction(
         messages: [
         {
           role: "system",
-          content: `You are a research AI with web search capabilities. When given a topic, you will:
+          content: `
+          
+You are a research AI with web search capabilities. When given a topic, you will:
 1. Search the web for comprehensive information
 2. Analyze and synthesize the findings
 3. Provide structured output
@@ -97,6 +99,7 @@ Respond with:
 - RevisedName: Corrected/standardized name of the topic
 - articleCategory: Entity type (person, place, technology, event, etc.)
 - KeyFacts: Array of important facts discovered
+- SearchQuerys: Array of all search querys
 - Sources: Array of source URLs used
 - ResearchSummary: Brief summary of findings
 
@@ -104,9 +107,7 @@ Be thorough and use current web information.`,
         },
         {
           role: "user",
-          content: `Research and gather comprehensive information about: "${__slug}"
-            
-Please search the web for reliable sources and provide detailed findings.`,
+          content: `Research and gather comprehensive information about: "${__slug}" Please search the web for reliable sources and provide detailed findings.`,
         }, ],
         response_format: {
           type: "json_schema",
@@ -122,6 +123,10 @@ Please search the web for reliable sources and provide detailed findings.`,
                 articleCategory: {
                   type: "string",
                   description: "Category of the entity",
+                },
+                SearchQuerys: {
+                  type: "array",
+                  description: "All search query for knowledge."
                 },
                 KeyFacts: {
                   type: "array",
@@ -140,6 +145,7 @@ Please search the web for reliable sources and provide detailed findings.`,
               },
               required: [
                 "RevisedName",
+                "SearchQuerys",
                 "articleCategory",
                 "KeyFacts",
                 "Sources",
@@ -158,7 +164,44 @@ Please search the web for reliable sources and provide detailed findings.`,
         return {};
       }
     });
-    
+    const SearchUse = await step.run('search', async () => {
+      const querys = __call__research.SearchQuerys;
+      
+      if (!querys || !querys.length) {
+        return [];
+      }
+      
+      // Run all searches in parallel
+      const searchMap = await Promise.all(
+        querys.map(async (q) => {
+          try {
+            const s = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+            
+            if (!s.ok) {
+              return {
+                query: q,
+                results: [],
+                error: `Search API returned status ${s.status}`
+              };
+            }
+            
+            const res = await s.json();
+            return {
+              query: q,
+              results: res.items || []
+            };
+          } catch (e) {
+            return {
+              query: q,
+              results: [],
+              error: e.message || 'Unknown error'
+            };
+          }
+        })
+      );
+      
+      return searchMap;
+    });
     /**
      * STEP 2: Generate comprehensive article using research data
      */
