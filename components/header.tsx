@@ -224,7 +224,7 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
                       : 'hover:bg-gray-100 text-red-600 hover:text-red-700'
                   }`}
                 >
-                  <LogOut className="w-5 h-5" />
+                  <Fai icon='sign-out' className="w-5 h-5" />
                   <span>Logout</span>
                 </button>
               </div>
