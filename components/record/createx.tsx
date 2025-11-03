@@ -284,7 +284,7 @@ export default function EnhancedEditor({
         onRedo={handleRedo}
         onPreview={handlePreview}
         onModeChange={setEditorMode}
-        handlePublish = {handlePublishSubmit}
+        handlePublish = {handlePublish}
       />
       
       <EditorStatusBar
