@@ -73,7 +73,7 @@ export const Viewer = function({ __data }: Props) {
     setIsSuccesfullCreated(null)
     
     try {
-      const response = await fetch(`/api/publish/article/${data?.title || 'untitled'}`, {
+      const response = await fetch(`/api/v_1/publish/article/${data?.title || 'untitled'}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
