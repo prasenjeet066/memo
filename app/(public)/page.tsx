@@ -48,7 +48,7 @@ export default function MainPage() {
   
   
   const Sidebar = !isMobile && (
-    <div className='w-auto max-w-[70px] h-full min-h-screen bg-gray-50 flex flex-col justify-between '>
+    <div className='w-auto max-w-64 h-full min-h-screen bg-gray-50 flex flex-col justify-between '>
       <div className='p-4 border-b border-gray-200'>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
@@ -67,7 +67,7 @@ export default function MainPage() {
               className='flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors group'
             >
               {!isExpanded ? (
-              <div className='rounded-full p-2 h-5 w-5 bg-gray-50 flex items-center justify-center'>
+              <div className='rounded-full p-2 h-5 w-5 bg-gray-100 flex items-center justify-center'>
               <nav.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-800 flex-shrink-0' />
               </div>
               ):(
