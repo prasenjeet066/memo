@@ -165,9 +165,7 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
           >
             {/* Sidebar Header */}
             <div
-              className={`p-4 border-b flex items-center justify-between ${
-                isDark ? 'border-gray-700' : 'border-gray-200'
-              }`}
+              className={`p-4 bg-gray-50 flex items-center justify-between`}
             >
               <h1 className="logo-style-font text-2xl font-semibold">S</h1>
               <button onClick={closeSidebar}>
