@@ -48,7 +48,7 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
           />)}
           <Link href="/" className="flex items-center gap-1">
             <h1
-              className={`logo-style-font text-2xl font-semibold cursor-pointer ${
+              className={`logo-style-font text-3xl font-semibold cursor-pointer ${
                 isDark ? 'text-white' : 'text-gray-800'
               }`}
             >
