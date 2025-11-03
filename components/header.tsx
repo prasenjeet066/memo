@@ -171,7 +171,7 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
             >
               <h1 className="logo-style-font text-2xl font-semibold">S</h1>
               <button onClick={closeSidebar}>
-                <ArrowLeft
+                <Fai icon='arrow-left'
                   className={`w-6 h-6 transition-colors ${
                     isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-800'
                   }`}
