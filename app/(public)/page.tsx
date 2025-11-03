@@ -1,37 +1,16 @@
 'use client'
 import { Suspense } from 'react'
-import * as d3 from "d3";
-
 import Spinner from '/components/utils/spinner'
-import Image from 'next/image'
 import { Fai } from '@/components/Fontawesome';
-import VA from '@/components/d3/VoronoiArt'
 import Header from '@/components/header';
-import StarBorder from '@/components/ui/star-border'
-import GlobeChart from '@/components/d3/earth';
 import { useMobile } from "@/lib/units/use-mobile";
 import { Home, Compass, HandHeart, Settings } from 'lucide-react';
-import { useState, useRef } from 'react';
-
-const HeaderNavs = () => {
-  const isMobile = useMobile();
-  return (
-    <>
-      {!isMobile && (
-        <button className="p-2 px-4 bg-gray-800 text-white rounded-full">
-          <Fai icon="heart" className="mr-1" />
-          Contribute Now!
-        </button>
-      )}
-    </>
-  );
-};
+import { useState } from 'react';
 
 export default function MainPage() {
   const isMobile = useMobile();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(null);
-  const svgXMlurl = 'https://memoorg.vercel.app/api/img/vor';
+  const [searchQuery, setSearchQuery] = useState('');
   
   const NavList = [
     { name: 'Home', icon: Home, href: '/' },
@@ -40,16 +19,19 @@ export default function MainPage() {
     { name: 'Settings', icon: Settings, href: '/settings' },
   ];
   
-  const handleSearchSubmit = () => {};
-  
-  const handleSearch = (e) => {
-    const value = e.target.value.trim();
-    if (value) setSearchQuery(value);
+  const handleSearchSubmit = () => {
+    if (searchQuery.trim()) {
+      // Handle search submission
+      console.log('Searching for:', searchQuery);
+    }
   };
   
+  const handleSearch = (e: React.ChangeEvent < HTMLInputElement > ) => {
+    setSearchQuery(e.target.value);
+  };
   
   const Sidebar = !isMobile && (
-    <div className='w-auto max-w-64 h-full min-h-screen bg-gray-50 flex flex-col justify-between '>
+    <aside className='w-auto max-w-64 h-full min-h-screen bg-white border-r border-gray-200 flex flex-col justify-between'>
       <div className='p-4 border-b border-gray-200'>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
@@ -60,20 +42,19 @@ export default function MainPage() {
       </div>
 
       <nav className='flex-1 p-4 flex flex-col justify-between'>
-        <div className='space-y-2 flex-1'>
+        <div className='space-y-1 flex-1'>
           {NavList.slice(0, -1).map((nav) => (
             <a
               key={nav.name}
               href={nav.href}
-              className='flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors group'
+              className='flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors group'
             >
               {!isExpanded ? (
-              <div className='rounded-full p-2 h-5 w-5 bg-gray-100 flex items-center justify-center'>
-              <nav.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-800 flex-shrink-0' />
-              </div>
-              ):(
-                <nav.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-800 flex-shrink-0' />
-  
+                <div className='rounded-full p-2 h-10 w-10 bg-gray-50 flex items-center justify-center'>
+                  <nav.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-900' />
+                </div>
+              ) : (
+                <nav.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-900' />
               )}
               {isExpanded && (
                 <span className='text-sm font-medium text-gray-700 group-hover:text-gray-900 capitalize'>
@@ -84,17 +65,17 @@ export default function MainPage() {
           ))}
         </div>
 
-        {/* Bottom nav item (Settings) */}
-        <div>
+        {/* Settings at bottom */}
+        <div className='border-t border-gray-200 pt-4'>
           {(() => {
             const settings = NavList[NavList.length - 1]
             return (
               <a
                 key={settings.name}
                 href={settings.href}
-                className='flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors group'
+                className='flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors group'
               >
-                <settings.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-800 flex-shrink-0' />
+                <settings.icon className='w-5 h-5 text-gray-600 group-hover:text-gray-900' />
                 {isExpanded && (
                   <span className='text-sm font-medium text-gray-700 group-hover:text-gray-900 capitalize'>
                     {settings.name}
@@ -105,8 +86,9 @@ export default function MainPage() {
           })()}
         </div>
       </nav>
-    </div>
+    </aside>
   )
+  
   const footerList = [
     { label: 'Terms & Conditions', href: '/terms' },
     { label: 'Content Security', href: '/security' },
@@ -115,67 +97,82 @@ export default function MainPage() {
     { label: 'APIs', href: '/api-docs' },
   ];
   
-  return ( <Suspense fallback={<Spinner/>}>
+  return (
+    <Suspense fallback={<Spinner/>}>
       <main className="min-h-screen w-full bg-gray-50 flex flex-col">
-        <Header  navlist={NavList} isMobile={isMobile} />
+        <Header navlist={NavList} />
+        
         <div className="flex-1 flex overflow-hidden">
-          {!isMobile && Sidebar}
+          {Sidebar}
+          
           <div className="flex-1 flex flex-col overflow-y-auto bg-white">
-            <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-              {/* Image Section */}
-              
-              {/* Search Section */}
-              <div className={`w-full ${isMobile ? 'max-w-full' : 'max-w-2xl'}`}>
-                <h1 className="text-center text-black text-2xl sm:text-3xl md:text-4xl font-semibold mb-6 ">
-                  {
-                    "Search anything..."
-                  }
+            <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
+              {/* Main Search Section */}
+              <div className={`w-full ${isMobile ? 'max-w-full px-4' : 'max-w-2xl'}`}>
+                <h1 className="text-center text-gray-900 text-3xl sm:text-4xl md:text-5xl font-bold mb-8">
+                  Search anything...
                 </h1>
                 
-                <div className="w-full p-[1px] rounded-full">
-                  <div className="w-full p-2 flex items-center gap-2 bg-gray-50 rounded-full">
+                <div className="w-full bg-gray-50 rounded-full p-2 shadow-sm border border-gray-200">
+                  <div className="flex items-center gap-2">
                     <input
                       type="text"
-                      className="outline-none text-black border-none pl-4 bg-transparent flex-1 text-sm sm:text-base font-semibold"
+                      className="outline-none border-none pl-4 bg-transparent flex-1 text-sm sm:text-base text-gray-900 placeholder-gray-500"
                       placeholder="About Bangladesh"
                       value={searchQuery}
                       onChange={handleSearch}
                       onKeyPress={(e) => e.key === 'Enter' && handleSearchSubmit()}
                     />
                     <button
-                      className="bg-none px-2 hover:bg-indigo-700 text-white p-2 sm:p-3 rounded-full transition-colors flex-shrink-0"
+                      className="bg-gray-900 hover:bg-gray-800 text-white p-3 rounded-full transition-colors flex-shrink-0"
                       onClick={handleSearchSubmit}
+                      aria-label="Search"
                     >
-                      <Fai icon={'arrow-up'} className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
+                      <Fai icon='arrow-up' className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                   </div>
                 </div>
-              </div>
-            </div>
-            
-            {/* Footer */}
-            
-          </div>
-        </div>
-           <footer className="w-full py-6 px-4 mt-auto text-black">
-              <div className="max-w-6xl mx-auto">
-                {!isMobile && (
-                <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row justify-center gap-8'} items-center`}>
-                  {footerList.map((item, index) => (
-                    <a
-                      key={item.label}
-                      href={item.href}
-                      className="text-sm text-whitw  transition-colors"
+
+                {/* Quick Links */}
+                <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+                  <span className="text-sm text-gray-500">Popular:</span>
+                  {['History', 'Science', 'Technology', 'Culture'].map((topic) => (
+                    <button
+                      key={topic}
+                      className="px-4 py-2 text-sm bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors"
+                      onClick={() => setSearchQuery(topic)}
                     >
-                      {item.label}
-                    </a>
+                      {topic}
+                    </button>
                   ))}
-                </div>)}
-                <div className="text-center mt-6 text-xs text-black">
-                  © 2025 All rights reserved.
                 </div>
               </div>
-            </footer>
+            </div>
+          </div>
+        </div>
+        
+        {/* Footer */}
+        <footer className="w-full bg-white border-t border-gray-200 py-6 px-4">
+          <div className="max-w-6xl mx-auto">
+            {!isMobile && (
+              <div className="flex flex-row justify-center gap-8 items-center">
+                {footerList.map((item) => (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                  >
+                    {item.label}
+                  </a>
+                ))}
+              </div>
+            )}
+            <div className="text-center mt-4 text-xs text-gray-500">
+              © 2025 Sistorica. All rights reserved.
+            </div>
+          </div>
+        </footer>
       </main>
-    </Suspense>);
+    </Suspense>
+  );
 }

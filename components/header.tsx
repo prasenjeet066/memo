@@ -13,9 +13,11 @@ interface NavItem {
   icon: React.ComponentType < { className ? : string } > ;
   href ? : string;
 }
+
 interface Replenishment {
   last: any;
 }
+
 interface HeaderProps {
   navlist: NavItem[];
   replacement ? : Replenishment;
@@ -32,40 +34,49 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
   
   return (
     <>
-      {/* Header Bar */}
+      {/* Header Bar - Fixed positioning issues */}
       <header
-        className={`w-full px-4 py-3 flex items-center justify-between ${
-          isDark ? 'bg-transparent text-white' : 'bg-gray-50 text-gray-800'
+        className={`w-full px-4 py-3 flex items-center justify-between border-b ${
+          isDark ? 'bg-transparent text-white border-gray-700' : 'bg-gray-50 text-gray-800 border-gray-200'
         } ${isMobile ? 'sticky top-0 z-40' : ''}`}
       >
-        {/* ===== Left Section ===== */}
+        {/* Left Section */}
         <div className="flex items-center gap-3">
           {isMobile && (
-          <Fai icon='bars'
-            className={`w-6 h-6 cursor-pointer transition-colors ${
-              isDark ? 'text-white' : 'text-gray-700 hover:text-gray-900'
-            }`}
-            onClick={() => setSideBarOpenLogic(!sideBarLogic)}
-          />)}
-          <Link href="/" className="flex items-center gap-1">
+            <button
+              onClick={() => setSideBarOpenLogic(!sideBarLogic)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Toggle menu"
+            >
+              <Fai 
+                icon='bars'
+                className={`w-5 h-5 ${isDark ? 'text-white' : 'text-gray-700'}`}
+              />
+            </button>
+          )}
+          <Link href="/" className="flex items-center">
             <h1
-              className={`logo-style-font text-3xl px-2 font-semibold cursor-pointer ${
+              className={`logo-style-font text-2xl font-semibold cursor-pointer ${
                 isDark ? 'text-white' : 'text-gray-800'
               }`}
             >
-              S
+              Sistorica
             </h1>
           </Link>
         </div>
 
-        {/* ===== Right Section ===== */}
+        {/* Right Section */}
         {isMobile ? (
-          <div className="flex items-center gap-4">
-            <Fai icon='search'
-              className={`w-6 h-6 cursor-pointer transition-colors ${
-                isDark ? 'text-white' : 'text-gray-700 hover:text-gray-900'
-              }`}
-            />
+          <div className="flex items-center gap-3">
+            <button
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Search"
+            >
+              <Fai 
+                icon='search'
+                className={`w-5 h-5 ${isDark ? 'text-white' : 'text-gray-700'}`}
+              />
+            </button>
             {session && (
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center ${
@@ -77,61 +88,61 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
             )}
           </div>
         ) : (
-          <div className="flex items-center gap-4 justify-end">
-            {
-              !pathname === '/' && <SearchInHeader />
-            }
-            
+          <div className="flex items-center gap-4">
+            {pathname !== '/' && <SearchInHeader />}
 
-            {/* ===== Auth / Notifications Section ===== */}
             {status === "loading" ? (
               <div
                 className={`w-20 h-8 rounded-full animate-pulse ${
                   isDark ? 'bg-gray-700' : 'bg-gray-200'
                 }`}
-              ></div>
+              />
             ) : session ? (
               <div className="flex items-center gap-2">
                 <button
                   className={`p-2 rounded-full transition-colors ${
                     isDark
                       ? 'text-white hover:bg-gray-800'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                      : 'text-gray-700 hover:bg-gray-100'
                   }`}
                   title="Messages"
+                  aria-label="Messages"
                 >
-                  <Fai icon='mail' className="w-5 h-5" />
+                  <Fai icon='envelope' className="w-5 h-5" />
                 </button>
                 <button
                   className={`p-2 rounded-full transition-colors ${
                     isDark
                       ? 'text-white hover:bg-gray-800'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                      : 'text-gray-700 hover:bg-gray-100'
                   }`}
                   title="Notifications"
+                  aria-label="Notifications"
                 >
                   <Fai icon='bell' className="w-5 h-5" />
                 </button>
                 <div
-                  className={`flex items-center gap-2 p-2 border-l ${
+                  className={`flex items-center gap-2 pl-2 ml-2 border-l ${
                     isDark ? 'border-gray-600' : 'border-gray-300'
                   }`}
                 >
-                  <span
-                    className={`h-5 w-5 rounded-full ${
-                      isDark ? 'bg-gray-500' : 'bg-gray-500'
+                  <div
+                    className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                      isDark ? 'bg-gray-700' : 'bg-gray-200'
                     }`}
-                  ></span>  
+                  >
+                    <Fai icon='user' className={`w-4 h-4 ${isDark ? 'text-white' : 'text-gray-600'}`} />
+                  </div>
                 </div>
               </div>
             ) : (
               <div className="flex items-center gap-2">
                 <Link href="/login">
                   <button
-                    className={`px-4 py-2 text-sm font-medium hover:underline transition-colors ${
+                    className={`px-4 py-2 text-sm font-medium transition-colors rounded-lg ${
                       isDark
-                        ? 'text-white hover:text-gray-300'
-                        : 'text-gray-700 hover:text-gray-900'
+                        ? 'text-white hover:bg-gray-800'
+                        : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
                     Sign In
@@ -139,7 +150,7 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
                 </Link>
                 <Link href="/register">
                   <button
-                    className={`p-1 px-4  text-sm font-medium bg-blue-600 text-white rounded-full transition-colors ${
+                    className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${
                       isDark
                         ? 'bg-white text-gray-900 hover:bg-gray-200'
                         : 'bg-gray-800 text-white hover:bg-gray-900'
@@ -154,50 +165,47 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
         )}
       </header>
 
-      {/* ===== Mobile Sidebar ===== */}
+      {/* Mobile Sidebar - Fixed overlay and positioning */}
       {sideBarLogic && isMobile && (
         <div className="fixed inset-0 z-50 flex">
           {/* Sidebar Panel */}
           <div
-            className={`w-full max-w-full flex flex-col ${
+            className={`w-full max-w-sm flex flex-col ${
               isDark ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'
-            }`}
+            } shadow-2xl`}
           >
             {/* Sidebar Header */}
-            <div
-              className={`p-4 bg-gray-50 flex items-center justify-between`}
-            >
-              <h1 className="logo-style-font text-2xl font-semibold">S</h1>
-              <button onClick={closeSidebar}>
-                <Fai icon='arrow-left'
-                  className={`w-6 h-6 transition-colors ${
-                    isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-800'
-                  }`}
+            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+              <h1 className="logo-style-font text-2xl font-semibold">Sistorica</h1>
+              <button 
+                onClick={closeSidebar}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Close menu"
+              >
+                <Fai 
+                  icon='times'
+                  className={`w-5 h-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
                 />
               </button>
             </div>
 
             {/* Nav Items */}
-            <nav className="flex-1 overflow-y-auto p-4 space-y-2">
+            <nav className="flex-1 overflow-y-auto p-4 space-y-1">
               {navlist.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href || `/${item.name.toLowerCase()}`}
                   onClick={closeSidebar}
-                  className={`flex items-center gap-3 p-3 rounded-lg transition-colors group ${
+                  className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
                     isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
                   }`}
                 >
                   <item.icon
                     className={`w-5 h-5 ${
-                      isDark ? 'text-gray-300 group-hover:text-white' : 'text-gray-600 group-hover:text-gray-800'
+                      isDark ? 'text-gray-300' : 'text-gray-600'
                     }`}
                   />
-                  <span
-                    className={`text-sm font-medium capitalize ${
-                      isDark ? 'text-gray-200 group-hover:text-white' : 'text-gray-700 group-hover:text-gray-900'
-                    }`}
-                  >
+                  <span className="text-sm font-medium capitalize">
                     {item.name}
                   </span>
                 </Link>
@@ -218,12 +226,12 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
                   }}
                   className={`flex items-center gap-3 p-3 w-full rounded-lg transition-colors ${
                     isDark
-                      ? 'hover:bg-gray-800 text-red-400 hover:text-red-500'
-                      : 'hover:bg-gray-100 text-red-600 hover:text-red-700'
+                      ? 'hover:bg-gray-800 text-red-400'
+                      : 'hover:bg-gray-100 text-red-600'
                   }`}
                 >
                   <Fai icon='sign-out' className="w-5 h-5" />
-                  <span>Logout</span>
+                  <span className="text-sm font-medium">Logout</span>
                 </button>
               </div>
             )}
@@ -231,7 +239,7 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
 
           {/* Backdrop */}
           <div
-            className="flex-1 bg-black/30 backdrop-blur-sm"
+            className="flex-1 bg-black/50 backdrop-blur-sm"
             onClick={closeSidebar}
           />
         </div>
