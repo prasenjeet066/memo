@@ -52,7 +52,7 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
                 isDark ? 'text-white' : 'text-gray-800'
               }`}
             >
-              Sistorica
+              S
             </h1>
           </Link>
         </div>
@@ -177,7 +177,7 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
                 isDark ? 'border-gray-700' : 'border-gray-200'
               }`}
             >
-              <h1 className="logo-style-font text-xl font-semibold">Sistorica</h1>
+              <h1 className="logo-style-font text-xl font-semibold">S</h1>
               <button onClick={closeSidebar}>
                 <ArrowLeft
                   className={`w-6 h-6 transition-colors ${
