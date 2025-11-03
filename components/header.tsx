@@ -122,18 +122,6 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
                       isDark ? 'bg-gray-500' : 'bg-gray-500'
                     }`}
                   ></span>
-                  <div
-                    className={`flex flex-col items-start justify-center text-[9px] ${
-                      isDark ? 'text-gray-200' : 'text-gray-800'
-                    }`}
-                  >
-                    <h1 className="font-semibold ">
-                      {session.user.name.split(' ')[0].slice(0, 5) +
-                        '..' +
-                        session.user.name.split(' ')[1].slice(0, 3)}
-                    </h1>
-                    <small>Account</small>
-                  </div>
                 </div>
               </div>
             ) : (
@@ -151,7 +139,7 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
                 </Link>
                 <Link href="/register">
                   <button
-                    className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${
+                    className={`p-1 px-4  text-sm font-medium bg-blue-600 text-white rounded-full transition-colors ${
                       isDark
                         ? 'bg-white text-gray-900 hover:bg-gray-200'
                         : 'bg-gray-800 text-white hover:bg-gray-900'
