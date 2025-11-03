@@ -61,7 +61,7 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
         {/* ===== Right Section ===== */}
         {isMobile ? (
           <div className="flex items-center gap-4">
-            <Search
+            <Fai icon='search'
               className={`w-6 h-6 cursor-pointer transition-colors ${
                 isDark ? 'text-white' : 'text-gray-700 hover:text-gray-900'
               }`}
