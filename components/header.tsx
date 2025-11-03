@@ -36,8 +36,8 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
     <>
       {/* Header Bar - Fixed positioning issues */}
       <header
-        className={`w-full px-4 py-3 flex items-center justify-between border-b ${
-          isDark ? 'bg-transparent text-white border-gray-700' : 'bg-gray-50 text-gray-800 border-gray-200'
+        className={`w-full px-4 py-3 flex items-center justify-between bg-gray-50 ${
+          isDark ? 'bg-transparent text-white border-gray-700' : 'bg-gray-50 text-gray-800'
         } ${isMobile ? 'sticky top-0 z-40' : ''}`}
       >
         {/* Left Section */}
@@ -60,7 +60,7 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
                 isDark ? 'text-white' : 'text-gray-800'
               }`}
             >
-              Sistorica
+              
             </h1>
           </Link>
         </div>
@@ -175,8 +175,8 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
             } shadow-2xl`}
           >
             {/* Sidebar Header */}
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-              <h1 className="logo-style-font text-2xl font-semibold">Sistorica</h1>
+            <div className="p-4 bg-gray-50 flex items-center justify-between">
+              <h1 className="logo-style-font text-2xl font-semibold">S</h1>
               <button 
                 onClick={closeSidebar}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"

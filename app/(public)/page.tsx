@@ -31,8 +31,8 @@ export default function MainPage() {
   };
   
   const Sidebar = !isMobile && (
-    <aside className='w-auto max-w-64 h-full min-h-screen bg-white border-r border-gray-200 flex flex-col justify-between'>
-      <div className='p-4 border-b border-gray-200'>
+    <aside className='w-auto max-w-64 h-full min-h-screen bg-white  flex flex-col justify-between'>
+      <div className='p-2'>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className='text-xs text-gray-500 hover:text-gray-700 transition-colors'
@@ -66,7 +66,7 @@ export default function MainPage() {
         </div>
 
         {/* Settings at bottom */}
-        <div className='border-t border-gray-200 pt-4'>
+        <div className='pt-4'>
           {(() => {
             const settings = NavList[NavList.length - 1]
             return (
@@ -152,7 +152,7 @@ export default function MainPage() {
         </div>
         
         {/* Footer */}
-        <footer className="w-full bg-white border-t border-gray-200 py-6 px-4">
+        <footer className="w-full bg-white py-6 px-4">
           <div className="max-w-6xl mx-auto">
             {!isMobile && (
               <div className="flex flex-row justify-center gap-8 items-center">
