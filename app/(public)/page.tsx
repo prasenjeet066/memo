@@ -122,13 +122,6 @@ export default function MainPage() {
           <div className="flex-1 flex flex-col overflow-y-auto bg-white">
             <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
               {/* Image Section */}
-              <div className="flex items-center justify-center w-full mb-8">
-                <img
-                  alt="Sample"
-                  className={`h-auto object-contain rounded-lg ${isMobile ? 'w-full' : 'w-2/3'}`}
-                  src="https://memoorg.vercel.app/api/v_1/img/vor"
-                />
-              </div>
               
               {/* Search Section */}
               <div className={`w-full ${isMobile ? 'max-w-full' : 'max-w-2xl'}`}>
