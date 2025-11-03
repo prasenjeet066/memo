@@ -29,7 +29,7 @@ const HeaderNavs = () => {
 
 export default function MainPage() {
   const isMobile = useMobile();
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState(null);
   const svgXMlurl = 'https://memoorg.vercel.app/api/img/vor';
   
