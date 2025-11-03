@@ -60,7 +60,7 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
                 isDark ? 'text-white' : 'text-gray-800'
               }`}
             >
-              
+              S
             </h1>
           </Link>
         </div>
