@@ -1,6 +1,7 @@
 'use client'
 import { Suspense } from 'react'
 import * as d3 from "d3";
+
 import Spinner from '/components/utils/spinner'
 import Image from 'next/image'
 import { Fai } from '@/components/Fontawesome';

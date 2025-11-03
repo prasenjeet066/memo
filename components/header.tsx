@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useSession, signOut } from "next-auth/react"
 import Link from 'next/link'
-
+import { usePathname } from 'next/navigation';
 import { SearchInHeader } from '@/components/utils/search'
 import { useMobile } from "@/lib/units/use-mobile"
 import { Menu, Search, ArrowLeft, LogOut, User, Bell, Mail } from 'lucide-react'
@@ -25,6 +25,7 @@ interface HeaderProps {
 export default function Header({ navlist, replacement, isDark = false }: HeaderProps) {
   const [sideBarLogic, setSideBarOpenLogic] = useState < boolean > (false)
   const { data: session, status } = useSession()
+  const pathname = usePathname()
   const isMobile = useMobile()
   
   const closeSidebar = () => setSideBarOpenLogic(false)
@@ -77,7 +78,10 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
           </div>
         ) : (
           <div className="flex items-center gap-4 justify-end">
-            <SearchInHeader />
+            {
+              !pathname === '/' && <SearchInHeader />
+            }
+            
 
             {/* ===== Auth / Notifications Section ===== */}
             {status === "loading" ? (
@@ -119,12 +123,12 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
                     }`}
                   ></span>
                   <div
-                    className={`flex flex-col items-start justify-center text-xs ${
+                    className={`flex flex-col items-start justify-center text-[9px] ${
                       isDark ? 'text-gray-200' : 'text-gray-800'
                     }`}
                   >
-                    <h1 className="font-semibold">
-                      {session.user.name.split(' ')[0].slice(0, 3) +
+                    <h1 className="font-semibold ">
+                      {session.user.name.split(' ')[0].slice(0, 5) +
                         '..' +
                         session.user.name.split(' ')[1].slice(0, 3)}
                     </h1>
