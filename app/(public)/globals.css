@@ -70,6 +70,7 @@ body {
   }
   .wiki-img-list{
     @apply rounded-lg
+    
   }
   .prose h1 {
     @apply text-3xl font-bold text-gray-800 border-b pb-1 mb-4;
