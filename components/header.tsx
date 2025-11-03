@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation';
 import { SearchInHeader } from '@/components/utils/search'
 import { useMobile } from "@/lib/units/use-mobile"
-import { Menu, Search, ArrowLeft, LogOut, User, Bell, Mail } from 'lucide-react'
+import { Fai } from '@/components/Fontawesome'
 
 interface NavItem {
   name: string;
@@ -72,7 +72,7 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
                   isDark ? 'bg-gray-700' : 'bg-gray-200'
                 }`}
               >
-                <User className={`w-4 h-4 ${isDark ? 'text-white' : 'text-gray-700'}`} />
+                <Fai icon='user' className={`w-4 h-4 ${isDark ? 'text-white' : 'text-gray-700'}`} />
               </div>
             )}
           </div>
@@ -100,7 +100,7 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
                   }`}
                   title="Messages"
                 >
-                  <Mail className="w-5 h-5" />
+                  <Fai icon='mail' className="w-5 h-5" />
                 </button>
                 <button
                   className={`p-2 rounded-full transition-colors ${
@@ -110,7 +110,7 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
                   }`}
                   title="Notifications"
                 >
-                  <Bell className="w-5 h-5" />
+                  <Fai icon='bell' className="w-5 h-5" />
                 </button>
                 <div
                   className={`flex items-center gap-2 p-2 border-l ${
@@ -121,7 +121,7 @@ export default function Header({ navlist, replacement, isDark = false }: HeaderP
                     className={`h-5 w-5 rounded-full ${
                       isDark ? 'bg-gray-500' : 'bg-gray-500'
                     }`}
-                  ></span>
+                  ></span>  
                 </div>
               </div>
             ) : (
