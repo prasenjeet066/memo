@@ -31,7 +31,7 @@ export default function MainPage() {
   };
   
   const Sidebar = !isMobile && (
-    <aside className='w-auto max-w-64 h-full min-h-screen bg-white  flex flex-col justify-between'>
+    <aside className='w-auto max-w-64 h-full min-h-screen bg-gray-50  flex flex-col justify-between'>
       <div className='p-2'>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
